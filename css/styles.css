@@ -433,10 +433,15 @@ img {
 
 .send-btn-container {
     width: 100%;
-    max-width: 300px;
+    max-width: 350px;
     margin: 0 auto;
     cursor: pointer;
     position: relative;
+    transition: transform 0.2s ease;
+}
+
+.send-btn-container:hover {
+    transform: scale(1.02);
 }
 
 #sendBtnSvg {
