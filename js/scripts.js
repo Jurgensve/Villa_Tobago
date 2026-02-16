@@ -110,7 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     } else {
                         return response.text().then(text => {
-                            throw new Error(text || 'Form submission failed');
+                            // If the response is HTML (e.g. server default error page), don't show it.
+                            // Create a fallback error message.
+                            let errorMessage = text;
+                            if (text.trim().startsWith('<')) {
+                                errorMessage = 'Server error: ' + response.status + ' ' + response.statusText;
+                            }
+                            throw new Error(errorMessage || 'Form submission failed');
                         });
                     }
                 })
