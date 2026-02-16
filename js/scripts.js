@@ -79,148 +79,47 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
         observer.observe(el);
     });
-    // SVG Animated Contact Form Handling
+    // AJAX Contact Form Handling
     const contactForm = document.getElementById('contactForm');
     const formStatus = document.getElementById('form-status');
-    const sendBtnContainer = document.querySelector('.send-btn-container');
-    const nativeSubmitBtn = document.getElementById('nativeSubmit');
 
-    // GSAP Timeline
-    let tl;
-
-    if (contactForm && sendBtnContainer) {
-
-        // Setup initial state
-        // Calculate path length for the route
-        const routePath = document.querySelector("#paperPlaneRoute");
-        const routeLength = routePath.getTotalLength();
-
-        // Hide the route line initially using standard CSS
-        gsap.set(routePath, {
-            strokeDasharray: routeLength,
-            strokeDashoffset: routeLength,
-            opacity: 0
-        });
-
-        // Logic for the button click
-        sendBtnContainer.addEventListener('click', function () {
-            // Trigger validation
-            if (contactForm.checkValidity()) {
-                startAnimationAndSend();
-            } else {
-                nativeSubmitBtn.click();
-            }
-        });
-
+    if (contactForm) {
         contactForm.addEventListener('submit', function (e) {
             e.preventDefault();
+
+            // Show loading state
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            formStatus.innerHTML = '';
+            formStatus.className = 'form-note';
+
+            const formData = new FormData(contactForm);
+
+            fetch(contactForm.action, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.text().then(text => {
+                            formStatus.innerHTML = '<span style="color: green;">' + text + '</span>';
+                            contactForm.reset();
+                        });
+                    } else {
+                        return response.text().then(text => {
+                            throw new Error(text || 'Form submission failed');
+                        });
+                    }
+                })
+                .catch(error => {
+                    formStatus.innerHTML = '<span style="color: red;">' + error.message + '</span>';
+                })
+                .finally(() => {
+                    submitBtn.textContent = originalBtnText;
+                    submitBtn.disabled = false;
+                });
         });
     }
-
-    function startAnimationAndSend() {
-        if (tl && tl.isActive()) return;
-
-        tl = gsap.timeline();
-
-        // 1. Button Squish & Morph
-        tl.to("#btnBase", { duration: 0.2, scale: 0.95, transformOrigin: "50% 50%" });
-        tl.to("#btnBase", { duration: 0.2, scale: 1, transformOrigin: "50% 50%" });
-
-        // 2. Rect to Circle
-        tl.to("#btnBase", {
-            duration: 0.5,
-            attr: { width: 158, rx: 79, x: 621 },
-            ease: "power2.inOut"
-        }, "morph");
-
-        // Fade out text
-        tl.to("#txtSend", { duration: 0.3, opacity: 0 }, "morph");
-
-        // 3. Plane takes off
-        tl.to("#paperPlane", {
-            duration: 1.5,
-            motionPath: {
-                path: "#paperPlaneRoute",
-                align: "#paperPlaneRoute",
-                alignOrigin: [0.5, 0.5],
-                autoRotate: 90
-            },
-            ease: "power2.in"
-        }, "flight");
-
-        // Reveal the route line
-        const routePath = document.querySelector("#paperPlaneRoute");
-        // We fade it in
-        tl.to(routePath, { opacity: 1, duration: 0.2 }, "flight");
-        // Animate the stroke drawing
-        tl.to(routePath, {
-            strokeDashoffset: 0,
-            duration: 1.0,
-            ease: "none"
-        }, "flight+=0.1");
-
-        // 4. AJAX Request
-        const formData = new FormData(contactForm);
-
-        fetch(contactForm.action, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => {
-                if (response.ok) {
-                    return response.text();
-                } else {
-                    throw new Error('Form submission failed');
-                }
-            })
-            .then(text => {
-                showSuccessState(text);
-            })
-            .catch(error => {
-                showErrorState(error.message);
-            });
-    }
-
-    function showSuccessState(msg) {
-        // Expand button back
-        tl.to("#btnBase", {
-            duration: 0.5,
-            attr: { width: 480, rx: 23, x: 460 }, // Back to rect
-            fill: "white",
-            ease: "power2.out"
-        }, "expand");
-
-        // Show Sent Text
-        tl.to("#rectSent", { opacity: 1, duration: 0.3 }, "expand");
-        tl.to("#txtSent", { opacity: 1, duration: 0.3 }, "expand");
-
-        // Change text color
-        tl.to("#txtSent", { fill: "var(--primary-color)" }, "expand");
-
-        formStatus.innerHTML = '<span style="color: green;">' + msg + '</span>';
-        contactForm.reset();
-
-        // Reset after a delay
-        setTimeout(() => {
-            resetButton();
-        }, 5000);
-    }
-
-    function showErrorState(msg) {
-        formStatus.innerHTML = '<span style="color: red;">' + msg + '</span>';
-        resetButton();
-    }
-
-    function resetButton() {
-        gsap.to("#btnBase", {
-            duration: 0.5,
-            attr: { width: 563.765, rx: 27, x: 418.117 },
-            fill: "var(--primary-color)"
-        });
-        gsap.to("#txtSend", { opacity: 1, duration: 0.3 });
-        gsap.to("#rectSent", { opacity: 0, duration: 0.3 });
-        gsap.set("#paperPlane", { x: 0, y: 0, rotation: 0 }); // Reset plane position
-        formStatus.innerHTML = '';
-    }
-
 });
