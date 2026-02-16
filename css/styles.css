@@ -460,10 +460,20 @@ img {
 }
 
 .form-note {
-    font-size: 0.8rem;
+    font-size: 1rem;
     color: #999;
     margin-top: 15px;
     text-align: center;
+    min-height: 24px;
+}
+
+.form-note.success {
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.form-note.error {
+    color: #d32f2f;
 }
 
 /* Footer */
