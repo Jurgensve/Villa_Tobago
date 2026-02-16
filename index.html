@@ -15,6 +15,10 @@
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap"
         rel="stylesheet">
 
+    <!-- GSAP for Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/MotionPathPlugin.min.js"></script>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/styles.css?v=1.0">
 
@@ -171,7 +175,44 @@
                         <textarea id="message" name="message" rows="4" required
                             placeholder="How can we help you?"></textarea>
                     </div>
-                    <button type="submit" class="btn-primary full-width">Send Message</button>
+                    <div class="send-btn-container">
+                        <svg id="sendBtnSvg" viewBox="0 0 1400 1080" fill="none" xmlns="http://www.w3.org/2000/svg"
+                            preserveAspectRatio="xMidYMid meet">
+                            <path id="paperPlaneRoute"
+                                d="M563.558,526.618 C638.854,410.19 787.84,243.065 916.53,334.949 1041.712,424.328 858.791,877.927 743.926,856.655 642.241,838.669 699.637,688.664 700,540"
+                                stroke="white" stroke-width="3"
+                                style="stroke-dashoffset: 0.001px; stroke-dasharray: 0px, 999999px; opacity: 0;" />
+                            <g id="rectSent" style="opacity: 0;">
+                                <g id="rectSentItems">
+                                    <rect id="sentBase" x="460" y="468.5" width="480" height="143" rx="23"
+                                        fill="var(--primary-color)" />
+                                    <text id="txtSent" fill="white" xml:space="preserve" style="white-space: pre"
+                                        font-family="Montserrat" font-size="82" font-weight="bold"
+                                        letter-spacing="0.025em">
+                                        <tspan x="637.487" y="568.027">Sent!</tspan>
+                                    </text>
+                                </g>
+                            </g>
+                            <g id="base" style="cursor: pointer;">
+                                <g>
+                                    <rect id="btnBase" x="418.117" y="460.55" width="563.765" height="158.899" rx="27"
+                                        fill="var(--primary-color)" />
+                                </g>
+                                <text id="txtSend" fill="white" xml:space="preserve" style="white-space: pre"
+                                    font-family="Montserrat" font-size="82" font-weight="bold" letter-spacing="0.06em">
+                                    <tspan x="679.379" y="568.027">Send</tspan>
+                                </text>
+                                <g id="paperPlane" style="transform-origin: 0px 0px 0px;"
+                                    transform="translate(377, -222)">
+                                    <path id="paperPlanePath"
+                                        d="M560.611 481.384C562.003 479.263 565.113 479.263 566.505 481.384L607.063 543.177C615.657 556.272 607.507 573.375 592.766 575.676L566.422 557.462V510.018C566.422 508.436 565.14 507.154 563.558 507.154C561.976 507.154 560.693 508.436 560.693 510.018V557.462L534.349 575.676C519.609 573.375 511.459 556.272 520.053 543.177L560.611 481.384Z"
+                                        fill="white" />
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+                    <!-- Invisible native button for form validation handling -->
+                    <button type="submit" id="nativeSubmit" style="display: none;">Send</button>
                     <div id="form-status" class="form-note"></div>
                 </form>
             </div>

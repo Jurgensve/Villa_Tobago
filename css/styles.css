@@ -428,6 +428,27 @@ img {
     background: var(--bg-alt);
     padding: 40px;
     border-radius: var(--border-radius);
+    text-align: center;
+}
+
+.send-btn-container {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    cursor: pointer;
+    position: relative;
+}
+
+#sendBtnSvg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+}
+
+/* Hide elements initially for GSAP to reveal */
+.hidden {
+    visibility: hidden;
 }
 
 .form-group {
