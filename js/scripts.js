@@ -91,28 +91,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contactForm && sendBtnContainer) {
 
         // Setup initial state
-        gsap.set("#paperPlaneRoute", { drawSVG: "0% 0%", opacity: 0 });
-        // Note: drawSVG is paid, so we will use stroke-dasharray CSS trick if drawSVG fails or just fade in
-        // Since we didn't include DrawSVG, we'll animate opacity/stroke-dashoffset manually if needed
+        // Calculate path length for the route
+        const routePath = document.querySelector("#paperPlaneRoute");
+        const routeLength = routePath.getTotalLength();
+
+        // Hide the route line initially using standard CSS
+        gsap.set(routePath, {
+            strokeDasharray: routeLength,
+            strokeDashoffset: routeLength,
+            opacity: 0
+        });
 
         // Logic for the button click
         sendBtnContainer.addEventListener('click', function () {
-            // Trigger the native submit to run HTML5 validation
+            // Trigger validation
             if (contactForm.checkValidity()) {
-                // If valid, prevent default submission and run animation + ajax
                 startAnimationAndSend();
             } else {
-                // If invalid, click the hidden submit button to trigger browser validation UI
                 nativeSubmitBtn.click();
             }
         });
 
         contactForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            // This listener is here just in case the native button is triggered directly,
-            // but our main logic is in the container click. 
-            // If triggered by nativeSubmit.click() and valid, it comes here.
-            // But we handle the animation/send call separately to coordinate.
         });
     }
 
@@ -121,15 +122,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tl = gsap.timeline();
 
-        // 1. Button Squish & Morph (Approximated with Scale & Border Radius)
+        // 1. Button Squish & Morph
         tl.to("#btnBase", { duration: 0.2, scale: 0.95, transformOrigin: "50% 50%" });
         tl.to("#btnBase", { duration: 0.2, scale: 1, transformOrigin: "50% 50%" });
 
-        // 2. Rect to Circle (Simulated by width change and border radius)
-        // Since MorphSVG is paid, we animate the width/rx of the rect
+        // 2. Rect to Circle
         tl.to("#btnBase", {
             duration: 0.5,
-            attr: { width: 158, rx: 79, x: 621 }, // Shrink width to height (158) and center it
+            attr: { width: 158, rx: 79, x: 621 },
             ease: "power2.inOut"
         }, "morph");
 
@@ -148,12 +148,20 @@ document.addEventListener('DOMContentLoaded', () => {
             ease: "power2.in"
         }, "flight");
 
-        // Fade in opacity of route if we want to show it, or just keep invisible
+        // Reveal the route line
+        const routePath = document.querySelector("#paperPlaneRoute");
+        // We fade it in
+        tl.to(routePath, { opacity: 1, duration: 0.2 }, "flight");
+        // Animate the stroke drawing
+        tl.to(routePath, {
+            strokeDashoffset: 0,
+            duration: 1.0,
+            ease: "none"
+        }, "flight+=0.1");
 
         // 4. AJAX Request
         const formData = new FormData(contactForm);
 
-        // We simulate the timing so the request happens during flight
         fetch(contactForm.action, {
             method: 'POST',
             body: formData
@@ -166,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             })
             .then(text => {
-                // 5. Success State animation
                 showSuccessState(text);
             })
             .catch(error => {
