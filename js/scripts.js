@@ -104,7 +104,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(response => {
                     if (response.ok) {
                         return response.text().then(text => {
-                            formStatus.innerHTML = '<span style="color: green;">' + text + '</span>';
+                            formStatus.textContent = text;
+                            formStatus.className = 'form-note success';
                             contactForm.reset();
                         });
                     } else {
@@ -114,7 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 })
                 .catch(error => {
-                    formStatus.innerHTML = '<span style="color: red;">' + error.message + '</span>';
+                    formStatus.textContent = error.message;
+                    formStatus.className = 'form-note error';
                 })
                 .finally(() => {
                     submitBtn.textContent = originalBtnText;
