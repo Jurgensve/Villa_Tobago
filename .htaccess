@@ -1,0 +1,15 @@
+# Prioritize the new index.html over WordPress index.php
+DirectoryIndex index.html index.php
+
+# Optional: If you want to completely disable the old WordPress site logic for root
+# RewriteEngine On
+# RewriteRule ^index\.php$ - [F]
+
+<IfModule mod_headers.c>
+  # Disable caching for the new index.html during development/switchover
+  <FilesMatch "index\.html">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+  </FilesMatch>
+</IfModule>
