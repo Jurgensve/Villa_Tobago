@@ -7,6 +7,8 @@ deployment:
     - /bin/cp -R js $DEPLOYPATH
     - /bin/cp -R images $DEPLOYPATH
     - /bin/cp contact.php $DEPLOYPATH
+    - /bin/cp -R admin $DEPLOYPATH
+    - /bin/cp test_db.php $DEPLOYPATH
     - /bin/cp .htaccess $DEPLOYPATH
     # Copies all files to public_html. 
     # NOTE: If your site is in a subdirectory (e.g. public_html/villatobago), 
