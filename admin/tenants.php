@@ -7,15 +7,16 @@ $action = $_GET['action'] ?? 'list';
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['create_tenant'])) {
+    if (isset($_POST['create_tenant']) || isset($_POST['update_tenant'])) {
         $full_name = trim($_POST['full_name']);
         $unit_id = $_POST['unit_id'];
         $email = $_POST['email'];
         $phone = $_POST['phone'];
         $id_number = $_POST['id_number'];
+        $tenant_id = $_POST['tenant_id'] ?? null;
 
         // Handle File Upload
-        $lease_path = null;
+        $lease_path = $_POST['current_lease_path'] ?? null;
         if (isset($_FILES['lease_agreement']) && $_FILES['lease_agreement']['error'] == 0) {
             $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
             $filename = $_FILES['lease_agreement']['name'];
@@ -45,9 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$error) {
             try {
-                $stmt = $pdo->prepare("INSERT INTO tenants (unit_id, full_name, id_number, email, phone, lease_agreement_path, start_date) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-                $stmt->execute([$unit_id, $full_name, $id_number, $email, $phone, $lease_path]);
-                $message = "Tenant added successfully.";
+                if ($tenant_id) {
+                    $stmt = $pdo->prepare("UPDATE tenants SET unit_id = ?, full_name = ?, id_number = ?, email = ?, phone = ?, lease_agreement_path = ? WHERE id = ?");
+                    $stmt->execute([$unit_id, $full_name, $id_number, $email, $phone, $lease_path, $tenant_id]);
+                    $message = "Tenant updated successfully.";
+                }
+                else {
+                    $stmt = $pdo->prepare("INSERT INTO tenants (unit_id, full_name, id_number, email, phone, lease_agreement_path, start_date) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                    $stmt->execute([$unit_id, $full_name, $id_number, $email, $phone, $lease_path]);
+                    $message = "Tenant added successfully.";
+                }
                 $action = 'list';
             }
             catch (PDOException $e) {
@@ -86,11 +94,26 @@ endif; ?>
 <?php
 endif; ?>
 
-<?php if ($action === 'add'): ?>
-<?php $units = $pdo->query("SELECT id, unit_number FROM units ORDER BY unit_number ASC")->fetchAll(); ?>
+<?php if ($action === 'add' || $action === 'edit'): ?>
+<?php
+    $units = $pdo->query("SELECT id, unit_number FROM units ORDER BY unit_number ASC")->fetchAll();
+    $tenant = ['id' => '', 'unit_id' => $_GET['unit_id'] ?? '', 'full_name' => '', 'id_number' => '', 'email' => '', 'phone' => '', 'lease_agreement_path' => ''];
+    if ($action === 'edit' && isset($_GET['id'])) {
+        $stmt = $pdo->prepare("SELECT * FROM tenants WHERE id = ?");
+        $stmt->execute([$_GET['id']]);
+        $fetched = $stmt->fetch();
+        if ($fetched)
+            $tenant = $fetched;
+    }
+?>
 <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
-    <h2 class="text-xl font-semibold mb-4">Add New Tenant</h2>
+    <h2 class="text-xl font-semibold mb-4">
+        <?= $action === 'edit' ? 'Edit Tenant' : 'Add New Tenant'?>
+    </h2>
     <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="tenant_id" value="<?= h($tenant['id'])?>">
+        <input type="hidden" name="current_lease_path" value="<?= h($tenant['lease_agreement_path'])?>">
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="mb-4 md:col-span-2">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="unit_id">Unit *</label>
@@ -99,8 +122,7 @@ endif; ?>
                     id="unit_id" name="unit_id" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value="<?= $unit['id']?>" <?=(isset($_GET['unit_id']) && $_GET['unit_id']==$unit['id'])
-                        ? 'selected' : ''?>>
+                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id']==$unit['id']) ? 'selected' : '' ?>>
                         <?= h($unit['unit_number'])?>
                     </option>
                     <?php
@@ -111,29 +133,36 @@ endif; ?>
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="full_name">Full Name *</label>
                 <input
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="full_name" name="full_name" type="text" required>
+                    id="full_name" name="full_name" type="text" value="<?= h($tenant['full_name'])?>" required>
             </div>
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="id_number">ID Number</label>
                 <input
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="id_number" name="id_number" type="text">
+                    id="id_number" name="id_number" type="text" value="<?= h($tenant['id_number'])?>">
             </div>
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Email</label>
                 <input
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="email" name="email" type="email">
+                    id="email" name="email" type="email" value="<?= h($tenant['email'])?>">
             </div>
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="phone">Phone</label>
                 <input
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="phone" name="phone" type="text">
+                    id="phone" name="phone" type="text" value="<?= h($tenant['phone'])?>">
             </div>
             <div class="mb-4 md:col-span-2">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="lease_agreement">Lease Agreement
-                    (PDF/Image)</label>
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="lease_agreement">
+                    Lease Agreement (PDF/Image)
+                    <?php if ($tenant['lease_agreement_path']): ?>
+                    <span class="text-xs font-normal text-gray-500 ml-2">(Current:
+                        <?= basename($tenant['lease_agreement_path'])?>)
+                    </span>
+                    <?php
+    endif; ?>
+                </label>
                 <input
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="lease_agreement" name="lease_agreement" type="file" accept=".pdf,.jpg,.jpeg,.png">
@@ -142,8 +171,8 @@ endif; ?>
         <div class="mt-6">
             <button
                 class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                type="submit" name="create_tenant">
-                Add Tenant
+                type="submit" name="<?= $action === 'edit' ? 'update_tenant' : 'create_tenant'?>">
+                <?= $action === 'edit' ? 'Update Tenant' : 'Add Tenant'?>
             </button>
         </div>
     </form>
@@ -185,10 +214,14 @@ else: ?>
                     <?= h($row['phone'])?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
-                    <?php if ($row['lease_agreement_path']): ?>
+                    <?php if ($row['lease_agreement_path']):
+            $full_path = UPLOAD_DIR . str_replace('uploads/', '', $row['lease_agreement_path']);
+            $exists = file_exists($full_path);
+?>
                     <a href="<?= SITE_URL?>/<?= h($row['lease_agreement_path'])?>" target="_blank"
-                        class="hover:underline">View
-                        Lease</a>
+                        class="hover:underline">
+                        <?= $exists ? 'View Lease' : '<span class="text-red-500">File Missing!</span>'?>
+                    </a>
                     <?php
         else: ?>
                     <span class="text-gray-400">No File</span>
@@ -196,7 +229,8 @@ else: ?>
         endif; ?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <a href="#" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                    <a href="tenants.php?action=edit&id=<?= $row['id']?>"
+                        class="text-indigo-600 hover:text-indigo-900">Edit</a>
                 </td>
             </tr>
             <?php

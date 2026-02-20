@@ -12,18 +12,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         $header = fgetcsv($handle, 1000, ",");
 
         $count = 0;
+        $skipped = 0;
+        $errors = [];
         try {
             $pdo->beginTransaction();
             while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                // Expected format: Unit Number, Full Name, ID Number, Email, Phone
+                // Handle semi-colon delimited files if comma fails
+                if (count($data) == 1 && strpos($data[0], ';') !== false) {
+                    $data = str_getcsv($data[0], ';');
+                }
+
                 $unit_num = trim($data[0] ?? '');
                 $name = trim($data[1] ?? '');
+
+                if (empty($name) || empty($unit_num)) {
+                    $skipped++;
+                    continue;
+                }
+
                 $id_num = trim($data[2] ?? '');
                 $email = trim($data[3] ?? '');
                 $phone = trim($data[4] ?? '');
-
-                if (empty($name) || empty($unit_num))
-                    continue;
 
                 // 1. Find or Create Unit
                 $stmt = $pdo->prepare("SELECT id FROM units WHERE unit_number = ?");
@@ -42,11 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 $owner_id = $pdo->lastInsertId();
 
                 // 3. Link them
-                // Clear old current owner
                 $stmt = $pdo->prepare("UPDATE ownership_history SET is_current = 0, end_date = NOW() WHERE unit_id = ? AND is_current = 1");
                 $stmt->execute([$unit_id]);
-
-                // Add new link
                 $stmt = $pdo->prepare("INSERT INTO ownership_history (unit_id, owner_id, start_date, is_current) VALUES (?, ?, NOW(), 1)");
                 $stmt->execute([$unit_id, $owner_id]);
 
@@ -54,10 +60,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
             }
             $pdo->commit();
             $message = "Successfully imported $count owners.";
+            if ($skipped > 0)
+                $message .= " ($skipped rows skipped due to missing Unit/Name)";
+            if ($count === 0 && $skipped > 0)
+                $error = "No valid data found. Check your CSV format (Unit Number, Name, ID, Email, Phone).";
         }
         catch (Exception $e) {
             $pdo->rollBack();
-            $error = "Import failed: " . $e->getMessage();
+            $error = "Import failed on row " . ($count + $skipped + 1) . ": " . $e->getMessage();
         }
         fclose($handle);
     }

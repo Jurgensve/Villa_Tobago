@@ -2,6 +2,7 @@
 require_once 'includes/header.php';
 
 $message = '';
+$error = '';
 $action = $_GET['action'] ?? 'list';
 
 // Handle Form Submission
