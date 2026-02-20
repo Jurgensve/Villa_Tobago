@@ -6,7 +6,6 @@ $error = '';
 $action = $_GET['action'] ?? 'list';
 
 // Handle Form Submission
-// Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['create_modification'])) {
         $unit_id = $_POST['unit_id'];
@@ -15,6 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description = trim($_POST['description']);
         $notes = trim($_POST['notes']);
         $status = 'approved'; // Admin-added mods are auto-approved
+
+        // Ensure 'category' column exists (Fallback if migration hasn't run)
+        $check = $pdo->query("SHOW COLUMNS FROM modifications LIKE 'category'");
+        if (!$check->fetch()) {
+            $pdo->exec("ALTER TABLE modifications ADD COLUMN category VARCHAR(50) AFTER owner_id");
+        }
 
         if (empty($description)) {
             $error = "Description is required.";
@@ -215,13 +220,13 @@ endif; ?>
         function updateHiddenField              const select = document.getElementById('unit_owner_select')            nst val = select.value;
               l) {
                        = JSON.parse(val);
-                          ementById('unit_id').value = data.unit_id;
-                              tById('owner_id').value = data.owner_id;
-            }
-                un        ach                    const container =             entById('attachments_container');
-            const row = document.c            v');
-            row.className = 'grid grid            cols-2 gap-4 items-end attachment-row border-t pt-4';
-            row.innerHTML = `
+            ementById('unit_id').value = data.unit_id;
+            tById('owner_id').value = data.owner_id;
+        }
+                un        ach                    const container = entById('attachments_container');
+        const row = document.c            v');
+        row.className = 'grid grid            cols-2 gap-4 items-end attachment-row border-t pt-4';
+        row.innerHTML = `
                                               <label class="block text-xs font-semibold text-gray-600 mb-1">Attachment Name</label>
                         <input type="text" name="attachment_names[]" class="w-full text-sm border rounded px-2 py-1" placeholder="Name this document">
                     </div>
@@ -230,7 +235,7 @@ endif; ?>
                         <button type="button" onclick="this.closest('.attachment-row').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
                     </div>
                 `;
-            container.appendChild(row);
+        container.appendChild(row);
         }
     </script>
 </div>

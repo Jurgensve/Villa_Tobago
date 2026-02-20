@@ -19,6 +19,70 @@ require_login();
     <title>Villa Tobago Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <style>
+        /* Custom DataTables Styling to match Tailwind */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_processing,
+        .dataTables_wrapper .dataTables_paginate {
+            color: #4a5568 !important;
+            /* text-gray-700 */
+            font-size: 0.875rem !important;
+            /* text-sm */
+            margin-bottom: 1rem;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #e2e8f0 !important;
+            /* border-gray-300 */
+            border-radius: 0.375rem !important;
+            padding: 0.4rem 0.75rem !important;
+            margin-left: 0.5rem !important;
+            outline: none !important;
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 0.375rem !important;
+            padding: 0.25rem 1.5rem 0.25rem 0.5rem !important;
+        }
+
+        table.dataTable thead th {
+            border-bottom: 1px solid #e2e8f0 !important;
+            background-color: #f8fafc !important;
+            /* bg-gray-50 */
+            font-weight: 600 !important;
+            color: #64748b !important;
+            /* text-gray-500 */
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            font-size: 0.75rem !important;
+        }
+
+        table.dataTable td {
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #3b82f6 !important;
+            /* bg-blue-500 */
+            color: white !important;
+            border: 1px solid #3b82f6 !important;
+            border-radius: 0.375rem !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #eff6ff !important;
+            /* bg-blue-50 */
+            color: #1d4ed8 !important;
+            /* blue-700 */
+            border: 1px solid #dbeafe !important;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans">

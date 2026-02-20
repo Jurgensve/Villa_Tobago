@@ -140,7 +140,8 @@ endif; ?>
     </form>
 </div>
 
-<?php elseif ($action === 'edit'): 
+<?php
+elseif ($action === 'edit'):
     $id = $_GET['id'] ?? null;
     $owner = null;
     if ($id) {
@@ -151,71 +152,74 @@ endif; ?>
 
     if (!$owner) {
         echo "<div class='bg-red-100 text-red-700 p-4 rounded'>Owner not found.</div>";
-    } else {
+    }
+    else {
         // Handle Edit Submission
         if (isset($_POST['update_owner'])) {
-             $full_name = trim($_POST['full_name']);
-             $id_number = trim($_POST['id_number']);
-             $email = trim($_POST['email']);
-             $phone = trim($_POST['phone']);
+            $full_name = trim($_POST['full_name']);
+            $id_number = trim($_POST['id_number']);
+            $email = trim($_POST['email']);
+            $phone = trim($_POST['phone']);
 
-             $stmt = $pdo->prepare("UPDATE owners SET full_name=?, id_number=?, email=?, phone=? WHERE id=?");
-             $stmt->execute([$full_name, $id_number, $email, $phone, $id]);
-             
-             echo "<script>window.location.href='owners.php?action=list&msg=updated';</script>";
+            $stmt = $pdo->prepare("UPDATE owners SET full_name=?, id_number=?, email=?, phone=? WHERE id=?");
+            $stmt->execute([$full_name, $id_number, $email, $phone, $id]);
+
+            echo "<script>window.location.href = 'owners.php?action=list&msg=updated';</script>";
         }
-    ?>
-    <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
-        <h2 class="text-xl font-semibold mb-4">Edit Owner</h2>
-        <form method="POST">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="full_name">Full Name *</label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                           id="full_name" name="full_name" type="text" value="<?= h($owner['full_name']) ?>" required>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="id_number">ID Number</label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                           id="id_number" name="id_number" type="text" value="<?= h($owner['id_number']) ?>">
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Email</label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                           id="email" name="email" type="email" value="<?= h($owner['email']) ?>">
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="phone">Phone</label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                           id="phone" name="phone" type="text" value="<?= h($owner['phone']) ?>">
-                </div>
+?>
+<div class="bg-white shadow rounded-lg p-6 max-w-2xl">
+    <h2 class="text-xl font-semibold mb-4">Edit Owner</h2>
+    <form method="POST">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="full_name">Full Name *</label>
+                <input
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    id="full_name" name="full_name" type="text" value="<?= h($owner['full_name'])?>" required>
             </div>
-            <div class="mt-6">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" 
-                        type="submit" name="update_owner">
-                    Update Owner
-                </button>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="id_number">ID Number</label>
+                <input
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    id="id_number" name="id_number" type="text" value="<?= h($owner['id_number'])?>">
             </div>
-        </form>
-    </div>
-    <?php } ?>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Email</label>
+                <input
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    id="email" name="email" type="email" value="<?= h($owner['email'])?>">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="phone">Phone</label>
+                <input
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    id="phone" name="phone" type="text" value="<?= h($owner['phone'])?>">
+            </div>
+        </div>
+        <div class="mt-6">
+            <button
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                type="submit" name="update_owner">
+                Update Owner
+            </button>
+        </div>
+    </form>
+</div>
+<?php
+    }?>
 
-<?php else: ?>
+<?php
+else: ?>
 
-<div class="bg-white shadow overflow-hidden sm:rounded-lg">
-    <table class="min-w-full divide-y divide-gray-200">
+<div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
+    <table id="ownersTable" class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Unit</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID Number</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions</th>
+                <th class="px-6 py-3 text-left">Name</th>
+                <th class="px-6 py-3 text-left">Unit</th>
+                <th class="px-6 py-3 text-left">Contact</th>
+                <th class="px-6 py-3 text-left">ID Number</th>
+                <th class="px-6 py-3 text-left">Actions</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -270,6 +274,14 @@ endif; ?>
     </table>
 </div>
 
+<script>
+    $(document).ready(function () {
+        $('#ownersTable').DataTable({
+            "pageLength": 25,
+            "order": [[0, "asc"]]
+        });
+    });
+</script>
 <?php
 endif; ?>
 

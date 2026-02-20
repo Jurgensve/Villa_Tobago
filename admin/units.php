@@ -149,43 +149,31 @@ endif; ?>
 </div>
 <?php
 else: ?>
-<div class="bg-white shadow overflow-hidden sm:rounded-lg">
-    <table class="min-w-full divide-y divide-gray-200">
+<div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
+    <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Unit Number
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Current Owner
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Current Tenant
-                </th>
+                <th class="px-6 py-3 text-left">Unit Number</th>
+                <th class="px-6 py-3 text-left">Current Owner</th>
+                <th class="px-6 py-3 text-left">Current Tenant</th>
+                <th class="px-6 py-3 text-left">Actions</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
             <?php
-    // Query to get units with current owner and tenant
-    $sql = "SELECT u.*, 
-                        o.full_name as owner_name, 
-                        t.full_name as tenant_name 
-                        FROM units u
-                        LEFT JOIN ownership_history oh ON u.id = oh.unit_id AND oh.is_current = 1
-                        LEFT JOIN owners o ON oh.owner_id = o.id
-                        LEFT JOIN tenants t ON u.id = t.unit_id AND t.is_active = 1
-                        ORDER BY u.unit_number ASC";
-
-    $stmt = $pdo->query($sql);
-    while ($row = $stmt->fetch()):
-?>
+            // Query to get units with current owner and tenant
+            $sql = "SELECT u.*, 
+                    o.full_name as owner_name, 
+                    t.full_name as tenant_name 
+                    FROM units u
+                    LEFT JOIN ownership_history oh ON u.id = oh.unit_id AND oh.is_current = 1
+                    LEFT JOIN owners o ON oh.owner_id = o.id
+                    LEFT JOIN tenants t ON u.id = t.unit_id AND t.is_active = 1
+                    ORDER BY u.unit_number ASC";
+            $stmt = $pdo->query($sql);
+            while ($row = $stmt->fetch()):
+            ?>
             <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <?= h($row['id'])?>
-                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <?= h($row['unit_number'])?>
                 </td>
@@ -195,13 +183,23 @@ else: ?>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <?= $row['tenant_name'] ? h($row['tenant_name']) : '<span class="text-gray-400">-</span>'?>
                 </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="units.php?action=edit&id=<?= $row['id']?>" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                </td>
             </tr>
-            <?php
-    endwhile; ?>
+            <?php endwhile; ?>
         </tbody>
     </table>
 </div>
-<?php
-endif; ?>
+
+<script>
+$(document).ready(function() {
+    $('#unitsTable').DataTable({
+        "pageLength": 25,
+        "order": [[0, "asc"]]
+    });
+});
+</script>
+<?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>

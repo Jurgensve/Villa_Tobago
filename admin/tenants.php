@@ -122,7 +122,7 @@ endif; ?>
                     id="unit_id" name="unit_id" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id']==$unit['id']) ? 'selected' : '' ?>>
+                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id'] == $unit['id']) ? 'selected' : ''?>>
                         <?= h($unit['unit_number'])?>
                     </option>
                     <?php
@@ -180,16 +180,15 @@ endif; ?>
 
 <?php
 else: ?>
-<div class="bg-white shadow overflow-hidden sm:rounded-lg">
-    <table class="min-w-full divide-y divide-gray-200">
+<div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
+    <table id="tenantsTable" class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tenant Name
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lease</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th class="px-6 py-3 text-left">Unit</th>
+                <th class="px-6 py-3 text-left">Tenant Name</th>
+                <th class="px-6 py-3 text-left">Contact</th>
+                <th class="px-6 py-3 text-left">Lease</th>
+                <th class="px-6 py-3 text-left">Actions</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -238,6 +237,15 @@ else: ?>
         </tbody>
     </table>
 </div>
+
+<script>
+    $(document).ready(function () {
+        $('#tenantsTable').DataTable({
+            "pageLength": 25,
+            "order": [[0, "asc"]]
+        });
+    });
+</script>
 <?php
 endif; ?>
 
