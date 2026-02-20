@@ -140,8 +140,8 @@ endif; ?>
                     name="unit_owner_json" id="unit_owner_select" onchange="updateHiddenFields()" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value='<?= json_encode([' unit_id' => $unit['unit_id'], 'owner_id' => $unit['owner_id']])
-    ?>'>
+                    <option value='<?= json_encode([' unit_id'=> $unit['unit_id'], 'owner_id' => $unit['owner_id']])
+                       ?>'>
                         <?= h($unit['unit_number'])?> -
                         <?= h($unit['full_name'])?>
                     </option>
@@ -217,25 +217,31 @@ endif; ?>
     </form>
 
     <script>
-        function updateHiddenField              const select = document.getElementById('unit_owner_select')            nst val = select.value;
-              l) {
-                       = JSON.parse(val);
-            ementById('unit_id').value = data.unit_id;
-            tById('owner_id').value = data.owner_id;
+        function updateHiddenFields() {
+            const select = document.getElementById('unit_owner_select');
+            const val = select.value;
+            if (val) {
+                const data = JSON.parse(val);
+                document.getElementById('unit_id').value = data.unit_id;
+                document.getElementById('owner_id').value = data.owner_id;
+            }
         }
-                un        ach                    const container = entById('attachments_container');
-        const row = document.c            v');
-        row.className = 'grid grid            cols-2 gap-4 items-end attachment-row border-t pt-4';
-        row.innerHTML = `
-                                              <label class="block text-xs font-semibold text-gray-600 mb-1">Attachment Name</label>
-                        <input type="text" name="attachment_names[]" class="w-full text-sm border rounded px-2 py-1" placeholder="Name this document">
-                    </div>
-                    <div class="flex gap-2">
-                        <input type="file" name="attachments[]" class="w-full text-sm">
-                        <button type="button" onclick="this.closest('.attachment-row').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                    </div>
-                `;
-        container.appendChild(row);
+
+        function addAttachmentRow() {
+            const container = document.getElementById('attachments_container');
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 items-end attachment-row border-t pt-4';
+            row.innerHTML = `
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Attachment Name</label>
+                    <input type="text" name="attachment_names[]" class="w-full text-sm border rounded px-2 py-1" placeholder="Name this document">
+                </div>
+                <div class="flex gap-2">
+                    <input type="file" name="attachments[]" class="w-full text-sm">
+                    <button type="button" onclick="this.closest('.attachment-row').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(row);
         }
     </script>
 </div>
