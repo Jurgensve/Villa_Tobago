@@ -358,7 +358,7 @@ else: ?>
     </div>
 </div>
 <script>
-    function openStatusModaatus, notes) {
+    function openStatusModal(id, status, notes) {
         document.getElementById('modal_mod_id').value = id;
         document.getElementById('modal_status').value = status;
         document.getElementById('modal_notes').value = notes;
