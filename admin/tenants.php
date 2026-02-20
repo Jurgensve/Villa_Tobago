@@ -99,7 +99,8 @@ endif; ?>
                     id="unit_id" name="unit_id" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value="<?= $unit['id']?>">
+                    <option value="<?= $unit['id']?>" <?=(isset($_GET['unit_id']) && $_GET['unit_id']==$unit['id'])
+                        ? 'selected' : ''?>>
                         <?= h($unit['unit_number'])?>
                     </option>
                     <?php
