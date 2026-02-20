@@ -8,8 +8,8 @@ $action = $_GET['action'] ?? 'list';
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['create_modification'])) {
-        $unit_id = $_POST['unit_id'];
-        $owner_id = $_POST['owner_id'];
+        $unit_id = (int)($_POST['unit_id'] ?? 0);
+        $owner_id = (int)($_POST['owner_id'] ?? 0);
         $category = $_POST['category'];
         $description = trim($_POST['description']);
         $notes = trim($_POST['notes']);
@@ -21,8 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->exec("ALTER TABLE modifications ADD COLUMN category VARCHAR(50) AFTER owner_id");
         }
 
-       
-        if (empty($description)) {
+        if ($unit_id <= 0 || $owner_id <= 0) {
+            $error = "Please select a valid Unit & Owner from the list. (Received Unit ID: $unit_id, Owner ID: $owner_id)";
+        }
+        elseif (empty($description)) {
             $error = "Description is required.";
         }
         else {
@@ -30,7 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->beginTransaction();
 
                 $stmt = $pdo->prepare("INSERT INTO modifications (unit_id, owner_id, category, description, notes, status, request_date, approval_date) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
-                $stmt->execute([$unit_id, $owner_id, $category, $description, $notes, $status]);
+                if (!$stmt->execute([$unit_id, $owner_id, $category, $description, $notes, $status])) {
+                    $error_info = $stmt->errorInfo();
+                    throw new Exception("Execute failed: " . ($error_info[2] ?? 'Unknown error') . " | Values: Unit=$unit_id, Owner=$owner_id");
+                }
                 $mod_id = $pdo->lastInsertId();
 
                 // Handle Multiple Attachments
@@ -141,8 +146,8 @@ endif; ?>
                     name="unit_owner_json" id="unit_owner_select" onchange="updateHiddenFields()" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value='<?= json_encode([' unit_id' => $unit['unit_id'], 'owner_id' => $unit['owner_id']])
-     ?>'>
+                    <option value='<?= json_encode([' unit_id'=> $unit['unit_id'], 'owner_id' => $unit['owner_id']])
+                       ?>'>
                         <?= h($unit['unit_number'])?> -
                         <?= h($unit['full_name'])?>
                     </option>
