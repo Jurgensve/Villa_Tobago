@@ -1,0 +1,9 @@
+# Database Configuration
+admin/config/config.php
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/
