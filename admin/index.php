@@ -106,6 +106,10 @@ $pending_modifications = $stmt->fetchColumn();
                 class="inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 shadow-sm">
                 <i class="fas fa-hammer mr-2"></i> Log Modification
             </a>
+            <a href="import.php"
+                class="inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 shadow-sm">
+                <i class="fas fa-file-import mr-2"></i> Import Data
+            </a>
         </div>
     </div>
 </div>
