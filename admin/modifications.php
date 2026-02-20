@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->exec("ALTER TABLE modifications ADD COLUMN category VARCHAR(50) AFTER owner_id");
         }
 
+       
         if (empty($description)) {
             $error = "Description is required.";
         }
@@ -140,8 +141,8 @@ endif; ?>
                     name="unit_owner_json" id="unit_owner_select" onchange="updateHiddenFields()" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value='<?= json_encode([' unit_id'=> $unit['unit_id'], 'owner_id' => $unit['owner_id']])
-                       ?>'>
+                    <option value='<?= json_encode([' unit_id' => $unit['unit_id'], 'owner_id' => $unit['owner_id']])
+     ?>'>
                         <?= h($unit['unit_number'])?> -
                         <?= h($unit['full_name'])?>
                     </option>
