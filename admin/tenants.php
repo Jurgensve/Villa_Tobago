@@ -22,8 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
             if (in_array($ext, $allowed)) {
                 // Ensure upload directory exists
-                // Note: UPLOAD_DIR is defined in config/config.sample.php but needs to be created
-                $target_dir = __DIR__ . '/../../uploads/leases/';
+                $target_dir = UPLOAD_DIR . 'leases/';
                 if (!file_exists($target_dir)) {
                     mkdir($target_dir, 0755, true);
                 }
@@ -35,7 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $lease_path = 'uploads/leases/' . $new_filename;
                 }
                 else {
-                    $error = "Failed to move uploaded file.";
+                    $upload_error = error_get_last();
+                    $error = "Failed to move uploaded file. " . ($upload_error['message'] ?? '');
                 }
             }
             else {
@@ -185,7 +185,8 @@ else: ?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
                     <?php if ($row['lease_agreement_path']): ?>
-                    <a href="../<?= h($row['lease_agreement_path'])?>" target="_blank" class="hover:underline">View
+                    <a href="<?= SITE_URL?>/<?= h($row['lease_agreement_path'])?>" target="_blank"
+                        class="hover:underline">View
                         Lease</a>
                     <?php
         else: ?>
