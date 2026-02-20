@@ -51,7 +51,11 @@ require_login();
                     <span class="text-gray-700 mr-4">Hello,
                         <?= h($_SESSION['username'])?>
                     </span>
-                    <a href="logout.php" class="text-red-600 hover:text-red-800 text-sm font-medium">Logout</a>
+                    <div class="flex space-x-4">
+                        <a href="change_password.php"
+                            class="text-blue-600 hover:text-blue-800 text-sm font-medium">Change Password</a>
+                        <a href="logout.php" class="text-red-600 hover:text-red-800 text-sm font-medium">Logout</a>
+                    </div>
                 </div>
             </div>
         </div>
