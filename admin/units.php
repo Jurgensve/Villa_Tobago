@@ -253,30 +253,55 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
     $stmt->execute([$id]);
     $tenant = $stmt->fetch();
 
-    // 4. Fetch Current Resident
-    $stmt = $pdo->prepare("SELECT r.*, 
-        CASE WHEN r.resident_type = 'owner' THEN o.full_name ELSE t.full_name END AS resident_name,
-        CASE WHEN r.resident_type = 'owner' THEN o.email ELSE t.email END AS resident_email,
-        CASE WHEN r.resident_type = 'owner' THEN o.phone ELSE t.phone END AS resident_phone
-        FROM residents r
-        LEFT JOIN owners o ON r.resident_type = 'owner' AND r.resident_id = o.id
-        LEFT JOIN tenants t ON r.resident_type = 'tenant' AND r.resident_id = t.id
-        WHERE r.unit_id = ?");
-    $stmt->execute([$id]);
-    $resident = $stmt->fetch();
+    // 4. Fetch Current Resident (graceful if migration not yet run)
+    $resident = null;
+    $pets = [];
+    $pet_enabled = '1';
+    $max_pets = 2;
+    $allowed_types = ['Dog', 'Cat', 'Bird', 'Fish'];
+    try {
+        $stmt = $pdo->prepare("SELECT r.*, 
+            CASE WHEN r.resident_type = 'owner' THEN o.full_name ELSE t.full_name END AS resident_name,
+            CASE WHEN r.resident_type = 'owner' THEN o.email ELSE t.email END AS resident_email,
+            CASE WHEN r.resident_type = 'owner' THEN o.phone ELSE t.phone END AS resident_phone
+            FROM residents r
+            LEFT JOIN owners o ON r.resident_type = 'owner' AND r.resident_id = o.id
+            LEFT JOIN tenants t ON r.resident_type = 'tenant' AND r.resident_id = t.id
+            WHERE r.unit_id = ?");
+        $stmt->execute([$id]);
+        $resident = $stmt->fetch();
 
-    // 5. Fetch Pets for this unit
-    $stmt = $pdo->prepare("SELECT * FROM pets WHERE unit_id = ? ORDER BY created_at DESC");
-    $stmt->execute([$id]);
-    $pets = $stmt->fetchAll();
+        // 5. Default residency: if no explicit resident, owners are occupants (when no tenant)
+        if (!$resident && !$tenant && !empty($current_owners)) {
+            $first_owner = $current_owners[0];
+            $resident = [
+                'resident_type' => 'owner',
+                'resident_id' => $first_owner['id'],
+                'resident_name' => $first_owner['full_name'],
+                'resident_email' => $first_owner['email'],
+                'resident_phone' => $first_owner['phone'],
+                'id' => null, // No DB record yet
+                '_default' => true, // Flag so we can show hint
+            ];
+        }
 
-    // 6. Fetch Pet Settings
-    $pet_settings = $pdo->query("SELECT setting_key, setting_value FROM pet_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
-    $max_pets = $pet_settings['max_pets_per_unit'] ?? 2;
-    $pet_enabled = $pet_settings['pet_management_enabled'] ?? '1';
-    $allowed_types = array_map('trim', explode(',', $pet_settings['allowed_pet_types'] ?? 'Dog, Cat, Bird, Fish'));
+        // 6. Fetch Pets
+        $stmt = $pdo->prepare("SELECT * FROM pets WHERE unit_id = ? ORDER BY created_at DESC");
+        $stmt->execute([$id]);
+        $pets = $stmt->fetchAll();
 
-    // 7. Fetch Modifications
+        // 7. Fetch Pet Settings
+        $pet_settings = $pdo->query("SELECT setting_key, setting_value FROM pet_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
+        $max_pets = $pet_settings['max_pets_per_unit'] ?? 2;
+        $pet_enabled = $pet_settings['pet_management_enabled'] ?? '1';
+        $allowed_types = array_map('trim', explode(',', $pet_settings['allowed_pet_types'] ?? 'Dog, Cat, Bird, Fish'));
+    }
+    catch (PDOException $e) {
+        // New tables not migrated yet — skip pets/resident features
+        $pet_enabled = '0';
+    }
+
+    // 8. Fetch Modifications
     $stmt = $pdo->prepare("SELECT * FROM modifications WHERE unit_id = ? ORDER BY request_date DESC");
     $stmt->execute([$id]);
     $modifications = $stmt->fetchAll();
@@ -314,15 +339,15 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                 </div>
                 <div class="p-6">
                     <?php if ($resident): ?>
-                    <div class="flex items-center mb-3">
-                        <span
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <?= $resident['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'?> mr-2">
+                    <div class="flex items-center mb-3 flex-wrap gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <?= $resident['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'?> ">
                             <?= $resident['resident_type'] === 'tenant' ? 'Tenant' : 'Owner'?>
                         </span>
+                        <?php if (!empty($resident['_default'])): ?>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500 italic">Default</span>
+                        <?php endif; ?>
                     </div>
-                    <div class="font-bold text-gray-900 text-lg">
-                        <?= h($resident['resident_name'])?>
-                    </div>
+                    <div class="font-bold text-gray-900 text-lg"><?= h($resident['resident_name'])?></div>
                     <div class="text-sm text-gray-600 mt-1">
                         <i class="fas fa-envelope w-5 text-gray-400"></i>
                         <?= h($resident['resident_email'] ?: '—')?>
@@ -331,12 +356,12 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         <i class="fas fa-phone w-5 text-gray-400"></i>
                         <?= h($resident['resident_phone'] ?: '—')?>
                     </div>
-                    <?php
-    else: ?>
-                    <p class="text-gray-400 italic text-sm">No current occupant. Assign an owner as resident or add a
-                        tenant.</p>
-                    <?php
-    endif; ?>
+                    <?php if (!empty($resident['_default'])): ?>
+                    <p class="text-xs text-gray-400 italic mt-3">Showing owner as default occupant. Check "Owner Resides in Unit" on the owner's edit page to make this explicit.</p>
+                    <?php endif; ?>
+                    <?php else: ?>
+                    <p class="text-gray-400 italic text-sm">No current occupant. Add a tenant or check "Owner Resides in Unit" on the owner's edit page.</p>
+                    <?php endif; ?>
                 </div>
             </div>
 
