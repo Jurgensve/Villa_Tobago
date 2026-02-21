@@ -44,44 +44,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-                if (!$error) {
-                    try {
-                        $pdo->beginTransaction();
-                        if ($tenant_id) {
-                            $stmt = $pdo->prepare("UPDATE tenants SET unit_id = ?, full_name = ?, id_number = ?, email = ?, phone = ?, lease_agreement_path = ? WHERE id = ?");
-                            $stmt->execute([$unit_id, $full_name, $id_number, $email, $phone, $lease_path, $tenant_id]);
-                            $message = "Tenant updated successfully.";
-                        }
-                        else {
-                            $stmt = $pdo->prepare("INSERT INTO tenants (unit_id, full_name, id_number, email, phone, lease_agreement_path, start_date) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-                            $stmt->execute([$unit_id, $full_name, $id_number, $email, $phone, $lease_path]);
-                            $tenant_id = $pdo->lastInsertId();
-                            $message = "Tenant added successfully.";
-                        }
+        if (!$error) {
+            try {
+                $pdo->beginTransaction();
+                if ($tenant_id) {
+                    $stmt = $pdo->prepare("UPDATE tenants SET unit_id = ?, full_name = ?, id_number = ?, email = ?, phone = ?, lease_agreement_path = ? WHERE id = ?");
+                    $stmt->execute([$unit_id, $full_name, $id_number, $email, $phone, $lease_path, $tenant_id]);
+                    $message = "Tenant updated successfully.";
+                }
+                else {
+                    $stmt = $pdo->prepare("INSERT INTO tenants (unit_id, full_name, id_number, email, phone, lease_agreement_path, start_date) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                    $stmt->execute([$unit_id, $full_name, $id_number, $email, $phone, $lease_path]);
+                    $tenant_id = $pdo->lastInsertId();
+                    $message = "Tenant added successfully.";
+                }
 
-                        // Update Residency for the unit
-                        $stmt = $pdo->prepare("SELECT resident_type, resident_id FROM residents WHERE unit_id = ?");
-                        $stmt->execute([$unit_id]);
-                        $current_r = $stmt->fetch();
+                // Update Residency for the unit
+                $stmt = $pdo->prepare("SELECT resident_type, resident_id FROM residents WHERE unit_id = ?");
+                $stmt->execute([$unit_id]);
+                $current_r = $stmt->fetch();
 
-                        if (!$current_r || $current_r['resident_type'] !== 'tenant' || $current_r['resident_id'] != $tenant_id) {
-                            $stmt = $pdo->prepare("DELETE FROM pets WHERE unit_id = ?");
-                            $stmt->execute([$unit_id]);
-                        }
+                if (!$current_r || $current_r['resident_type'] !== 'tenant' || $current_r['resident_id'] != $tenant_id) {
+                    $stmt = $pdo->prepare("DELETE FROM pets WHERE unit_id = ?");
+                    $stmt->execute([$unit_id]);
+                }
 
-                        $stmt = $pdo->prepare("INSERT INTO residents (unit_id, resident_type, resident_id) 
+                $stmt = $pdo->prepare("INSERT INTO residents (unit_id, resident_type, resident_id) 
                                              VALUES (?, 'tenant', ?) 
                                              ON DUPLICATE KEY UPDATE resident_type = 'tenant', resident_id = VALUES(resident_id)");
-                        $stmt->execute([$unit_id, $tenant_id]);
+                $stmt->execute([$unit_id, $tenant_id]);
 
-                        $pdo->commit();
-                        $action = 'list';
-                    }
-                    catch (PDOException $e) {
-                        $pdo->rollBack();
-                        $error = "Database Error: " . $e->getMessage();
-                    }
-                }
+                $pdo->commit();
+                $action = 'list';
+            }
+            catch (PDOException $e) {
+                $pdo->rollBack();
+                $error = "Database Error: " . $e->getMessage();
+            }
+        }
     }
 }
 ?>
@@ -142,7 +142,7 @@ endif; ?>
                     id="unit_id" name="unit_id" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id'] == $unit['id']) ? 'selected' : ''?>>
+                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id']==$unit['id']) ? 'selected' : '' ?>>
                         <?= h($unit['unit_number'])?>
                     </option>
                     <?php
@@ -333,7 +333,6 @@ else: ?>
     $sql = "SELECT t.*, u.unit_number 
                         FROM tenants t
                         JOIN units u ON t.unit_id = u.id
-                        WHERE t.is_active = 1
                         ORDER BY u.unit_number ASC";
     $stmt = $pdo->query($sql);
     while ($row = $stmt->fetch()):
