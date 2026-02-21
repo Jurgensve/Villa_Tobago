@@ -147,7 +147,7 @@ endif; ?>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
                     <option value='<?= json_encode([' unit_id'=> $unit['unit_id'], 'owner_id' => $unit['owner_id']])
-                       ?>'>
+     ?>'>
                         <?= h($unit['unit_number'])?> -
                         <?= h($unit['full_name'])?>
                     </option>
