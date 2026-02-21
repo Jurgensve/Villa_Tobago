@@ -177,7 +177,124 @@ endif; ?>
         </div>
     </form>
 </div>
+<?php
+elseif ($action === 'view' && isset($_GET['id'])): ?>
+<?php
+    $stmt = $pdo->prepare("SELECT t.*, u.unit_number FROM tenants t JOIN units u ON t.unit_id = u.id WHERE t.id = ?");
+    $stmt->execute([$_GET['id']]);
+    $tenant = $stmt->fetch();
 
+    if (!$tenant) {
+        echo "<div class='bg-red-100 p-4 rounded text-red-700'>Tenant not found.</div>";
+        require_once 'includes/footer.php';
+        exit;
+    }
+?>
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-800">Tenant Details</h2>
+            <a href="tenants.php?action=edit&id=<?= $tenant['id']?>"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded text-sm transition duration-150 ease-in-out">
+                <i class="fas fa-edit mr-2"></i> Edit Tenant
+            </a>
+        </div>
+        <div class="p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Personal Information</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-500">Full Name</label>
+                            <div class="text-lg font-bold text-gray-900">
+                                <?= h($tenant['full_name'])?>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-500">ID Number</label>
+                            <div class="text-gray-900">
+                                <?= h($tenant['id_number'] ?: 'Not provided')?>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-500">Assigned Unit</label>
+                            <div class="text-gray-900 font-semibold border-b-2 border-blue-200 inline-block">
+                                <?= h($tenant['unit_number'])?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Contact Details</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-envelope w-8 text-blue-400"></i>
+                            <div>
+                                <label class="block text-sm text-gray-500">Email Address</label>
+                                <a href="mailto:<?= h($tenant['email'])?>" class="text-blue-600 hover:underline">
+                                    <?= h($tenant['email'] ?: 'No email')?>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-phone w-8 text-green-400"></i>
+                            <div>
+                                <label class="block text-sm text-gray-500">Phone Number</label>
+                                <div class="text-gray-900">
+                                    <?= h($tenant['phone'] ?: 'No phone')?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-gray-100">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Documentation</h3>
+                <?php if ($tenant['lease_agreement_path']):
+        $full_path = UPLOAD_DIR . str_replace('uploads/', '', $tenant['lease_agreement_path']);
+        $exists = file_exists($full_path);
+?>
+                <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="bg-indigo-100 p-3 rounded-lg mr-4 text-indigo-600">
+                            <i class="fas fa-file-contract text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-900">Lease Agreement</div>
+                            <div class="text-xs text-gray-500">
+                                <?= h(basename($tenant['lease_agreement_path']))?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php if ($exists): ?>
+                    <a href="<?= SITE_URL?>/<?= h($tenant['lease_agreement_path'])?>" target="_blank"
+                        class="bg-white border border-gray-300 hover:border-indigo-500 hover:text-indigo-600 text-gray-700 font-bold py-2 px-6 rounded transition duration-150">
+                        <i class="fas fa-external-link-alt mr-2"></i> View Document
+                    </a>
+                    <?php
+        else: ?>
+                    <span class="text-red-500 font-bold text-sm"><i class="fas fa-exclamation-triangle mr-1"></i> File
+                        Missing!</span>
+                    <?php
+        endif; ?>
+                </div>
+                <?php
+    else: ?>
+                <div class="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                    <p class="text-gray-400 italic">No lease agreement uploaded.</p>
+                    <a href="tenants.php?action=edit&id=<?= $tenant['id']?>"
+                        class="text-blue-600 text-sm font-bold mt-2 inline-block">Upload Lease <i
+                            class="fas fa-arrow-up ml-1"></i></a>
+                </div>
+                <?php
+    endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+<?php
+elseif ($action === 'list'): ?>
 <?php
 else: ?>
 <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
@@ -227,7 +344,9 @@ else: ?>
                     <?php
         endif; ?>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                    <a href="tenants.php?action=view&id=<?= $row['id']?>"
+                        class="text-green-600 hover:text-green-900">View</a>
                     <a href="tenants.php?action=edit&id=<?= $row['id']?>"
                         class="text-indigo-600 hover:text-indigo-900">Edit</a>
                 </td>

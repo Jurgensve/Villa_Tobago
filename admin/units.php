@@ -57,14 +57,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="mb-6 flex justify-between items-center">
     <h1 class="text-3xl font-bold text-gray-900">Units</h1>
-    <?php if ($action !== 'add'): ?>
-    <a href="units.php?action=add" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-        <i class="fas fa-plus mr-2"></i> Add Unit
+    <?php if ($action === 'view' && isset($_GET['id'])): ?>
+    <div class="space-x-2">
+        <a href="modifications.php?action=add&unit_id=<?= $_GET['id']?>"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-hammer mr-2"></i> Log Modification
+        </a>
+        <a href="units.php?action=edit&id=<?= $_GET['id']?>"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-edit mr-2"></i> Edit Unit
+        </a>
+        <a href="units.php" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-arrow-left mr-2"></i> Back to List
+        </a>
+    </div>
+    <?php
+elseif ($action === 'add' || $action === 'edit'): ?>
+    <a href="units.php" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+        <i class="fas fa-arrow-left mr-2"></i> Back to List
     </a>
     <?php
 else: ?>
-    <a href="units.php" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
-        <i class="fas fa-arrow-left mr-2"></i> Back to List
+    <a href="units.php?action=add" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <i class="fas fa-plus mr-2"></i> Add Unit
     </a>
     <?php
 endif; ?>
@@ -274,9 +289,9 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         <?php
         endif; ?>
                         <div class="mt-4">
-                            <a href="tenants.php?action=edit&id=<?= $tenant['id']?>"
+                            <a href="tenants.php?action=view&id=<?= $tenant['id']?>"
                                 class="text-indigo-600 hover:text-indigo-800 text-xs font-bold uppercase tracking-wider">
-                                Edit Tenant Details <i class="fas fa-arrow-right ml-1"></i>
+                                View Tenant Details <i class="fas fa-arrow-right ml-1"></i>
                             </a>
                         </div>
                     </div>
@@ -364,8 +379,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
             if ($attachments = $atts->fetchAll()): ?>
                                                 <div class="mt-2 flex flex-wrap gap-2">
                                                     <?php foreach ($attachments as $att): ?>
-                                                    <a href="<?= SITE_URL?>/<?= h($att['file_path'])?>"
-                                                        target="_blank"
+                                                    <a href="<?= SITE_URL?>/<?= h($att['file_path'])?>" target="_blank"
                                                         class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-white border border-gray-200 text-blue-600 hover:border-blue-300">
                                                         <i class="fas fa-paperclip mr-1"></i>
                                                         <?= h($att['display_name'])?>
@@ -436,7 +450,7 @@ else: ?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <?php if ($row['tenant_id']): ?>
-                    <a href="tenants.php?action=edit&id=<?= $row['tenant_id']?>"
+                    <a href="tenants.php?action=view&id=<?= $row['tenant_id']?>"
                         class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
                         <?= h($row['tenant_name'])?>
                     </a>

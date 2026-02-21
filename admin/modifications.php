@@ -146,14 +146,14 @@ endif; ?>
                     name="unit_owner_json" id="unit_owner_select" onchange="updateHiddenFields()" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value='<?= json_encode(['unit_id'=> $unit['unit_id'], 'owner_id' => $unit['owner_id']])
-                       ?>'>
+                    <option value='<?= json_encode([' unit_id' => $unit['unit_id'], 'owner_id' => $unit['owner_id']])
+    ?>'>
                         <?= h($unit['unit_number'])?> -
                         <?= h($unit['full_name'])?>
                     </option>
                     <?php
-  
-     endforeach; ?>
+
+    endforeach; ?>
                 </select>
                 <input type="hidden" name="unit_id" id="unit_id">
                 <input type="hidden" name="owner_id" id="owner_id">
@@ -233,6 +233,28 @@ endif; ?>
                 document.getElementById('owner_id').value = data.owner_id;
             }
         }
+
+        // Auto-select unit if passed in URL
+        window.onload = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const preselectedUnitId = urlParams.get('unit_id');
+            if (preselectedUnitId) {
+                const select = document.getElementById('unit_owner_select');
+                for (let i = 0; i < select.options.length; i++) {
+                    const opt = select.options[i];
+                    if (opt.value) {
+                        try {
+                            const data = JSON.parse(opt.value);
+                            if (data.unit_id == preselectedUnitId) {
+                                select.selectedIndex = i;
+                                updateHiddenFields();
+                                break;
+                            }
+                        } catch (e) { }
+                    }
+                }
+            }
+        };
 
         function addAttachmentRow() {
             const container = document.getElementById('attachments_container');
