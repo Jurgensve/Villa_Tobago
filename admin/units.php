@@ -148,6 +148,259 @@ endif; ?>
     </form>
 </div>
 <?php
+elseif ($action === 'view' && isset($_GET['id'])): ?>
+<?php
+    $id = $_GET['id'];
+
+    // 1. Fetch Unit & Current Owner
+    $sql = "SELECT u.*, o.full_name as owner_name, o.email as owner_email, o.phone as owner_phone, o.id_number as owner_id_num
+            FROM units u
+            LEFT JOIN ownership_history oh ON u.id = oh.unit_id AND oh.is_current = 1
+            LEFT JOIN owners o ON oh.owner_id = o.id
+            WHERE u.id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$id]);
+    $unit = $stmt->fetch();
+
+    if (!$unit) {
+        echo "<div class='bg-red-100 p-4 rounded text-red-700'>Unit not found.</div>";
+        require_once 'includes/footer.php';
+        exit;
+    }
+
+    // 2. Fetch Active Tenant
+    $stmt = $pdo->prepare("SELECT * FROM tenants WHERE unit_id = ? AND is_active = 1 LIMIT 1");
+    $stmt->execute([$id]);
+    $tenant = $stmt->fetch();
+
+    // 3. Fetch Modifications
+    $stmt = $pdo->prepare("SELECT * FROM modifications WHERE unit_id = ? ORDER BY request_date DESC");
+    $stmt->execute([$id]);
+    $modifications = $stmt->fetchAll();
+?>
+<div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- left Column: Info Cards -->
+        <div class="space-y-6 lg:col-span-1">
+            <!-- Unit Card -->
+            <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-blue-500">
+                <div class="px-6 py-4 bg-gray-50 border-b">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-building mr-2 text-blue-500"></i> Unit Info
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="text-3xl font-bold text-gray-900 mb-1">
+                        <?= h($unit['unit_number'])?>
+                    </div>
+                    <div class="text-sm text-gray-500">ID: #
+                        <?= $unit['id']?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Owner Card -->
+            <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-indigo-500">
+                <div class="px-6 py-4 bg-gray-50 border-b">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-user-tie mr-2 text-indigo-500"></i> Current Owner
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <?php if ($unit['owner_name']): ?>
+                    <div class="font-bold text-gray-900 text-lg mb-4">
+                        <?= h($unit['owner_name'])?>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-id-card w-6 text-indigo-400"></i>
+                            <span>
+                                <?= h($unit['owner_id_num'] ?: 'No ID on file')?>
+                            </span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-envelope w-6 text-indigo-400"></i>
+                            <a href="mailto:<?= h($unit['owner_email'])?>" class="hover:text-indigo-600">
+                                <?= h($unit['owner_email'] ?: 'No email')?>
+                            </a>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-phone w-6 text-indigo-400"></i>
+                            <span>
+                                <?= h($unit['owner_phone'] ?: 'No phone')?>
+                            </span>
+                        </div>
+                    </div>
+                    <?php
+    else: ?>
+                    <p class="text-red-500 italic">No current owner assigned.</p>
+                    <?php
+    endif; ?>
+                </div>
+            </div>
+
+            <!-- Tenant Card -->
+            <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-green-500">
+                <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-user mr-2 text-green-500"></i> Resident Tenant
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <?php if ($tenant): ?>
+                    <div class="font-bold text-gray-900 text-lg mb-4">
+                        <?= h($tenant['full_name'])?>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-envelope w-6 text-green-400"></i>
+                            <a href="mailto:<?= h($tenant['email'])?>" class="hover:text-green-600">
+                                <?= h($tenant['email'] ?: 'No email')?>
+                            </a>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-phone w-6 text-green-400"></i>
+                            <span>
+                                <?= h($tenant['phone'] ?: 'No phone')?>
+                            </span>
+                        </div>
+                        <?php if ($tenant['lease_agreement_path']): ?>
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <a href="<?= SITE_URL?>/<?= h($tenant['lease_agreement_path'])?>" target="_blank"
+                                class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold">
+                                <i class="fas fa-file-contract mr-2"></i> View Lease Agreement
+                            </a>
+                        </div>
+                        <?php
+        endif; ?>
+                        <div class="mt-4">
+                            <a href="tenants.php?action=edit&id=<?= $tenant['id']?>"
+                                class="text-indigo-600 hover:text-indigo-800 text-xs font-bold uppercase tracking-wider">
+                                Edit Tenant Details <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <?php
+    else: ?>
+                    <div class="text-center py-4">
+                        <p class="text-gray-400 italic mb-4">No active tenant.</p>
+                        <a href="tenants.php?action=add&unit_id=<?= $id?>"
+                            class="bg-blue-50 text-blue-700 font-bold py-2 px-4 rounded text-sm hover:bg-blue-100">
+                            <i class="fas fa-plus mr-1"></i> Add Tenant
+                        </a>
+                    </div>
+                    <?php
+    endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Modifications History -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow rounded-lg overflow-hidden h-full">
+                <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-800">Modification History</h3>
+                    <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
+                        <?= count($modifications)?> Total
+                    </span>
+                </div>
+                <div class="p-6">
+                    <?php if (empty($modifications)): ?>
+                    <div class="text-center py-12">
+                        <div class="text-gray-300 text-5xl mb-4"><i class="fas fa-tools"></i></div>
+                        <p class="text-gray-500">No modifications logged for this unit yet.</p>
+                    </div>
+                    <?php
+    else: ?>
+                    <div class="flow-root">
+                        <ul class="-mb-8">
+                            <?php foreach ($modifications as $index => $mod):
+            $statusColor = 'bg-gray-100 text-gray-800';
+            if ($mod['status'] == 'approved')
+                $statusColor = 'bg-green-100 text-green-800';
+            if ($mod['status'] == 'rejected')
+                $statusColor = 'bg-red-100 text-red-800';
+            if ($mod['status'] == 'completed')
+                $statusColor = 'bg-blue-100 text-blue-800';
+?>
+                            <li>
+                                <div class="relative pb-8">
+                                    <?php if ($index !== count($modifications) - 1): ?>
+                                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                                        aria-hidden="true"></span>
+                                    <?php
+            endif; ?>
+                                    <div class="relative flex space-x-3">
+                                        <div>
+                                            <span
+                                                class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                                <i class="fas fa-hammer text-white text-xs"></i>
+                                            </span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="bg-gray-50 rounded-lg p-4 ml-2">
+                                                <div class="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h4 class="text-sm font-bold text-gray-900">
+                                                            <?= h($mod['category'])?>
+                                                        </h4>
+                                                        <p class="text-xs text-gray-500">
+                                                            <?= format_date($mod['request_date'])?>
+                                                        </p>
+                                                    </div>
+                                                    <span
+                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $statusColor?>">
+                                                        <?= ucfirst($mod['status'])?>
+                                                    </span>
+                                                </div>
+                                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                                    <?= h($mod['description'])?>
+                                                </p>
+
+                                                <?php
+            // Fetch attachments for this mod
+            $atts = $pdo->prepare("SELECT * FROM modification_attachments WHERE modification_id = ?");
+            $atts->execute([$mod['id']]);
+            if ($attachments = $atts->fetchAll()): ?>
+                                                <div class="mt-2 flex flex-wrap gap-2">
+                                                    <?php foreach ($attachments as $att): ?>
+                                                    <a href="<?= SITE_URL?>/<?= h($att['file_path'])?>"
+                                                        target="_blank"
+                                                        class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-white border border-gray-200 text-blue-600 hover:border-blue-300">
+                                                        <i class="fas fa-paperclip mr-1"></i>
+                                                        <?= h($att['display_name'])?>
+                                                    </a>
+                                                    <?php
+                endforeach; ?>
+                                                </div>
+                                                <?php
+            endif; ?>
+
+                                                <?php if ($mod['notes']): ?>
+                                                <div
+                                                    class="mt-3 text-xs bg-yellow-50 p-2 rounded border border-yellow-100 italic text-yellow-800">
+                                                    <strong>Admin Note:</strong>
+                                                    <?= h($mod['notes'])?>
+                                                </div>
+                                                <?php
+            endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <?php
+        endforeach; ?>
+                        </ul>
+                    </div>
+                    <?php
+    endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php
 else: ?>
 <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
     <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
@@ -161,18 +414,19 @@ else: ?>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
             <?php
-            // Query to get units with current owner and tenant
-            $sql = "SELECT u.*, 
+    // Query to get units with current owner and tenant
+    $sql = "SELECT u.*, 
                     o.full_name as owner_name, 
-                    t.full_name as tenant_name 
+                    t.full_name as tenant_name,
+                    t.id as tenant_id 
                     FROM units u
                     LEFT JOIN ownership_history oh ON u.id = oh.unit_id AND oh.is_current = 1
                     LEFT JOIN owners o ON oh.owner_id = o.id
                     LEFT JOIN tenants t ON u.id = t.unit_id AND t.is_active = 1
                     ORDER BY u.unit_number ASC";
-            $stmt = $pdo->query($sql);
-            while ($row = $stmt->fetch()):
-            ?>
+    $stmt = $pdo->query($sql);
+    while ($row = $stmt->fetch()):
+?>
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <?= h($row['unit_number'])?>
@@ -181,25 +435,39 @@ else: ?>
                     <?= $row['owner_name'] ? h($row['owner_name']) : '<span class="text-red-400">No Owner</span>'?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <?= $row['tenant_name'] ? h($row['tenant_name']) : '<span class="text-gray-400">-</span>'?>
+                    <?php if ($row['tenant_id']): ?>
+                    <a href="tenants.php?action=edit&id=<?= $row['tenant_id']?>"
+                        class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
+                        <?= h($row['tenant_name'])?>
+                    </a>
+                    <?php
+        else: ?>
+                    <span class="text-gray-400">-</span>
+                    <?php
+        endif; ?>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <a href="units.php?action=edit&id=<?= $row['id']?>" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                    <a href="units.php?action=view&id=<?= $row['id']?>"
+                        class="text-green-600 hover:text-green-900">View</a>
+                    <a href="units.php?action=edit&id=<?= $row['id']?>"
+                        class="text-indigo-600 hover:text-indigo-900">Edit</a>
                 </td>
             </tr>
-            <?php endwhile; ?>
+            <?php
+    endwhile; ?>
         </tbody>
     </table>
 </div>
 
 <script>
-$(document).ready(function() {
-    $('#unitsTable').DataTable({
-        "pageLength": 25,
-        "order": [[0, "asc"]]
+    $(document).ready(function () {
+        $('#unitsTable').DataTable({
+            "pageLength": 25,
+            "order": [[0, "asc"]]
+        });
     });
-});
 </script>
-<?php endif; ?>
+<?php
+endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>
