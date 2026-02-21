@@ -230,12 +230,8 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
 <?php
     $id = $_GET['id'];
 
-    // 1. Fetch Unit & Current Owner
-    $sql = "SELECT u.*, o.full_name as owner_name, o.email as owner_email, o.phone as owner_phone, o.id_number as owner_id_num
-            FROM units u
-            LEFT JOIN ownership_history oh ON u.id = oh.unit_id AND oh.is_current = 1
-            LEFT JOIN owners o ON oh.owner_id = o.id
-            WHERE u.id = ?";
+    // 1. Fetch Unit Details
+    $sql = "SELECT * FROM units WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$id]);
     $unit = $stmt->fetch();
@@ -246,19 +242,48 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
         exit;
     }
 
-    // 2. Fetch Active Tenant
+    // 2. Fetch Current Owners
+    $sql = "SELECT o.* FROM owners o JOIN ownership_history oh ON o.id = oh.owner_id WHERE oh.unit_id = ? AND oh.is_current = 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$id]);
+    $current_owners = $stmt->fetchAll();
+
+    // 3. Fetch Active Tenant
     $stmt = $pdo->prepare("SELECT * FROM tenants WHERE unit_id = ? AND is_active = 1 LIMIT 1");
     $stmt->execute([$id]);
     $tenant = $stmt->fetch();
 
-    // 3. Fetch Modifications
+    // 4. Fetch Current Resident
+    $stmt = $pdo->prepare("SELECT r.*, 
+        CASE WHEN r.resident_type = 'owner' THEN o.full_name ELSE t.full_name END AS resident_name,
+        CASE WHEN r.resident_type = 'owner' THEN o.email ELSE t.email END AS resident_email,
+        CASE WHEN r.resident_type = 'owner' THEN o.phone ELSE t.phone END AS resident_phone
+        FROM residents r
+        LEFT JOIN owners o ON r.resident_type = 'owner' AND r.resident_id = o.id
+        LEFT JOIN tenants t ON r.resident_type = 'tenant' AND r.resident_id = t.id
+        WHERE r.unit_id = ?");
+    $stmt->execute([$id]);
+    $resident = $stmt->fetch();
+
+    // 5. Fetch Pets for this unit
+    $stmt = $pdo->prepare("SELECT * FROM pets WHERE unit_id = ? ORDER BY created_at DESC");
+    $stmt->execute([$id]);
+    $pets = $stmt->fetchAll();
+
+    // 6. Fetch Pet Settings
+    $pet_settings = $pdo->query("SELECT setting_key, setting_value FROM pet_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
+    $max_pets = $pet_settings['max_pets_per_unit'] ?? 2;
+    $pet_enabled = $pet_settings['pet_management_enabled'] ?? '1';
+    $allowed_types = array_map('trim', explode(',', $pet_settings['allowed_pet_types'] ?? 'Dog, Cat, Bird, Fish'));
+
+    // 7. Fetch Modifications
     $stmt = $pdo->prepare("SELECT * FROM modifications WHERE unit_id = ? ORDER BY request_date DESC");
     $stmt->execute([$id]);
     $modifications = $stmt->fetchAll();
 ?>
 <div class="max-w-6xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- left Column: Info Cards -->
+        <!-- Left Column: Info Cards -->
         <div class="space-y-6 lg:col-span-1">
             <!-- Unit Card -->
             <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-blue-500">
@@ -274,6 +299,44 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                     <div class="text-sm text-gray-500">ID: #
                         <?= $unit['id']?>
                     </div>
+                </div>
+            </div>
+
+            <!-- Current Resident Card -->
+            <div
+                class="bg-white shadow rounded-lg overflow-hidden border-t-4 <?= $resident ? ($resident['resident_type'] === 'tenant' ? 'border-green-500' : 'border-purple-500') : 'border-gray-300'?>">
+                <div class="px-6 py-4 bg-gray-50 border-b">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i
+                            class="fas fa-home mr-2 <?= $resident ? ($resident['resident_type'] === 'tenant' ? 'text-green-500' : 'text-purple-500') : 'text-gray-400'?>"></i>
+                        Current Occupant
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <?php if ($resident): ?>
+                    <div class="flex items-center mb-3">
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <?= $resident['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'?> mr-2">
+                            <?= $resident['resident_type'] === 'tenant' ? 'Tenant' : 'Owner'?>
+                        </span>
+                    </div>
+                    <div class="font-bold text-gray-900 text-lg">
+                        <?= h($resident['resident_name'])?>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">
+                        <i class="fas fa-envelope w-5 text-gray-400"></i>
+                        <?= h($resident['resident_email'] ?: '—')?>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">
+                        <i class="fas fa-phone w-5 text-gray-400"></i>
+                        <?= h($resident['resident_phone'] ?: '—')?>
+                    </div>
+                    <?php
+    else: ?>
+                    <p class="text-gray-400 italic text-sm">No current occupant. Assign an owner as resident or add a
+                        tenant.</p>
+                    <?php
+    endif; ?>
                 </div>
             </div>
 
@@ -337,7 +400,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
             <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-green-500">
                 <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i class="fas fa-user mr-2 text-green-500"></i> Resident Tenant
+                        <i class="fas fa-user mr-2 text-green-500"></i> Tenant
                     </h3>
                 </div>
                 <div class="p-6">
@@ -387,28 +450,102 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
     endif; ?>
                 </div>
             </div>
-        </div>
 
-        <!-- Right Column: Modifications History -->
-        <div class="lg:col-span-2">
-            <div class="bg-white shadow rounded-lg overflow-hidden h-full">
+            <!-- Pets Card -->
+            <?php if ($pet_enabled): ?>
+            <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-yellow-500">
                 <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
-                    <h3 class="text-xl font-bold text-gray-800">Modification History</h3>
-                    <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
-                        <?= count($modifications)?> Total
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-paw mr-2 text-yellow-500"></i> Pets
+                    </h3>
+                    <span class="text-xs text-gray-500">Max:
+                        <?= $max_pets == 0 ? 'Unlimited' : $max_pets?>
                     </span>
                 </div>
                 <div class="p-6">
-                    <?php if (empty($modifications)): ?>
-                    <div class="text-center py-12">
-                        <div class="text-gray-300 text-5xl mb-4"><i class="fas fa-tools"></i></div>
-                        <p class="text-gray-500">No modifications logged for this unit yet.</p>
-                    </div>
+                    <?php if (!$resident): ?>
+                    <p class="text-gray-400 italic text-sm">Assign a resident to this unit to register pets.</p>
                     <?php
+        elseif (!empty($pets)): ?>
+                    <div class="space-y-3">
+                        <?php foreach ($pets as $pet): ?>
+                        <div
+                            class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                            <div>
+                                <div class="font-bold text-yellow-900">
+                                    <?= h($pet['name'])?>
+                                </div>
+                                <div class="text-xs text-yellow-700">
+                                    <?= h($pet['type'])?>
+                                    <?= $pet['breed'] ? ' · ' . h($pet['breed']) : ''?>
+                                </div>
+                                <?php if ($pet['reg_number']): ?>
+                                <div class="text-xs text-gray-500">Reg:
+                                    <?= h($pet['reg_number'])?>
+                                </div>
+                                <?php
+                endif; ?>
+                            </div>
+                            <a href="units.php?action=delete_pet&pet_id=<?= $pet['id']?>&unit_id=<?= $id?>"
+                                class="text-red-400 hover:text-red-600 text-xs"
+                                onclick="return confirm('Remove this pet record?')">
+                                <i class="fas fa-times-circle"></i>
+                            </a>
+                        </div>
+                        <?php
+            endforeach; ?>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100">
+                        <?php
+        else: ?>
+                        <p class="text-gray-400 italic text-sm mb-4">No pets registered.</p>
+                        <div>
+                            <?php
+        endif; ?>
+
+                            <?php if ($resident && ($max_pets == 0 || count($pets) < $max_pets)): ?>
+                            <a href="units.php?action=add_pet&id=<?= $id?>"
+                                class="inline-flex items-center bg-yellow-50 text-yellow-700 font-bold py-2 px-4 rounded text-sm hover:bg-yellow-100 w-full justify-center">
+                                <i class="fas fa-plus mr-2"></i> Register Pet
+                            </a>
+                            <?php
+        elseif ($resident && $max_pets > 0 && count($pets) >= $max_pets): ?>
+                            <p class="text-xs text-red-500 italic text-center">Maximum pets reached (
+                                <?= $max_pets?>).
+                            </p>
+                            <?php
+        endif; ?>
+                            <?php if (!empty($pets) || $resident): ?>
+                        </div>
+                        <?php
+        endif; ?>
+                    </div>
+                </div>
+                <?php
+    endif; ?>
+
+            </div>
+
+            <!-- Right Column: Modifications History -->
+            <div class="lg:col-span-2">
+                <div class="bg-white shadow rounded-lg overflow-hidden h-full">
+                    <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-gray-800">Modification History</h3>
+                        <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
+                            <?= count($modifications)?> Total
+                        </span>
+                    </div>
+                    <div class="p-6">
+                        <?php if (empty($modifications)): ?>
+                        <div class="text-center py-12">
+                            <div class="text-gray-300 text-5xl mb-4"><i class="fas fa-tools"></i></div>
+                            <p class="text-gray-500">No modifications logged for this unit yet.</p>
+                        </div>
+                        <?php
     else: ?>
-                    <div class="flow-root">
-                        <ul class="-mb-8">
-                            <?php foreach ($modifications as $index => $mod):
+                        <div class="flow-root">
+                            <ul class="-mb-8">
+                                <?php foreach ($modifications as $index => $mod):
             $statusColor = 'bg-gray-100 text-gray-800';
             if ($mod['status'] == 'approved')
                 $statusColor = 'bg-green-100 text-green-800';
@@ -417,85 +554,232 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
             if ($mod['status'] == 'completed')
                 $statusColor = 'bg-blue-100 text-blue-800';
 ?>
-                            <li>
-                                <div class="relative pb-8">
-                                    <?php if ($index !== count($modifications) - 1): ?>
-                                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
-                                        aria-hidden="true"></span>
-                                    <?php
+                                <li>
+                                    <div class="relative pb-8">
+                                        <?php if ($index !== count($modifications) - 1): ?>
+                                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                                            aria-hidden="true"></span>
+                                        <?php
             endif; ?>
-                                    <div class="relative flex space-x-3">
-                                        <div>
-                                            <span
-                                                class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
-                                                <i class="fas fa-hammer text-white text-xs"></i>
-                                            </span>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="bg-gray-50 rounded-lg p-4 ml-2">
-                                                <div class="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h4 class="text-sm font-bold text-gray-900">
-                                                            <?= h($mod['category'])?>
-                                                        </h4>
-                                                        <p class="text-xs text-gray-500">
-                                                            <?= format_date($mod['request_date'])?>
-                                                        </p>
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span
+                                                    class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                                    <i class="fas fa-hammer text-white text-xs"></i>
+                                                </span>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="bg-gray-50 rounded-lg p-4 ml-2">
+                                                    <div class="flex justify-between items-start mb-2">
+                                                        <div>
+                                                            <h4 class="text-sm font-bold text-gray-900">
+                                                                <?= h($mod['category'])?>
+                                                            </h4>
+                                                            <p class="text-xs text-gray-500">
+                                                                <?= format_date($mod['request_date'])?>
+                                                            </p>
+                                                        </div>
+                                                        <span
+                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $statusColor?>">
+                                                            <?= ucfirst($mod['status'])?>
+                                                        </span>
                                                     </div>
-                                                    <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $statusColor?>">
-                                                        <?= ucfirst($mod['status'])?>
-                                                    </span>
-                                                </div>
-                                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
-                                                    <?= h($mod['description'])?>
-                                                </p>
+                                                    <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                                        <?= h($mod['description'])?>
+                                                    </p>
 
-                                                <?php
+                                                    <?php
             // Fetch attachments for this mod
             $atts = $pdo->prepare("SELECT * FROM modification_attachments WHERE modification_id = ?");
             $atts->execute([$mod['id']]);
             if ($attachments = $atts->fetchAll()): ?>
-                                                <div class="mt-2 flex flex-wrap gap-2">
-                                                    <?php foreach ($attachments as $att): ?>
-                                                    <a href="<?= SITE_URL?>/<?= h($att['file_path'])?>" target="_blank"
-                                                        class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-white border border-gray-200 text-blue-600 hover:border-blue-300">
-                                                        <i class="fas fa-paperclip mr-1"></i>
-                                                        <?= h($att['display_name'])?>
-                                                    </a>
-                                                    <?php
+                                                    <div class="mt-2 flex flex-wrap gap-2">
+                                                        <?php foreach ($attachments as $att): ?>
+                                                        <a href="<?= SITE_URL?>/<?= h($att['file_path'])?>"
+                                                            target="_blank"
+                                                            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-white border border-gray-200 text-blue-600 hover:border-blue-300">
+                                                            <i class="fas fa-paperclip mr-1"></i>
+                                                            <?= h($att['display_name'])?>
+                                                        </a>
+                                                        <?php
                 endforeach; ?>
-                                                </div>
-                                                <?php
+                                                    </div>
+                                                    <?php
             endif; ?>
 
-                                                <?php if ($mod['notes']): ?>
-                                                <div
-                                                    class="mt-3 text-xs bg-yellow-50 p-2 rounded border border-yellow-100 italic text-yellow-800">
-                                                    <strong>Admin Note:</strong>
-                                                    <?= h($mod['notes'])?>
-                                                </div>
-                                                <?php
+                                                    <?php if ($mod['notes']): ?>
+                                                    <div
+                                                        class="mt-3 text-xs bg-yellow-50 p-2 rounded border border-yellow-100 italic text-yellow-800">
+                                                        <strong>Admin Note:</strong>
+                                                        <?= h($mod['notes'])?>
+                                                    </div>
+                                                    <?php
             endif; ?>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </li>
-                            <?php
+                                </li>
+                                <?php
         endforeach; ?>
-                        </ul>
-                    </div>
-                    <?php
+                            </ul>
+                        </div>
+                        <?php
     endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<?php
+    <?php
+elseif ($action === 'delete_pet' && isset($_GET['pet_id']) && isset($_GET['unit_id'])): ?>
+    <?php
+    $pet_id = (int)$_GET['pet_id'];
+    $unit_id = (int)$_GET['unit_id'];
+    $stmt = $pdo->prepare("DELETE FROM pets WHERE id = ? AND unit_id = ?");
+    $stmt->execute([$pet_id, $unit_id]);
+    header("Location: units.php?action=view&id=" . $unit_id . "&msg=pet_removed");
+    exit;
+?>
+    <?php
+elseif ($action === 'add_pet' && isset($_GET['id'])): ?>
+    <?php
+    $unit_id = (int)$_GET['id'];
+
+    // Fetch unit
+    $stmt = $pdo->prepare("SELECT * FROM units WHERE id = ?");
+    $stmt->execute([$unit_id]);
+    $unit = $stmt->fetch();
+    if (!$unit) {
+        header("Location: units.php");
+        exit;
+    }
+
+    // Fetch resident
+    $stmt = $pdo->prepare("SELECT r.*, 
+        CASE WHEN r.resident_type = 'owner' THEN o.full_name ELSE t.full_name END AS resident_name
+        FROM residents r
+        LEFT JOIN owners o ON r.resident_type = 'owner' AND r.resident_id = o.id
+        LEFT JOIN tenants t ON r.resident_type = 'tenant' AND r.resident_id = t.id
+        WHERE r.unit_id = ?");
+    $stmt->execute([$unit_id]);
+    $resident = $stmt->fetch();
+
+    if (!$resident) {
+        header("Location: units.php?action=view&id=" . $unit_id);
+        exit;
+    }
+
+    // Fetch pet settings
+    $pet_settings = $pdo->query("SELECT setting_key, setting_value FROM pet_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
+    $max_pets = (int)($pet_settings['max_pets_per_unit'] ?? 2);
+    $allowed_types = array_map('trim', explode(',', $pet_settings['allowed_pet_types'] ?? 'Dog, Cat, Bird, Fish'));
+
+    // Check current count
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM pets WHERE unit_id = ?");
+    $stmt->execute([$unit_id]);
+    $pet_count = $stmt->fetchColumn();
+
+    if ($max_pets > 0 && $pet_count >= $max_pets) {
+        header("Location: units.php?action=view&id=" . $unit_id . "&error=max_pets");
+        exit;
+    }
+
+    // Handle form submission
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_pet'])) {
+        $name = trim($_POST['pet_name']);
+        $type = trim($_POST['pet_type']);
+        $breed = trim($_POST['breed'] ?? '');
+        $reg = trim($_POST['reg_number'] ?? '');
+        $notes = trim($_POST['notes'] ?? '');
+
+        if ($name && $type) {
+            $stmt = $pdo->prepare("INSERT INTO pets (unit_id, resident_id, name, type, breed, reg_number, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$unit_id, $resident['id'], $name, $type, $breed, $reg, $notes]);
+            header("Location: units.php?action=view&id=" . $unit_id . "&msg=pet_added");
+            exit;
+        }
+        else {
+            $error = "Pet name and type are required.";
+        }
+    }
+?>
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 bg-gray-50 border-b">
+                <h2 class="text-xl font-bold text-gray-800">
+                    <i class="fas fa-paw mr-2 text-yellow-500"></i>
+                    Register Pet for
+                    <?= h($unit['unit_number'])?>
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">Resident: <strong>
+                        <?= h($resident['resident_name'])?>
+                    </strong></p>
+            </div>
+            <div class="p-6">
+                <?php if (!empty($error)): ?>
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    <?= h($error)?>
+                </div>
+                <?php
+    endif; ?>
+                <form method="POST" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Pet Name *</label>
+                            <input type="text" name="pet_name" required
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
+                                placeholder="e.g. Buddy">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Type *</label>
+                            <select name="pet_type" required
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline">
+                                <option value="">-- Select Type --</option>
+                                <?php foreach ($allowed_types as $t): ?>
+                                <option value="<?= h($t)?>">
+                                    <?= h($t)?>
+                                </option>
+                                <?php
+    endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Breed</label>
+                            <input type="text" name="breed"
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
+                                placeholder="e.g. Labrador">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Registration / Tag Number</label>
+                            <input type="text" name="reg_number"
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
+                                placeholder="e.g. T-1234">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Notes</label>
+                            <textarea name="notes" rows="3"
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
+                                placeholder="Any additional notes about this pet..."></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 pt-4">
+                        <button type="submit" name="save_pet"
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded shadow transition duration-150">
+                            <i class="fas fa-paw mr-2"></i> Register Pet
+                        </button>
+                        <a href="units.php?action=view&id=<?= $unit_id?>"
+                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded transition duration-150">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
 elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
-<?php
+    <?php
     $id = $_GET['id'];
     $stmt = $pdo->prepare("SELECT * FROM units WHERE id = ?");
     $stmt->execute([$id]);
@@ -515,170 +799,166 @@ elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
     // Fetch all owners for dropdown
     $all_owners = $pdo->query("SELECT id, full_name, email FROM owners WHERE is_active = 1 ORDER BY full_name ASC")->fetchAll();
 ?>
-<div class="max-w-4xl mx-auto">
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-4 bg-gray-50 border-b">
-            <h2 class="text-xl font-bold text-gray-800">Manage Ownership:
-                <?= h($unit['unit_number'])?>
-            </h2>
-        </div>
-        <div class="p-8">
-            <!-- Current Owners List -->
-            <div class="mb-10">
-                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Current Owners</h3>
-                <?php if ($current_owners): ?>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <?php foreach ($current_owners as $owner): ?>
-                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
-                        <div>
-                            <div class="font-bold text-blue-900">
-                                <?= h($owner['full_name'])?>
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 bg-gray-50 border-b">
+                <h2 class="text-xl font-bold text-gray-800">Manage Ownership:
+                    <?= h($unit['unit_number'])?>
+                </h2>
+            </div>
+            <div class="p-8">
+                <!-- Current Owners List -->
+                <div class="mb-10">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Current Owners</h3>
+                    <?php if ($current_owners): ?>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <?php foreach ($current_owners as $owner): ?>
+                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                            <div>
+                                <div class="font-bold text-blue-900">
+                                    <?= h($owner['full_name'])?>
+                                </div>
+                                <div class="text-xs text-blue-600">
+                                    <?= h($owner['email'])?>
+                                </div>
                             </div>
-                            <div class="text-xs text-blue-600">
-                                <?= h($owner['email'])?>
-                            </div>
+                            <i class="fas fa-check-circle text-blue-500"></i>
                         </div>
-                        <i class="fas fa-check-circle text-blue-500"></i>
+                        <?php
+        endforeach; ?>
                     </div>
                     <?php
-        endforeach; ?>
-                </div>
-                <?php
     else: ?>
-                <p class="text-gray-400 italic">No owners currently assigned.</p>
-                <?php
+                    <p class="text-gray-400 italic">No owners currently assigned.</p>
+                    <?php
     endif; ?>
-            </div>
+                </div>
 
-            <form method="POST" class="space-y-8">
-                <input type="hidden" name="unit_id" value="<?= $id?>">
+                <form method="POST" class="space-y-8">
+                    <input type="hidden" name="unit_id" value="<?= $id?>">
 
-                <div>
-                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Add or Assign Owner</h3>
-                    <div class="bg-gray-50 border rounded-lg p-6">
-                        <div class="mb-6">
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Select Existing Owner</label>
-                            <select name="owner_id"
-                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
-                                id="owner_select" onchange="toggleNewOwnerForm()">
-                                <option value="">-- Create New Owner --</option>
-                                <?php foreach ($all_owners as $o): ?>
-                                <option value="<?= $o['id']?>">
-                                    <?= h($o['full_name'])?> (
-                                    <?= h($o['email'])?>)
-                                </option>
-                                <?php
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Add or Assign Owner
+                        </h3>
+                        <div class="bg-gray-50 border rounded-lg p-6">
+                            <div class="mb-6">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Select Existing Owner</label>
+                                <select name="owner_id"
+                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
+                                    id="owner_select" onchange="toggleNewOwnerForm()">
+                                    <option value="">-- Create New Owner --</option>
+                                    <?php foreach ($all_owners as $o): ?>
+                                    <option value="<?= $o['id']?>">
+                                        <?= h($o['full_name'])?> (
+                                        <?= h($o['email'])?>)
+                                    </option>
+                                    <?php
     endforeach; ?>
-                            </select>
-                        </div>
+                                </select>
+                            </div>
 
-                        <div id="new_owner_form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="col-span-2">
-                                <p class="text-xs font-bold text-gray-500 mb-2 border-b pb-1">NEW OWNER DETAILS</p>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 text-xs font-bold mb-1">Full Name *</label>
-                                <input type="text" name="full_name" id="new_name"
-                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 text-xs font-bold mb-1">ID Number</label>
-                                <input type="text" name="id_number"
-                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 text-xs font-bold mb-1">Email</label>
-                                <input type="email" name="email"
-                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 text-xs font-bold mb-1">Phone</label>
-                                <input type="text" name="phone"
-                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                            <div id="new_owner_form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="col-span-2">
+                                    <p class="text-xs font-bold text-gray-500 mb-2 border-b pb-1">NEW OWNER DETAILS</p>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-xs font-bold mb-1">Full Name *</label>
+                                    <input type="text" name="full_name" id="new_name"
+                                        class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-xs font-bold mb-1">ID Number</label>
+                                    <input type="text" name="id_number"
+                                        class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-xs font-bold mb-1">Email</label>
+                                    <input type="email" name="email"
+                                        class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-xs font-bold mb-1">Phone</label>
+                                    <input type="text" name="phone"
+                                        class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <?php if ($current_owners): ?>
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                    <h3 class="text-yellow-800 font-bold mb-3 flex items-center">
-                        <i class="fas fa-exclamation-triangle mr-2"></i> Replacement Confirmation
-                    </h3>
-                    <p class="text-sm text-yellow-700 mb-4">This unit already has owner(s) assigned. How would you like
-                        to proceed?</p>
-                    <div class="space-y-3">
-                        <label
-                            class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
-                            <input type="radio" name="replacement_type" value="replace" checked
-                                class="h-4 w-4 text-yellow-600">
-                            <div class="ml-3">
-                                <span class="block font-bold text-gray-900">Replace existing owners</span>
-                                <span class="block text-xs text-gray-500">They will be marked as "Previous
-                                    Owners"</span>
-                            </div>
-                        </label>
-                        <label
-                            class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
-                            <input type="radio" name="replacement_type" value="add" class="h-4 w-4 text-yellow-600">
-                            <div class="ml-3">
-                                <span class="block font-bold text-gray-900">Add as Co-owner</span>
-                                <span class="block text-xs text-gray-500">Unit will be owned by multiple people
-                                    simultaneously</span>
-                            </div>
-                        </label>
+                    <?php if ($current_owners): ?>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                        <h3 class="text-yellow-800 font-bold mb-3 flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-2"></i> Replacement Confirmation
+                        </h3>
+                        <p class="text-sm text-yellow-700 mb-4">This unit already has owner(s) assigned. How would you
+                            like
+                            to proceed?</p>
+                        <div class="space-y-3">
+                            <label
+                                class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
+                                <input type="radio" name="replacement_type" value="replace" checked
+                                    class="h-4 w-4 text-yellow-600">
+                                <div class="ml-3">
+                                    <span class="block font-bold text-gray-900">Replace existing owners</span>
+                                    <span class="block text-xs text-gray-500">They will be marked as "Previous
+                                        Owners"</span>
+                                </div>
+                            </label>
+                            <label
+                                class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
+                                <input type="radio" name="replacement_type" value="add" class="h-4 w-4 text-yellow-600">
+                                <div class="ml-3">
+                                    <span class="block font-bold text-gray-900">Add as Co-owner</span>
+                                    <span class="block text-xs text-gray-500">Unit will be owned by multiple people
+                                        simultaneously</span>
+                                </div>
+                            </label>
+                        </div>
                     </div>
-                </div>
-                <?php
+                    <?php
     endif; ?>
 
-                <div class="flex items-center justify-between pt-6 border-t">
-                    <a href="units.php?action=view&id=<?= $id?>"
-                        class="text-gray-500 hover:text-gray-700 font-bold">Cancel</a>
-                    <button type="submit" name="assign_owner"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded shadow-lg transition duration-150">
-                        Update Unit Ownership
-                    </button>
-                </div>
-            </form>
+                    <div class="flex items-center justify-between pt-6 border-t">
+                        <a href="units.php?action=view&id=<?= $id?>"
+                            class="text-gray-500 hover:text-gray-700 font-bold">Cancel</a>
+                        <button type="submit" name="assign_owner"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded shadow-lg transition duration-150">
+                            Update Unit Ownership
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    function toggleNewOwnerForm() {
-        const select = document.getElementById('owner_select');
-        const form = document.getElementById('new_owner_form');
-        const nameInput = document.getElementById('new_name');
-
-        if (select && form && nameInput) {
-            if (select.value === "") {
-                form.style.opacity = "1";
-                form.style.pointerEvents = "auto";
-                nameInput.required = true;
-            } else {
-                form.style.opacity = "0.4";
-                form.style.pointerEvents = "none";
-                nameInput.required = false;
-            }
+    <script>
+        function toggleNewOwn             {
+            const select = document.getElementById('owner            );
+        const form = document.ge('new_owner_form');
+                            = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
+                form                    ents = "auto";
+                name                     true;
+        } else {
+                              ty        pa = "0.4";
+            form.style.pointerEvents = "none";
+            nameInput.required = false;
         }
-    }
-    document.addEventListener('DOMContentLoaded', toggleNewOwnerForm);
-</script>
-<?php
+        }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
+    </script>
+    <?php
 else: ?>
-<div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
-    <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="px-6 py-3 text-left">Unit Number</th>
-                <th class="px-6 py-3 text-left">Current Owner</th>
-                <th class="px-6 py-3 text-left">Current Tenant</th>
-                <th class="px-6 py-3 text-left">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-            <?php
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
+        <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left">Unit Number</th>
+                    <th class="px-6 py-3 text-left">Current Owner</th>
+                    <th class="px-6 py-3 text-left">Current Tenant</th>
+                    <th class="px-6 py-3 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <?php
     // Query to get units with current owners and tenant
     $sql = "SELECT u.*, 
                     GROUP_CONCAT(o.full_name SEPARATOR ', ') as owner_names, 
@@ -693,47 +973,46 @@ else: ?>
     $stmt = $pdo->query($sql);
     while ($row = $stmt->fetch()):
 ?>
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <?= h($row['unit_number'])?>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <?= $row['owner_names'] ? h($row['owner_names']) : '<span class="text-red-400">No Owner</span>'?>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <?php if ($row['tenant_id']): ?>
-                    <a href="tenants.php?action=view&id=<?= $row['tenant_id']?>"
-                        class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
-                        <?= h($row['tenant_name'])?>
-                    </a>
-                    <?php
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <?= h($row['unit_number'])?>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <?= $row['owner_names'] ? h($row['owner_names']) : '<span class="text-red-400">No Owner</span>'?>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <?php if ($row['tenant_id']): ?>
+                        <a href="tenants.php?action=view&id=<?= $row['tenant_id']?>"
+                            class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
+                            <?= h($row['tenant_name'])?>
+                        </a>
+                        <?php
         else: ?>
-                    <span class="text-gray-400">-</span>
-                    <?php
+                        <span class="text-gray-400">-</span>
+                        <?php
         endif; ?>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                    <a href="units.php?action=view&id=<?= $row['id']?>"
-                        class="text-green-600 hover:text-green-900">View</a>
-                    <a href="units.php?action=edit&id=<?= $row['id']?>"
-                        class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                </td>
-            </tr>
-            <?php
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                        <a href="units.php?action=view&id=<?= $row['id']?>"
+                            class="text-green-600 hover:text-green-900">View</a>
+                        <a href="units.php?action=edit&id=<?= $row['id']?>"
+                            class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                    </td>
+                </tr>
+                <?php
     endwhile; ?>
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
 
-<script>
-    $(document).ready(function () {
-        $('#unitsTable').DataTable({
+    <script>
+        $(document).reataTable({
             "pageLength": 25,
             "order": [[0, "asc"]]
         });
     });
-</script>
-<?php
+    </script>
+    <?php
 endif; ?>
 
-<?php require_once 'includes/footer.php'; ?>
+    <?php require_once 'includes/footer.php'; ?>
