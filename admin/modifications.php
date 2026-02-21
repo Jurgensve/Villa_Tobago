@@ -146,13 +146,14 @@ endif; ?>
                     name="unit_owner_json" id="unit_owner_select" onchange="updateHiddenFields()" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value='<?= json_encode([' unit_id'=> $unit['unit_id'], 'owner_id' => $unit['owner_id']])
-     ?>'>
+                    <option value='<?= json_encode(['unit_id'=> $unit['unit_id'], 'owner_id' => $unit['owner_id']])
+                       ?>'>
                         <?= h($unit['unit_number'])?> -
                         <?= h($unit['full_name'])?>
                     </option>
                     <?php
-    endforeach; ?>
+  
+     endforeach; ?>
                 </select>
                 <input type="hidden" name="unit_id" id="unit_id">
                 <input type="hidden" name="owner_id" id="owner_id">
@@ -379,5 +380,3 @@ else: ?>
 </script>
 <?php
 endif; ?>
-
-<?php require_once 'includes/footer.php'; ?>
