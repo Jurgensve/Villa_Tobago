@@ -310,181 +310,128 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column: Info Cards -->
         <div class="space-y-6 lg:col-span-1">
-            <!-- Unit Card -->
+            <!-- Unit Info + Owner Card -->
             <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-blue-500">
-                <div class="px-6 py-4 bg-gray-50 border-b">
-                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i class="fas fa-building mr-2 text-blue-500"></i> Unit Info
-                    </h3>
-                </div>
-                <div class="p-6">
-                    <div class="text-3xl font-bold text-gray-900 mb-1">
-                        <?= h($unit['unit_number'])?>
-                    </div>
-                    <div class="text-sm text-gray-500">ID: #
-                        <?= $unit['id']?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Current Resident Card -->
-            <div
-                class="bg-white shadow rounded-lg overflow-hidden border-t-4 <?= $resident ? ($resident['resident_type'] === 'tenant' ? 'border-green-500' : 'border-purple-500') : 'border-gray-300'?>">
-                <div class="px-6 py-4 bg-gray-50 border-b">
-                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i
-                            class="fas fa-home mr-2 <?= $resident ? ($resident['resident_type'] === 'tenant' ? 'text-green-500' : 'text-purple-500') : 'text-gray-400'?>"></i>
-                        Current Occupant
-                    </h3>
-                </div>
-                <div class="p-6">
-                    <?php if ($resident): ?>
-                    <div class="flex items-center mb-3 flex-wrap gap-2">
-                        <span
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <?= $resident['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'?> ">
-                            <?= $resident['resident_type'] === 'tenant' ? 'Tenant' : 'Owner'?>
-                        </span>
-                        <?php if (!empty($resident['_default'])): ?>
-                        <span
-                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500 italic">Default</span>
-                        <?php
-        endif; ?>
-                    </div>
-                    <div class="font-bold text-gray-900 text-lg">
-                        <?= h($resident['resident_name'])?>
-                    </div>
-                    <div class="text-sm text-gray-600 mt-1">
-                        <i class="fas fa-envelope w-5 text-gray-400"></i>
-                        <?= h($resident['resident_email'] ?: '—')?>
-                    </div>
-                    <div class="text-sm text-gray-600 mt-1">
-                        <i class="fas fa-phone w-5 text-gray-400"></i>
-                        <?= h($resident['resident_phone'] ?: '—')?>
-                    </div>
-                    <?php if (!empty($resident['_default'])): ?>
-                    <p class="text-xs text-gray-400 italic mt-3">Showing owner as default occupant. Check "Owner Resides
-                        in Unit" on the owner's edit page to make this explicit.</p>
-                    <?php
-        endif; ?>
-                    <?php
-    else: ?>
-                    <p class="text-gray-400 italic text-sm">No current occupant. Add a tenant or check "Owner Resides in
-                        Unit" on the owner's edit page.</p>
-                    <?php
-    endif; ?>
-                </div>
-            </div>
-
-            <!-- Owner Card -->
-            <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-indigo-500">
                 <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i class="fas fa-user-tie mr-2 text-indigo-500"></i> Current Owners
+                        <i class="fas fa-building mr-2 text-blue-500"></i>
+                        Unit <?= h($unit['unit_number']) ?>
                     </h3>
+                    <span class="text-xs text-gray-400">#<?= $unit['id'] ?></span>
                 </div>
                 <div class="p-6">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Owner(s)</p>
                     <?php if (!empty($current_owners)): ?>
-                    <div class="space-y-6">
+                    <div class="space-y-4">
                         <?php foreach ($current_owners as $index => $owner): ?>
-                        <div class="<?= $index > 0 ? 'pt-4 border-t border-gray-100' : ''?>">
-                            <div class="font-bold text-gray-900 text-lg mb-2 flex justify-between">
-                                <?= h($owner['full_name'])?>
-                                <a href="owners.php?action=edit&id=<?= $owner['id']?>"
-                                    class="text-indigo-600 hover:text-indigo-900 text-xs">Edit</a>
+                        <div class="<?= $index > 0 ? 'pt-3 border-t border-gray-100' : '' ?>">
+                            <div class="flex justify-between items-start">
+                                <div class="font-bold text-gray-900"><?= h($owner['full_name']) ?></div>
+                                <a href="owners.php?action=edit&id=<?= $owner['id'] ?>" class="text-indigo-500 hover:text-indigo-700 text-xs ml-2">Edit</a>
                             </div>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-center text-gray-600">
-                                    <i class="fas fa-id-card w-6 text-indigo-300"></i>
-                                    <span>
-                                        <?= h($owner['id_number'] ?: 'No ID on file')?>
-                                    </span>
-                                </div>
-                                <div class="flex items-center text-gray-600">
-                                    <i class="fas fa-envelope w-6 text-indigo-300"></i>
-                                    <a href="mailto:<?= h($owner['email'])?>" class="hover:text-indigo-600">
-                                        <?= h($owner['email'] ?: 'No email')?>
-                                    </a>
-                                </div>
-                                <div class="flex items-center text-gray-600">
-                                    <i class="fas fa-phone w-6 text-indigo-300"></i>
-                                    <span>
-                                        <?= h($owner['phone'] ?: 'No phone')?>
-                                    </span>
-                                </div>
+                            <div class="mt-1 space-y-1 text-sm text-gray-500">
+                                <?php if ($owner['id_number']): ?>
+                                <div><i class="fas fa-id-card w-5 text-gray-300"></i> <?= h($owner['id_number']) ?></div>
+                                <?php endif; ?>
+                                <?php if ($owner['email']): ?>
+                                <div><i class="fas fa-envelope w-5 text-gray-300"></i> <a href="mailto:<?= h($owner['email']) ?>" class="hover:text-indigo-600"><?= h($owner['email']) ?></a></div>
+                                <?php endif; ?>
+                                <?php if ($owner['phone']): ?>
+                                <div><i class="fas fa-phone w-5 text-gray-300"></i> <?= h($owner['phone']) ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
-                        <?php
-        endforeach; ?>
+                        <?php endforeach; ?>
                     </div>
-                    <?php
-    else: ?>
-                    <p class="text-red-500 italic">No current owner assigned.</p>
-                    <?php
-    endif; ?>
-
-                    <div class="mt-6 pt-4 border-t-2 border-dashed border-gray-100">
-                        <a href="units.php?action=manage_owners&id=<?= $id?>"
-                            class="inline-flex items-center justify-center w-full bg-indigo-50 text-indigo-700 font-bold py-2 px-4 rounded hover:bg-indigo-100 transition duration-150">
+                    <?php else: ?>
+                    <p class="text-red-400 italic text-sm">No owner assigned.</p>
+                    <?php endif; ?>
+                    <div class="mt-5 pt-4 border-t border-dashed border-gray-100">
+                        <a href="units.php?action=manage_owners&id=<?= $id ?>"
+                            class="inline-flex items-center justify-center w-full bg-indigo-50 text-indigo-700 font-bold py-2 px-4 rounded hover:bg-indigo-100 transition duration-150 text-sm">
                             <i class="fas fa-users-cog mr-2"></i> Manage Owners
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Tenant Card -->
-            <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-green-500">
-                <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+            <!-- Resident Card (unified) -->
+            <?php
+            $display_res = null;
+            $res_color = 'border-gray-300';
+            $res_icon  = 'text-gray-400';
+            if ($tenant) {
+                $display_res = ['name' => $tenant['full_name'], 'email' => $tenant['email'], 'phone' => $tenant['phone'],
+                    'label' => 'Tenant', 'label_class' => 'bg-green-100 text-green-800',
+                    'lease' => $tenant['lease_agreement_path'] ?? null,
+                    'link'  => 'tenants.php?action=view&id=' . $tenant['id'], 'link_text' => 'View Tenant Details',
+                    'add_tenant' => false];
+                $res_color = 'border-green-500'; $res_icon = 'text-green-500';
+            } elseif ($resident && empty($resident['_default'])) {
+                $display_res = ['name' => $resident['resident_name'], 'email' => $resident['resident_email'], 'phone' => $resident['resident_phone'],
+                    'label' => 'Owner (Residing)', 'label_class' => 'bg-purple-100 text-purple-800',
+                    'add_tenant' => true];
+                $res_color = 'border-purple-500'; $res_icon = 'text-purple-500';
+            } elseif (!empty($current_owners)) {
+                $o = $current_owners[0];
+                $display_res = ['name' => $o['full_name'], 'email' => $o['email'], 'phone' => $o['phone'],
+                    'label' => 'Owner', 'label_class' => 'bg-blue-100 text-blue-700',
+                    'default_hint' => true, 'add_tenant' => true];
+                $res_color = 'border-blue-300'; $res_icon = 'text-blue-400';
+            }
+            ?>
+            <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 <?= $res_color ?>">
+                <div class="px-6 py-4 bg-gray-50 border-b">
                     <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i class="fas fa-user mr-2 text-green-500"></i> Tenant
+                        <i class="fas fa-home mr-2 <?= $res_icon ?>"></i> Resident
                     </h3>
                 </div>
                 <div class="p-6">
-                    <?php if ($tenant): ?>
-                    <div class="font-bold text-gray-900 text-lg mb-4">
-                        <?= h($tenant['full_name'])?>
-                    </div>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex items-center text-gray-600">
-                            <i class="fas fa-envelope w-6 text-green-400"></i>
-                            <a href="mailto:<?= h($tenant['email'])?>" class="hover:text-green-600">
-                                <?= h($tenant['email'] ?: 'No email')?>
-                            </a>
-                        </div>
-                        <div class="flex items-center text-gray-600">
-                            <i class="fas fa-phone w-6 text-green-400"></i>
-                            <span>
-                                <?= h($tenant['phone'] ?: 'No phone')?>
+                    <?php if ($display_res): ?>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <?= $display_res['label_class'] ?>">
+                                <?= h($display_res['name']) ?>
                             </span>
+                            <?php if (!empty($display_res['default_hint'])): ?>
+                            <span class="text-xs text-gray-400 italic">default</span>
+                            <?php endif; ?>
                         </div>
-                        <?php if ($tenant['lease_agreement_path']): ?>
-                        <div class="mt-4 pt-4 border-t border-gray-100">
-                            <a href="<?= SITE_URL?>/<?= h($tenant['lease_agreement_path'])?>" target="_blank"
-                                class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold">
-                                <i class="fas fa-file-contract mr-2"></i> View Lease Agreement
+                        <div class="font-bold text-gray-900 text-lg mb-2"><?= h($display_res['name']) ?></div>
+                        <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold <?= $display_res['label_class'] ?> mb-3"><?= h($display_res['label']) ?></div>
+                        <div class="space-y-1 text-sm text-gray-600">
+                            <?php if (!empty($display_res['email'])): ?>
+                            <div><i class="fas fa-envelope w-5 text-gray-400"></i> <a href="mailto:<?= h($display_res['email']) ?>" class="hover:text-blue-600"><?= h($display_res['email']) ?></a></div>
+                            <?php endif; ?>
+                            <?php if (!empty($display_res['phone'])): ?>
+                            <div><i class="fas fa-phone w-5 text-gray-400"></i> <?= h($display_res['phone']) ?></div>
+                            <?php endif; ?>
+                        </div>
+                        <?php if (!empty($display_res['lease'])): ?>
+                        <div class="mt-4 pt-3 border-t border-gray-100">
+                            <a href="<?= SITE_URL ?>/<?= h($display_res['lease']) ?>" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold text-sm">
+                                <i class="fas fa-file-contract mr-2"></i> View Lease
                             </a>
                         </div>
-                        <?php
-        endif; ?>
-                        <div class="mt-4">
-                            <a href="tenants.php?action=view&id=<?= $tenant['id']?>"
-                                class="text-indigo-600 hover:text-indigo-800 text-xs font-bold uppercase tracking-wider">
-                                View Tenant Details <i class="fas fa-arrow-right ml-1"></i>
+                        <?php endif; ?>
+                        <?php if (!empty($display_res['link'])): ?>
+                        <div class="mt-2"><a href="<?= $display_res['link'] ?>" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold uppercase tracking-wider"><?= $display_res['link_text'] ?> <i class="fas fa-arrow-right ml-1"></i></a></div>
+                        <?php endif; ?>
+                        <?php if (!empty($display_res['add_tenant'])): ?>
+                        <div class="mt-4 pt-3 border-t border-dashed border-gray-100">
+                            <a href="tenants.php?action=add&unit_id=<?= $id ?>" class="inline-flex items-center justify-center w-full bg-green-50 text-green-700 font-bold py-2 px-4 rounded hover:bg-green-100 transition text-sm">
+                                <i class="fas fa-plus mr-2"></i> Add Tenant
                             </a>
                         </div>
-                    </div>
-                    <?php
-    else: ?>
-                    <div class="text-center py-4">
-                        <p class="text-gray-400 italic mb-4">No active tenant.</p>
-                        <a href="tenants.php?action=add&unit_id=<?= $id?>"
-                            class="bg-blue-50 text-blue-700 font-bold py-2 px-4 rounded text-sm hover:bg-blue-100">
-                            <i class="fas fa-plus mr-1"></i> Add Tenant
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <p class="text-gray-400 italic text-sm mb-4">No resident or owner assigned.</p>
+                        <a href="tenants.php?action=add&unit_id=<?= $id ?>" class="inline-flex items-center justify-center w-full bg-green-50 text-green-700 font-bold py-2 px-4 rounded hover:bg-green-100 transition text-sm">
+                            <i class="fas fa-plus mr-2"></i> Add Tenant
                         </a>
-                    </div>
-                    <?php
-    endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
+
 
             <!-- Pets Card -->
             <?php if ($pet_enabled): ?>
