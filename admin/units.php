@@ -24,14 +24,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$unit_number]);
                 $unit_id = $pdo->lastInsertId();
 
-                // 2. Create Owner
-                $stmt = $pdo->prepare("INSERT INTO owners (full_name, id_number, email, phone) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$owner_name, $owner_id_num, $owner_email, $owner_phone]);
-                $owner_id = $pdo->lastInsertId();
+                // 2. Determine Owner
+                $owner_id = $_POST['owner_id'] ?? null;
+                if (!$owner_id && !empty($owner_name)) {
+                    // Create New Owner
+                    $stmt = $pdo->prepare("INSERT INTO owners (full_name, id_number, email, phone) VALUES (?, ?, ?, ?)");
+                    $stmt->execute([$owner_name, $owner_id_num, $owner_email, $owner_phone]);
+                    $owner_id = $pdo->lastInsertId();
+                }
 
                 // 3. Link them in history
-                $stmt = $pdo->prepare("INSERT INTO ownership_history (unit_id, owner_id, start_date, is_current) VALUES (?, ?, NOW(), 1)");
-                $stmt->execute([$unit_id, $owner_id]);
+                if ($owner_id) {
+                    $stmt = $pdo->prepare("INSERT INTO ownership_history (unit_id, owner_id, start_date, is_current) VALUES (?, ?, NOW(), 1)");
+                    $stmt->execute([$unit_id, $owner_id]);
+                }
 
                 $pdo->commit();
 
@@ -50,6 +56,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         else {
             $error = "Unit Number and Owner Name are required.";
+        }
+    // Handle Manage Owners
+    if (isset($_POST['assign_owner'])) {
+        $unit_id = $_POST['unit_id'];
+        $owner_id = $_POST['owner_id'] ?? null;
+        $full_name = trim($_POST['full_name']);
+        $replacement_type = $_POST['replacement_type'] ?? 'replace'; // 'replace' or 'add'
+
+        try {
+            $pdo->beginTransaction();
+
+            // If no existing owner selected, create new
+            if (!$owner_id && !empty($full_name)) {
+                $stmt = $pdo->prepare("INSERT INTO owners (full_name, id_number, email, phone) VALUES (?, ?, ?, ?)");
+                $stmt->execute([
+                    $full_name,
+                    trim($_POST['id_number']),
+                    trim($_POST['email']),
+                    trim($_POST['phone'])
+                ]);
+                $owner_id = $pdo->lastInsertId();
+            }
+
+            if ($owner_id) {
+                // If replacing, end current ownerships
+                if ($replacement_type === 'replace') {
+                    $stmt = $pdo->prepare("UPDATE ownership_history SET is_current = 0, end_date = NOW() WHERE unit_id = ? AND is_current = 1");
+                    $stmt->execute([$unit_id]);
+                }
+
+                // Check if this owner is already linked to this unit
+                $stmt = $pdo->prepare("SELECT id FROM ownership_history WHERE unit_id = ? AND owner_id = ? AND is_current = 1");
+                $stmt->execute([$unit_id, $owner_id]);
+                if (!$stmt->fetch()) {
+                    // Link owner
+                    $stmt = $pdo->prepare("INSERT INTO ownership_history (unit_id, owner_id, start_date, is_current) VALUES (?, ?, NOW(), 1)");
+                    $stmt->execute([$unit_id, $owner_id]);
+                    $message = "Ownership updated successfully.";
+                } else {
+                    $error = "This person is already a current owner of this unit.";
+                }
+            } else {
+                $error = "Please select an existing owner or enter details for a new one.";
+            }
+
+            $pdo->commit();
+            if ($message) {
+                header("Location: units.php?action=view&id=" . $unit_id . "&msg=ownership_updated");
+                exit;
+            }
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            $error = "Error: " . $e->getMessage();
         }
     }
 }
@@ -216,41 +275,54 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
 
             <!-- Owner Card -->
             <div class="bg-white shadow rounded-lg overflow-hidden border-t-4 border-indigo-500">
-                <div class="px-6 py-4 bg-gray-50 border-b">
+                <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i class="fas fa-user-tie mr-2 text-indigo-500"></i> Current Owner
+                        <i class="fas fa-user-tie mr-2 text-indigo-500"></i> Current Owners
                     </h3>
                 </div>
                 <div class="p-6">
-                    <?php if ($unit['owner_name']): ?>
-                    <div class="font-bold text-gray-900 text-lg mb-4">
-                        <?= h($unit['owner_name'])?>
+                    <?php if (!empty($current_owners)): ?>
+                    <div class="space-y-6">
+                        <?php foreach ($current_owners as $index => $owner): ?>
+                        <div class="<?= $index > 0 ? 'pt-4 border-t border-gray-100' : '' ?>">
+                            <div class="font-bold text-gray-900 text-lg mb-2 flex justify-between">
+                                <?= h($owner['full_name']) ?>
+                                <a href="owners.php?action=edit&id=<?= $owner['id'] ?>"
+                                    class="text-indigo-600 hover:text-indigo-900 text-xs">Edit</a>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-id-card w-6 text-indigo-300"></i>
+                                    <span>
+                                        <?= h($owner['id_number'] ?: 'No ID on file') ?>
+                                    </span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-envelope w-6 text-indigo-300"></i>
+                                    <a href="mailto:<?= h($owner['email']) ?>" class="hover:text-indigo-600">
+                                        <?= h($owner['email'] ?: 'No email') ?>
+                                    </a>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-phone w-6 text-indigo-300"></i>
+                                    <span>
+                                        <?= h($owner['phone'] ?: 'No phone') ?>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
                     </div>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex items-center text-gray-600">
-                            <i class="fas fa-id-card w-6 text-indigo-400"></i>
-                            <span>
-                                <?= h($unit['owner_id_num'] ?: 'No ID on file')?>
-                            </span>
-                        </div>
-                        <div class="flex items-center text-gray-600">
-                            <i class="fas fa-envelope w-6 text-indigo-400"></i>
-                            <a href="mailto:<?= h($unit['owner_email'])?>" class="hover:text-indigo-600">
-                                <?= h($unit['owner_email'] ?: 'No email')?>
-                            </a>
-                        </div>
-                        <div class="flex items-center text-gray-600">
-                            <i class="fas fa-phone w-6 text-indigo-400"></i>
-                            <span>
-                                <?= h($unit['owner_phone'] ?: 'No phone')?>
-                            </span>
-                        </div>
-                    </div>
-                    <?php
-    else: ?>
+                    <?php else: ?>
                     <p class="text-red-500 italic">No current owner assigned.</p>
-                    <?php
-    endif; ?>
+                    <?php endif; ?>
+
+                    <div class="mt-6 pt-4 border-t-2 border-dashed border-gray-100">
+                        <a href="units.php?action=manage_owners&id=<?= $id ?>"
+                            class="inline-flex items-center justify-center w-full bg-indigo-50 text-indigo-700 font-bold py-2 px-4 rounded hover:bg-indigo-100 transition duration-150">
+                            <i class="fas fa-users-cog mr-2"></i> Manage Owners
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -414,6 +486,173 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
         </div>
     </div>
 </div>
+<?php elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
+<?php
+    $id = $_GET['id'];
+    $stmt = $pdo->prepare("SELECT * FROM units WHERE id = ?");
+    $stmt->execute([$id]);
+    $unit = $stmt->fetch();
+
+    if (!$unit) {
+        echo "<div class='bg-red-100 p-4 rounded text-red-700'>Unit not found.</div>";
+        require_once 'includes/footer.php';
+        exit;
+    }
+
+    // Fetch current owners
+    $stmt = $pdo->prepare("SELECT o.* FROM owners o JOIN ownership_history oh ON o.id = oh.owner_id WHERE oh.unit_id = ? AND oh.is_current = 1");
+    $stmt->execute([$id]);
+    $current_owners = $stmt->fetchAll();
+
+    // Fetch all owners for dropdown
+    $all_owners = $pdo->query("SELECT id, full_name, email FROM owners WHERE is_active = 1 ORDER BY full_name ASC")->fetchAll();
+?>
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b">
+            <h2 class="text-xl font-bold text-gray-800">Manage Ownership:
+                <?= h($unit['unit_number']) ?>
+            </h2>
+        </div>
+        <div class="p-8">
+            <!-- Current Owners List -->
+            <div class="mb-10">
+                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Current Owners</h3>
+                <?php if ($current_owners): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <?php foreach ($current_owners as $owner): ?>
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <div>
+                            <div class="font-bold text-blue-900">
+                                <?= h($owner['full_name']) ?>
+                            </div>
+                            <div class="text-xs text-blue-600">
+                                <?= h($owner['email']) ?>
+                            </div>
+                        </div>
+                        <i class="fas fa-check-circle text-blue-500"></i>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php else: ?>
+                <p class="text-gray-400 italic">No owners currently assigned.</p>
+                <?php endif; ?>
+            </div>
+
+            <form method="POST" class="space-y-8">
+                <input type="hidden" name="unit_id" value="<?= $id ?>">
+
+                <div>
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Add or Assign Owner</h3>
+
+                    <div class="bg-gray-50 border rounded-lg p-6">
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Select Existing Owner</label>
+                            <select name="owner_id"
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
+                                id="owner_select" onchange="toggleNewOwnerForm()">
+                                <option value="">-- Create New Owner --</option>
+                                <?php foreach ($all_owners as $o): ?>
+                                <option value="<?= $o['id'] ?>">
+                                    <?= h($o['full_name']) ?> (
+                                    <?= h($o['email']) ?>)
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div id="new_owner_form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="col-span-2">
+                                <p class="text-xs font-bold text-gray-500 mb-2 border-b pb-1">NEW OWNER DETAILS</p>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-xs font-bold mb-1">Full Name *</label>
+                                <input type="text" name="full_name" id="new_name"
+                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-xs font-bold mb-1">ID Number</label>
+                                <input type="text" name="id_number"
+                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-xs font-bold mb-1">Email</label>
+                                <input type="email" name="email"
+                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-xs font-bold mb-1">Phone</label>
+                                <input type="text" name="phone"
+                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <?php if ($current_owners): ?>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                    <h3 class="text-yellow-800 font-bold mb-3 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> Replacement Confirmation
+                    </h3>
+                    <p class="text-sm text-yellow-700 mb-4">This unit already has owner(s) assigned. How would you like
+                        to proceed?</p>
+                    <div class="space-y-3">
+                        <label
+                            class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
+                            <input type="radio" name="replacement_type" value="replace" checked
+                                class="h-4 w-4 text-yellow-600">
+                            <div class="ml-3">
+                                <span class="block font-bold text-gray-900">Replace existing owners</span>
+                                <span class="block text-xs text-gray-500">They will be marked as "Previous
+                                    Owners"</span>
+                            </div>
+                        </label>
+                        <label
+                            class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
+                            <input type="radio" name="replacement_type" value="add" class="h-4 w-4 text-yellow-600">
+                            <div class="ml-3">
+                                <span class="block font-bold text-gray-900">Add as Co-owner</span>
+                                <span class="block text-xs text-gray-500">Unit will be owned by multiple people
+                                    simultaneously</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <div class="flex items-center justify-between pt-6 border-t">
+                    <a href="units.php?action=view&id=<?= $id ?>"
+                        class="text-gray-500 hover:text-gray-700 font-bold">Cancel</a>
+                    <button type="submit" name="assign_owner"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded shadow-lg transition duration-150">
+                        Update Unit Ownership
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleNewOwnerForm() {
+        const select = document.getElementById('owner_select');
+        const form = document.getElementById('new_owner_form');
+        const nameInput = document.getElementById('new_name');
+
+        if (select && form && nameInput) {
+            if (select.value === "") {
+                form.style.opacity = "1";
+                form.style.pointerEvents = "auto";
+                nameInput.required = true;
+            } else {
+                form.style.opacity = "0.4";
+                form.style.pointerEvents = "none";
+                nameInput.required = false;
+            }
+        }
+    }
+    document.addEventListener('DOMContentLoaded', toggleNewOwnerForm);
+</script>
 <?php
 else: ?>
 <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
@@ -428,15 +667,16 @@ else: ?>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
             <?php
-    // Query to get units with current owner and tenant
+    // Query to get units with current owners and tenant
     $sql = "SELECT u.*, 
-                    o.full_name as owner_name, 
+                    GROUP_CONCAT(o.full_name SEPARATOR ', ') as owner_names, 
                     t.full_name as tenant_name,
                     t.id as tenant_id 
                     FROM units u
                     LEFT JOIN ownership_history oh ON u.id = oh.unit_id AND oh.is_current = 1
                     LEFT JOIN owners o ON oh.owner_id = o.id
                     LEFT JOIN tenants t ON u.id = t.unit_id AND t.is_active = 1
+                    GROUP BY u.id
                     ORDER BY u.unit_number ASC";
     $stmt = $pdo->query($sql);
     while ($row = $stmt->fetch()):
@@ -446,7 +686,7 @@ else: ?>
                     <?= h($row['unit_number'])?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <?= $row['owner_name'] ? h($row['owner_name']) : '<span class="text-red-400">No Owner</span>'?>
+                    <?= $row['owner_names'] ? h($row['owner_names']) : '<span class="text-red-400">No Owner</span>'?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <?php if ($row['tenant_id']): ?>

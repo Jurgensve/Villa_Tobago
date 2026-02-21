@@ -225,11 +225,12 @@ else: ?>
         <tbody class="bg-white divide-y divide-gray-200">
             <?php
     $sql = "SELECT o.*, 
-                        u.unit_number 
+                        GROUP_CONCAT(u.unit_number SEPARATOR ', ') as unit_numbers
                         FROM owners o
                         LEFT JOIN ownership_history oh ON o.id = oh.owner_id AND oh.is_current = 1
                         LEFT JOIN units u ON oh.unit_id = u.id
                         WHERE o.is_active = 1
+                        GROUP BY o.id
                         ORDER BY o.full_name ASC";
     $stmt = $pdo->query($sql);
     while ($row = $stmt->fetch()):
@@ -241,10 +242,10 @@ else: ?>
                     </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <?php if ($row['unit_number']): ?>
+                    <?php if ($row['unit_numbers']): ?>
                     <span
                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                        <?= h($row['unit_number'])?>
+                        <?= h($row['unit_numbers'])?>
                     </span>
                     <?php
         else: ?>
