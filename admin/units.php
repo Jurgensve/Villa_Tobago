@@ -340,14 +340,19 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                 <div class="p-6">
                     <?php if ($resident): ?>
                     <div class="flex items-center mb-3 flex-wrap gap-2">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <?= $resident['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'?> ">
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <?= $resident['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'?> ">
                             <?= $resident['resident_type'] === 'tenant' ? 'Tenant' : 'Owner'?>
                         </span>
                         <?php if (!empty($resident['_default'])): ?>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500 italic">Default</span>
-                        <?php endif; ?>
+                        <span
+                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500 italic">Default</span>
+                        <?php
+        endif; ?>
                     </div>
-                    <div class="font-bold text-gray-900 text-lg"><?= h($resident['resident_name'])?></div>
+                    <div class="font-bold text-gray-900 text-lg">
+                        <?= h($resident['resident_name'])?>
+                    </div>
                     <div class="text-sm text-gray-600 mt-1">
                         <i class="fas fa-envelope w-5 text-gray-400"></i>
                         <?= h($resident['resident_email'] ?: '—')?>
@@ -357,11 +362,16 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         <?= h($resident['resident_phone'] ?: '—')?>
                     </div>
                     <?php if (!empty($resident['_default'])): ?>
-                    <p class="text-xs text-gray-400 italic mt-3">Showing owner as default occupant. Check "Owner Resides in Unit" on the owner's edit page to make this explicit.</p>
-                    <?php endif; ?>
-                    <?php else: ?>
-                    <p class="text-gray-400 italic text-sm">No current occupant. Add a tenant or check "Owner Resides in Unit" on the owner's edit page.</p>
-                    <?php endif; ?>
+                    <p class="text-xs text-gray-400 italic mt-3">Showing owner as default occupant. Check "Owner Resides
+                        in Unit" on the owner's edit page to make this explicit.</p>
+                    <?php
+        endif; ?>
+                    <?php
+    else: ?>
+                    <p class="text-gray-400 italic text-sm">No current occupant. Add a tenant or check "Owner Resides in
+                        Unit" on the owner's edit page.</p>
+                    <?php
+    endif; ?>
                 </div>
             </div>
 
@@ -978,7 +988,7 @@ else: ?>
                 <tr>
                     <th class="px-6 py-3 text-left">Unit Number</th>
                     <th class="px-6 py-3 text-left">Current Owner</th>
-                    <th class="px-6 py-3 text-left">Current Tenant</th>
+                    <th class="px-6 py-3 text-left">Current Resident</th>
                     <th class="px-6 py-3 text-left">Actions</th>
                 </tr>
             </thead>
@@ -992,7 +1002,7 @@ else: ?>
                     FROM units u
                     LEFT JOIN ownership_history oh ON u.id = oh.unit_id AND oh.is_current = 1
                     LEFT JOIN owners o ON oh.owner_id = o.id
-                    LEFT JOIN tenants t ON u.id = t.unit_id AND t.is_active = 1
+                    LEFT JOIN tenants t ON u.id = t.unit_id
                     GROUP BY u.id
                     ORDER BY u.unit_number ASC";
     $stmt = $pdo->query($sql);
