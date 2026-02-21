@@ -4,6 +4,37 @@ require_once 'includes/header.php';
 $message = '';
 $error = '';
 
+// Handle Bulk Action: Set Owners as Residents
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_set_owner_residents'])) {
+    try {
+        // Find all units that have a current owner but NO tenant record at all
+        $units_to_update = $pdo->query(
+            "SELECT oh.unit_id, oh.owner_id
+             FROM ownership_history oh
+             WHERE oh.is_current = 1
+               AND oh.unit_id NOT IN (SELECT DISTINCT unit_id FROM tenants)
+               AND oh.unit_id NOT IN (SELECT unit_id FROM residents)
+             GROUP BY oh.unit_id
+             ORDER BY oh.owner_id ASC"
+        )->fetchAll();
+
+        $count = 0;
+        $stmt = $pdo->prepare(
+            "INSERT INTO residents (unit_id, resident_type, resident_id)
+             VALUES (?, 'owner', ?)
+             ON DUPLICATE KEY UPDATE resident_type = 'owner', resident_id = VALUES(resident_id)"
+        );
+        foreach ($units_to_update as $row) {
+            $stmt->execute([$row['unit_id'], $row['owner_id']]);
+            $count++;
+        }
+        $message = "Done! Set $count unit(s) where the owner is now the default resident.";
+    }
+    catch (PDOException $e) {
+        $error = "Error: " . $e->getMessage() . " (Have you run the migration yet?)";
+    }
+}
+
 // Handle Settings Save
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     try {
@@ -68,7 +99,8 @@ endif; ?>
                         <p class="text-sm text-gray-500">Allow pets to be registered against residents.</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="pet_management_enabled" value="1" <?=$pet_enabled ? 'checked' : ''?> class="sr-only peer">
+                        <input type="checkbox" name="pet_management_enabled" value="1" <?=$pet_enabled ? 'checked' : ''
+    ?> class="sr-only peer">
                         <div
                             class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                         </div>
@@ -108,6 +140,33 @@ endif; ?>
             </button>
         </div>
     </form>
+</div>
+
+<?php require_once 'includes/footer.php'; ?>-lg overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center">
+            <i class="fas fa-bolt mr-3 text-orange-500"></i>
+            <h2 class="text-lg font-bold text-gray-800">Bulk Actions</h2>
+        </div>
+        <div class="p-6 space-y-5">
+            <div class="flex items-start justify-between p-4 bg-orange-50 rounded-lg border border-orange-100">
+                <div class="mr-6">
+                    <p class="font-bold text-gray-800">Set Owners as Default Residents</p>
+                    <p class="text-sm text-gray-500 mt-1">
+                        For every unit that has a current owner but <strong>no tenant</strong> and 
+                        <strong>no resident record</strong> yet, this will set the owner as the current resident.
+                        Units already having an explicit resident or any tenant record are skipped.
+                    </p>
+                </div>
+                <form method="POST" onsubmit="return confirm('This will update all eligible units. Continue?')">
+                    <button type="submit" name="bulk_set_owner_residents"
+                        class="whitespace-nowrap bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded shadow transition duration-150">
+                        <i class="fas fa-user-check mr-2"></i> Run
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
