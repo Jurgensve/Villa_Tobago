@@ -28,13 +28,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // 2. Assign to Unit (if selected)
                 if ($unit_id) {
-                    // End current ownership for this unit if exists
+                    $is_resident = isset($_POST['is_resident']);
+
+                    // Handle Ownership Replacement (from previous logic)
                     $stmt = $pdo->prepare("UPDATE ownership_history SET is_current = 0, end_date = NOW() WHERE unit_id = ? AND is_current = 1");
                     $stmt->execute([$unit_id]);
 
-                    // Create new ownership record
                     $stmt = $pdo->prepare("INSERT INTO ownership_history (unit_id, owner_id, start_date, is_current) VALUES (?, ?, NOW(), 1)");
                     $stmt->execute([$unit_id, $owner_id]);
+
+                    // 3. Handle Residency Update
+                    if ($is_resident) {
+                        // Per plan: Clear pets if resident changes
+                        // Check if current resident is different
+                        $stmt = $pdo->prepare("SELECT resident_type, resident_id FROM residents WHERE unit_id = ?");
+                        $stmt->execute([$unit_id]);
+                        $current_r = $stmt->fetch();
+
+                        if (!$current_r || $current_r['resident_type'] !== 'owner' || $current_r['resident_id'] != $owner_id) {
+                            $stmt = $pdo->prepare("DELETE FROM pets WHERE unit_id = ?");
+                            $stmt->execute([$unit_id]);
+                        }
+
+                        $stmt = $pdo->prepare("INSERT INTO residents (unit_id, resident_type, resident_id) 
+                                             VALUES (?, 'owner', ?) 
+                                             ON DUPLICATE KEY UPDATE resident_type = 'owner', resident_id = VALUES(resident_id)");
+                        $stmt->execute([$unit_id, $owner_id]);
+                    }
                 }
 
                 $pdo->commit();
@@ -128,6 +148,17 @@ endif; ?>
                 </select>
                 <p class="text-xs text-gray-500 mt-1">Note: Assigning a unit will automatically remove the previous
                     owner from that unit.</p>
+            </div>
+            <div class="mb-4 col-span-2">
+                <label
+                    class="flex items-center space-x-3 cursor-pointer p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <input type="checkbox" name="is_resident" value="1"
+                        class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <span class="text-sm font-bold text-blue-800">Owner Resides in Unit (Mark as Current
+                        Occupant)</span>
+                </label>
+                <p class="text-xs text-blue-600 mt-1 ml-8 italic">Checking this will set this owner as the primary
+                    resident and clear previous occupant's pets.</p>
             </div>
         </div>
         <div class="mt-6">

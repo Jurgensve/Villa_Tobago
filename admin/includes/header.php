@@ -118,6 +118,10 @@ require_login();
                             class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             <i class="fas fa-file-import mr-2"></i> Import
                         </a>
+                        <a href="settings.php"
+                            class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-cog mr-2"></i> Settings
+                        </a>
                     </div>
                 </div>
                 <div class="flex items-center">

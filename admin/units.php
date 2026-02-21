@@ -57,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         else {
             $error = "Unit Number and Owner Name are required.";
         }
+    }
     // Handle Manage Owners
     if (isset($_POST['assign_owner'])) {
         $unit_id = $_POST['unit_id'];
@@ -94,10 +95,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $pdo->prepare("INSERT INTO ownership_history (unit_id, owner_id, start_date, is_current) VALUES (?, ?, NOW(), 1)");
                     $stmt->execute([$unit_id, $owner_id]);
                     $message = "Ownership updated successfully.";
-                } else {
+                }
+                else {
                     $error = "This person is already a current owner of this unit.";
                 }
-            } else {
+            }
+            else {
                 $error = "Please select an existing owner or enter details for a new one.";
             }
 
@@ -106,7 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: units.php?action=view&id=" . $unit_id . "&msg=ownership_updated");
                 exit;
             }
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             $pdo->rollBack();
             $error = "Error: " . $e->getMessage();
         }
@@ -284,41 +288,44 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                     <?php if (!empty($current_owners)): ?>
                     <div class="space-y-6">
                         <?php foreach ($current_owners as $index => $owner): ?>
-                        <div class="<?= $index > 0 ? 'pt-4 border-t border-gray-100' : '' ?>">
+                        <div class="<?= $index > 0 ? 'pt-4 border-t border-gray-100' : ''?>">
                             <div class="font-bold text-gray-900 text-lg mb-2 flex justify-between">
-                                <?= h($owner['full_name']) ?>
-                                <a href="owners.php?action=edit&id=<?= $owner['id'] ?>"
+                                <?= h($owner['full_name'])?>
+                                <a href="owners.php?action=edit&id=<?= $owner['id']?>"
                                     class="text-indigo-600 hover:text-indigo-900 text-xs">Edit</a>
                             </div>
                             <div class="space-y-2 text-sm">
                                 <div class="flex items-center text-gray-600">
                                     <i class="fas fa-id-card w-6 text-indigo-300"></i>
                                     <span>
-                                        <?= h($owner['id_number'] ?: 'No ID on file') ?>
+                                        <?= h($owner['id_number'] ?: 'No ID on file')?>
                                     </span>
                                 </div>
                                 <div class="flex items-center text-gray-600">
                                     <i class="fas fa-envelope w-6 text-indigo-300"></i>
-                                    <a href="mailto:<?= h($owner['email']) ?>" class="hover:text-indigo-600">
-                                        <?= h($owner['email'] ?: 'No email') ?>
+                                    <a href="mailto:<?= h($owner['email'])?>" class="hover:text-indigo-600">
+                                        <?= h($owner['email'] ?: 'No email')?>
                                     </a>
                                 </div>
                                 <div class="flex items-center text-gray-600">
                                     <i class="fas fa-phone w-6 text-indigo-300"></i>
                                     <span>
-                                        <?= h($owner['phone'] ?: 'No phone') ?>
+                                        <?= h($owner['phone'] ?: 'No phone')?>
                                     </span>
                                 </div>
                             </div>
                         </div>
-                        <?php endforeach; ?>
+                        <?php
+        endforeach; ?>
                     </div>
-                    <?php else: ?>
+                    <?php
+    else: ?>
                     <p class="text-red-500 italic">No current owner assigned.</p>
-                    <?php endif; ?>
+                    <?php
+    endif; ?>
 
                     <div class="mt-6 pt-4 border-t-2 border-dashed border-gray-100">
-                        <a href="units.php?action=manage_owners&id=<?= $id ?>"
+                        <a href="units.php?action=manage_owners&id=<?= $id?>"
                             class="inline-flex items-center justify-center w-full bg-indigo-50 text-indigo-700 font-bold py-2 px-4 rounded hover:bg-indigo-100 transition duration-150">
                             <i class="fas fa-users-cog mr-2"></i> Manage Owners
                         </a>
@@ -486,7 +493,8 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
         </div>
     </div>
 </div>
-<?php elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
+<?php
+elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
 <?php
     $id = $_GET['id'];
     $stmt = $pdo->prepare("SELECT * FROM units WHERE id = ?");
@@ -511,7 +519,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
     <div class="bg-white shadow rounded-lg overflow-hidden">
         <div class="px-6 py-4 bg-gray-50 border-b">
             <h2 class="text-xl font-bold text-gray-800">Manage Ownership:
-                <?= h($unit['unit_number']) ?>
+                <?= h($unit['unit_number'])?>
             </h2>
         </div>
         <div class="p-8">
@@ -524,27 +532,29 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                     <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
                         <div>
                             <div class="font-bold text-blue-900">
-                                <?= h($owner['full_name']) ?>
+                                <?= h($owner['full_name'])?>
                             </div>
                             <div class="text-xs text-blue-600">
-                                <?= h($owner['email']) ?>
+                                <?= h($owner['email'])?>
                             </div>
                         </div>
                         <i class="fas fa-check-circle text-blue-500"></i>
                     </div>
-                    <?php endforeach; ?>
+                    <?php
+        endforeach; ?>
                 </div>
-                <?php else: ?>
+                <?php
+    else: ?>
                 <p class="text-gray-400 italic">No owners currently assigned.</p>
-                <?php endif; ?>
+                <?php
+    endif; ?>
             </div>
 
             <form method="POST" class="space-y-8">
-                <input type="hidden" name="unit_id" value="<?= $id ?>">
+                <input type="hidden" name="unit_id" value="<?= $id?>">
 
                 <div>
                     <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Add or Assign Owner</h3>
-
                     <div class="bg-gray-50 border rounded-lg p-6">
                         <div class="mb-6">
                             <label class="block text-gray-700 text-sm font-bold mb-2">Select Existing Owner</label>
@@ -553,11 +563,12 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                 id="owner_select" onchange="toggleNewOwnerForm()">
                                 <option value="">-- Create New Owner --</option>
                                 <?php foreach ($all_owners as $o): ?>
-                                <option value="<?= $o['id'] ?>">
-                                    <?= h($o['full_name']) ?> (
-                                    <?= h($o['email']) ?>)
+                                <option value="<?= $o['id']?>">
+                                    <?= h($o['full_name'])?> (
+                                    <?= h($o['email'])?>)
                                 </option>
-                                <?php endforeach; ?>
+                                <?php
+    endforeach; ?>
                             </select>
                         </div>
 
@@ -618,10 +629,11 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         </label>
                     </div>
                 </div>
-                <?php endif; ?>
+                <?php
+    endif; ?>
 
                 <div class="flex items-center justify-between pt-6 border-t">
-                    <a href="units.php?action=view&id=<?= $id ?>"
+                    <a href="units.php?action=view&id=<?= $id?>"
                         class="text-gray-500 hover:text-gray-700 font-bold">Cancel</a>
                     <button type="submit" name="assign_owner"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded shadow-lg transition duration-150">
