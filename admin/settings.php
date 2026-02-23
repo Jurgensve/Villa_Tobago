@@ -35,6 +35,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_set_owner_reside
     }
 }
 
+// Handle Database Reset
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_database'])) {
+    try {
+        $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
+        $pdo->exec("TRUNCATE TABLE amendment_logs;");
+        $pdo->exec("TRUNCATE TABLE pets;");
+        $pdo->exec("TRUNCATE TABLE modifications;");
+        $pdo->exec("TRUNCATE TABLE occupants;");
+        $pdo->exec("TRUNCATE TABLE residents;");
+        $pdo->exec("TRUNCATE TABLE tenants;");
+        $pdo->exec("TRUNCATE TABLE ownership_history;");
+        $pdo->exec("TRUNCATE TABLE owners;");
+        $pdo->exec("TRUNCATE TABLE units;");
+        $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
+        $message = "System Database has been completely reset.";
+    }
+    catch (PDOException $e) {
+        $error = "Error resetting database: " . $e->getMessage();
+    }
+}
+
 // Handle Settings Save
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     try {
@@ -99,8 +120,8 @@ endif; ?>
                         <p class="text-sm text-gray-500">Allow pets to be registered against residents.</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="pet_management_enabled" value="1" <?=$pet_enabled ? 'checked' : ''
-    ?> class="sr-only peer">
+                        <input type="checkbox" name="pet_management_enabled" value="1" <?= $pet_enabled ? 'checked' : ''
+                            ?> class="sr-only peer">
                         <div
                             class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                         </div>
@@ -140,9 +161,8 @@ endif; ?>
             </button>
         </div>
     </form>
-</div>
 
-<?php require_once 'includes/footer.php'; ?>-lg overflow-hidden">
+    <div class="mt-8 bg-white shadow rounded-lg overflow-hidden">
         <div class="px-6 py-4 bg-gray-50 border-b flex items-center">
             <i class="fas fa-bolt mr-3 text-orange-500"></i>
             <h2 class="text-lg font-bold text-gray-800">Bulk Actions</h2>
@@ -152,7 +172,7 @@ endif; ?>
                 <div class="mr-6">
                     <p class="font-bold text-gray-800">Set Owners as Default Residents</p>
                     <p class="text-sm text-gray-500 mt-1">
-                        For every unit that has a current owner but <strong>no tenant</strong> and 
+                        For every unit that has a current owner but <strong>no tenant</strong> and
                         <strong>no resident record</strong> yet, this will set the owner as the current resident.
                         Units already having an explicit resident or any tenant record are skipped.
                     </p>
@@ -164,9 +184,25 @@ endif; ?>
                     </button>
                 </form>
             </div>
+
+            <div class="flex items-start justify-between p-4 bg-red-50 rounded-lg border border-red-100 mt-4">
+                <div class="mr-6">
+                    <p class="font-bold text-red-800">Reset System Database</p>
+                    <p class="text-sm text-red-500 mt-1">
+                        <strong>DANGER:</strong> This will delete all owners, tenants, pets, modifications, and
+                        application records. This action cannot be undone!
+                    </p>
+                </div>
+                <form method="POST"
+                    onsubmit="return confirm('WARNING: Are you sure you want to completely erase all system data? This cannot be undone!')">
+                    <button type="submit" name="reset_database"
+                        class="whitespace-nowrap bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow transition duration-150">
+                        <i class="fas fa-trash-alt mr-2"></i> Factory Reset
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
-
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
