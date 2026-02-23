@@ -10,6 +10,14 @@ deployment:
     - /bin/cp -R admin $DEPLOYPATH
     - /bin/cp test_db.php $DEPLOYPATH
     - /bin/cp .htaccess $DEPLOYPATH
+    - /bin/cp resident_portal.php $DEPLOYPATH
+    - /bin/cp amend_request.php $DEPLOYPATH
+    - /bin/cp logout_resident.php $DEPLOYPATH
+    - /bin/cp pet_form.php $DEPLOYPATH
+    - /bin/cp modification_form.php $DEPLOYPATH
+    - /bin/cp move_in_form.php $DEPLOYPATH
+    - /bin/cp migrate_amendments.php $DEPLOYPATH
+    - /bin/cp schema_amendments.sql $DEPLOYPATH
     # Copies all files to public_html. 
     # NOTE: If your site is in a subdirectory (e.g. public_html/villatobago), 
     # update the DEPLOYPATH above.
