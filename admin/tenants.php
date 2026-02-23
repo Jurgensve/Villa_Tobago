@@ -83,6 +83,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+
+    if (isset($_POST['update_approval'])) {
+        $tenant_id = $_POST['tenant_id'];
+        $status = $_POST['status'];
+        $owner_approval = isset($_POST['owner_approval']) ? 1 : 0;
+        $pet_approval = isset($_POST['pet_approval']) ? 1 : 0;
+
+        $pdo->prepare("UPDATE tenants SET status = ?, owner_approval = ?, pet_approval = ? WHERE id = ?")
+            ->execute([$status, $owner_approval, $pet_approval, $tenant_id]);
+
+        // Move-in logistics form logic
+        if ($status === 'Approved') {
+            $t = $pdo->prepare("SELECT email, full_name, move_in_sent FROM tenants WHERE id = ?");
+            $t->execute([$tenant_id]);
+            $res = $t->fetch();
+            if ($res && !$res['move_in_sent']) {
+                $subject = "Move-In Logistics Form - Villa Tobago";
+                $body = "Dear {$res['full_name']},\n\nYour resident application is Approved!\nPlease complete the Move-In Logistics Form here: " . SITE_URL . "/move_in_form.php\n\nWelcome!";
+                send_notification_email($res['email'], $subject, $body);
+                $pdo->prepare("UPDATE tenants SET move_in_sent = 1 WHERE id = ?")->execute([$tenant_id]);
+            }
+        }
+
+        $message = "Approval status updated.";
+        header("Location: tenants.php?action=view&id=" . $tenant_id . "&msg=approved");
+        exit;
+    }
 }
 ?>
 
@@ -142,7 +169,7 @@ endif; ?>
                     id="unit_id" name="unit_id" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id']==$unit['id']) ? 'selected' : '' ?>>
+                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id'] == $unit['id']) ? 'selected' : ''?>>
                         <?= h($unit['unit_number'])?>
                     </option>
                     <?php
@@ -267,6 +294,46 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Approval Status Section -->
+            <div class="mt-8 pt-8 border-t border-gray-100">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Resident Application Approval
+                </h3>
+                <form method="POST" class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <input type="hidden" name="tenant_id" value="<?= h($tenant['id'])?>">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Overall Status</label>
+                            <select name="status" class="w-full border rounded p-2">
+                                <?php foreach (['Pending', 'Information Requested', 'Pending Updated', 'Approved', 'Declined', 'Completed'] as $st): ?>
+                                <option value="<?= $st?>" <?=($tenant['status'] ?? 'Pending' )===$st ? 'selected' : ''?>>
+                                    <?= $st?>
+                                </option>
+                                <?php
+    endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="flex items-center mt-6">
+                            <input type="checkbox" name="owner_approval" value="1" <?=empty($tenant['owner_approval'])
+                                ? '' : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                            <label class="font-bold text-sm text-gray-700">Owner Approved</label>
+                        </div>
+                        <div class="flex items-center mt-6">
+                            <input type="checkbox" name="pet_approval" value="1" <?=empty($tenant['pet_approval']) ? ''
+                                : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                            <label class="font-bold text-sm text-gray-700">Pet Approved</label>
+                        </div>
+                    </div>
+                    <button type="submit" name="update_approval"
+                        class="bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Update
+                        Approvals</button>
+                    <?php if (!empty($tenant['move_in_sent'])): ?>
+                    <span class="ml-4 text-green-600 text-sm font-bold"><i class="fas fa-check-circle"></i> Move-In Form
+                        Sent</span>
+                    <?php
+    endif; ?>
+                </form>
             </div>
 
             <div class="mt-8 pt-8 border-t border-gray-100">

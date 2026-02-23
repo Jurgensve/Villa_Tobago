@@ -102,6 +102,10 @@ require_login();
                             class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             <i class="fas fa-building mr-2"></i> Units
                         </a>
+                        <a href="pets.php"
+                            class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-paw mr-2"></i> Pets
+                        </a>
                         <a href="modifications.php"
                             class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             <i class="fas fa-hammer mr-2"></i> Modifications

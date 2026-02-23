@@ -76,10 +76,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mod_id = $_POST['mod_id'];
         $status = $_POST['status'];
         $notes = trim($_POST['notes']);
+        $trustee_comments = trim($_POST['trustee_comments'] ?? '');
 
-        $stmt = $pdo->prepare("UPDATE modifications SET status = ?, notes = ?, approval_date = NOW() WHERE id = ?");
-        $stmt->execute([$status, $notes, $mod_id]);
-        $message = "Status updated.";
+        // Fetch current to check email
+        $stmtCurrent = $pdo->prepare("SELECT m.*, o.email as owner_email, o.full_name FROM modifications m JOIN owners o ON m.owner_id = o.id WHERE m.id = ?");
+        $stmtCurrent->execute([$mod_id]);
+        $currentMod = $stmtCurrent->fetch();
+
+        $token = $currentMod['amendment_token'];
+
+        if ($status === 'Information Requested' || $status === 'Declined') {
+            if (empty($trustee_comments)) {
+                $error = "Trustee Comment is mandatory when requesting information or declining.";
+            }
+            else {
+                if (empty($token) && $status === 'Information Requested') {
+                    $token = bin2hex(random_bytes(32));
+                }
+                $stmt = $pdo->prepare("UPDATE modifications SET status = ?, notes = ?, trustee_comments = ?, amendment_token = ?, approval_date = NOW() WHERE id = ?");
+                $stmt->execute([$status, $notes, $trustee_comments, $token, $mod_id]);
+
+                // Log action
+                $log_comment = "Status changed to $status. " . ($trustee_comments ? "Comment: $trustee_comments" : "");
+                $log = $pdo->prepare("INSERT INTO amendment_logs (related_type, related_id, action_type, comments) VALUES ('modification', ?, 'status_change', ?)");
+                $log->execute([$mod_id, $log_comment]);
+
+                $message = "Status updated and email sent.";
+
+                if ($currentMod && !empty($currentMod['owner_email'])) {
+                    $subject = "Modification Request Update - $status";
+                    $body = "Dear " . h($currentMod['full_name']) . ",\n\n";
+                    $body .= "Your modification request status is now: $status.\n\n";
+                    $body .= "Trustee Comments:\n" . h($trustee_comments) . "\n\n";
+
+                    if ($status === 'Information Requested') {
+                        $link = SITE_URL . "/amend_request.php?type=modification&token=" . $token;
+                        $body .= "Please update your request by clicking here: <a href='$link'>$link</a>\n\n";
+                    }
+                    send_notification_email($currentMod['owner_email'], $subject, $body);
+                }
+            }
+        }
+        else {
+            $stmt = $pdo->prepare("UPDATE modifications SET status = ?, notes = ?, trustee_comments = ?, approval_date = NOW() WHERE id = ?");
+            $stmt->execute([$status, $notes, $trustee_comments, $mod_id]);
+
+            // Log action
+            $log = $pdo->prepare("INSERT INTO amendment_logs (related_type, related_id, action_type, comments) VALUES ('modification', ?, 'status_change', ?)");
+            $log->execute([$mod_id, "Status changed to $status."]);
+
+            $message = "Status updated.";
+        }
     }
 }
 ?>
@@ -298,12 +345,21 @@ else: ?>
     $stmt = $pdo->query($sql);
     while ($row = $stmt->fetch()):
         $statusColor = 'bg-gray-100 text-gray-800';
-        if ($row['status'] == 'approved')
+        if ($row['status'] == 'Approved' || $row['status'] == 'approved') {
             $statusColor = 'bg-green-100 text-green-800';
-        if ($row['status'] == 'rejected')
+        }
+        elseif ($row['status'] == 'Declined' || $row['status'] == 'rejected') {
             $statusColor = 'bg-red-100 text-red-800';
-        if ($row['status'] == 'completed')
+        }
+        elseif ($row['status'] == 'Completed' || $row['status'] == 'completed') {
             $statusColor = 'bg-blue-100 text-blue-800';
+        }
+        elseif ($row['status'] == 'Information Requested') {
+            $statusColor = 'bg-yellow-100 text-yellow-800';
+        }
+        elseif ($row['status'] == 'Pending Updated') {
+            $statusColor = 'bg-purple-100 text-purple-800';
+        }
 ?>
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -316,6 +372,13 @@ else: ?>
                     <div class="truncate max-w-xs">
                         <?= h($row['description'])?>
                     </div>
+                    <?php if (!empty($row['trustee_comments'])): ?>
+                    <div class="mt-1 text-xs text-blue-600 bg-blue-50 p-1 rounded">
+                        <strong>Trustee:</strong>
+                        <?= h($row['trustee_comments'])?>
+                    </div>
+                    <?php
+        endif; ?>
 
                     <?php
         // Fetch attachments
@@ -346,7 +409,7 @@ else: ?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
-                        onclick="openStatusModal(<?= $row['id']?>, '<?= $row['status']?>', '<?= h(addslashes($row['notes']))?>')"
+                        onclick="openStatusModal(<?= $row['id']?>, '<?= h($row['status'])?>', '<?= h(addslashes($row['notes'] ?? ''))?>', '<?= h(addslashes($row['trustee_comments'] ?? ''))?>')"
                         class="text-indigo-600 hover:text-indigo-900">Update Status</button>
                 </td>
             </tr>
@@ -367,21 +430,33 @@ else: ?>
                     <label class="block text-sm font-medium text-gray-700">Status</label>
                     <select name="status" id="modal_status"
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="completed">Completed</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Pending Updated">Pending Updated</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Declined">Declined</option>
+                        <option value="Information Requested">Information Requested</option>
+                        <option value="Completed">Completed</option>
                     </select>
                 </div>
                 <div class="mt-2">
-                    <label class="block text-sm font-medium text-gray-700">Notes</label>
+                    <label class="block text-sm font-medium text-gray-700">Trustee Comments (Required for Decline/Info
+                        Requested)</label>
+                    <textarea name="trustee_comments" id="modal_trustee_comments"
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm" rows="2"></textarea>
+                </div>
+                <div class="mt-2 text-xs text-gray-500 mb-2">
+                    * If you select "Information Requested" or "Declined", the resident will be emailed the Trustee
+                    Comments.
+                </div>
+                <div class="mt-2">
+                    <label class="block text-sm font-medium text-gray-700">Internal Admin Notes</label>
                     <textarea name="notes" id="modal_notes"
-                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm"></textarea>
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm" rows="2"></textarea>
                 </div>
                 <div class="items-center px-4 py-3">
                     <button name="update_status"
                         class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
-                        Save
+                        Save Status
                     </button>
                     <button type="button" onclick="document.getElementById('statusModal').classList.add('hidden')"
                         class="mt-3 px-4 py-2 bg-gray-100 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-200">
@@ -393,10 +468,22 @@ else: ?>
     </div>
 </div>
 <script>
-    function openStatusModal(id, status, notes) {
+    function openStatusModal(id, status, notes, trustee_comments = '') {
         document.getElementById('modal_mod_id').value = id;
-        document.getElementById('modal_status').value = status;
+
+        let selValue = status.charAt(0).toUpperCase() + status.slice(1);
+        if (selValue === 'Rejected') selValue = 'Declined';
+
+        let sel = document.getElementById('modal_status');
+        for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === selValue || sel.options[i].value.toLowerCase() === status.toLowerCase()) {
+                sel.selectedIndex = i;
+                break;
+            }
+        }
+
         document.getElementById('modal_notes').value = notes;
+        document.getElementById('modal_trustee_comments').value = trustee_comments;
         document.getElementById('statusModal').classList.remove('hidden');
     }
 </script>

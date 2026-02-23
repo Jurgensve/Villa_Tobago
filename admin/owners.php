@@ -191,9 +191,25 @@ elseif ($action === 'edit'):
             $id_number = trim($_POST['id_number']);
             $email = trim($_POST['email']);
             $phone = trim($_POST['phone']);
+            $status = $_POST['status'];
+            $agent_approval = isset($_POST['agent_approval']) ? 1 : 0;
+            $pet_approval = isset($_POST['pet_approval']) ? 1 : 0;
 
-            $stmt = $pdo->prepare("UPDATE owners SET full_name=?, id_number=?, email=?, phone=? WHERE id=?");
-            $stmt->execute([$full_name, $id_number, $email, $phone, $id]);
+            $stmt = $pdo->prepare("UPDATE owners SET full_name=?, id_number=?, email=?, phone=?, status=?, agent_approval=?, pet_approval=? WHERE id=?");
+            $stmt->execute([$full_name, $id_number, $email, $phone, $status, $agent_approval, $pet_approval, $id]);
+
+            // Move-in logistics form logic
+            if ($status === 'Approved') {
+                $o = $pdo->prepare("SELECT email, full_name, move_in_sent FROM owners WHERE id = ?");
+                $o->execute([$id]);
+                $res = $o->fetch();
+                if ($res && !$res['move_in_sent']) {
+                    $subject = "Move-In Logistics Form - Villa Tobago";
+                    $body = "Dear {$res['full_name']},\n\nYour resident application is Approved!\nPlease complete the Move-In Logistics Form here: " . SITE_URL . "/move_in_form.php\n\nWelcome!";
+                    send_notification_email($res['email'], $subject, $body);
+                    $pdo->prepare("UPDATE owners SET move_in_sent = 1 WHERE id = ?")->execute([$id]);
+                }
+            }
 
             echo "<script>window.location.href = 'owners.php?action=list&msg=updated';</script>";
         }
@@ -226,6 +242,39 @@ elseif ($action === 'edit'):
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="phone" name="phone" type="text" value="<?= h($owner['phone'])?>">
             </div>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-gray-100">
+            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Resident Application Approval
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Overall Status</label>
+                    <select name="status" class="w-full border rounded p-2">
+                        <?php foreach (['Pending', 'Information Requested', 'Pending Updated', 'Approved', 'Declined', 'Completed'] as $st): ?>
+                        <option value="<?= $st?>" <?=($owner['status'] ?? 'Pending' )===$st ? 'selected' : ''?>>
+                            <?= $st?>
+                        </option>
+                        <?php
+        endforeach; ?>
+                    </select>
+                </div>
+                <div class="flex items-center mt-6">
+                    <input type="checkbox" name="agent_approval" value="1" <?=empty($owner['agent_approval']) ? ''
+                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <label class="font-bold text-sm text-gray-700">Managing Agent Approved</label>
+                </div>
+                <div class="flex items-center mt-6">
+                    <input type="checkbox" name="pet_approval" value="1" <?=empty($owner['pet_approval']) ? ''
+                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <label class="font-bold text-sm text-gray-700">Pet Approved</label>
+                </div>
+            </div>
+            <?php if (!empty($owner['move_in_sent'])): ?>
+            <div class="mb-4 text-green-600 text-sm font-bold"><i class="fas fa-check-circle"></i> Move-In Form Sent
+            </div>
+            <?php
+        endif; ?>
         </div>
         <div class="mt-6">
             <button
