@@ -72,8 +72,16 @@ function current_user($pdo)
 // Verify login and populate session
 function verify_login($username, $password, $pdo)
 {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND is_active = 1");
-    $stmt->execute([$username]);
+    // Try with is_active filter first; fall back if column not yet added by migration
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND is_active = 1");
+        $stmt->execute([$username]);
+    }
+    catch (PDOException $e) {
+        // is_active column doesn't exist yet — query without it
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
+        $stmt->execute([$username]);
+    }
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user['password_hash'])) {
