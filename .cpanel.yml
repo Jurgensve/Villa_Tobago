@@ -2,22 +2,32 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/$USER/public_html/
+    # ── Static assets ─────────────────────────────────────────────
     - /bin/cp index.html $DEPLOYPATH
     - /bin/cp -R css $DEPLOYPATH
     - /bin/cp -R js $DEPLOYPATH
     - /bin/cp -R images $DEPLOYPATH
-    - /bin/cp contact.php $DEPLOYPATH
+    # ── Admin panel ────────────────────────────────────────────────
     - /bin/cp -R admin $DEPLOYPATH
-    - /bin/cp test_db.php $DEPLOYPATH
-    - /bin/cp .htaccess $DEPLOYPATH
+    # ── Resident-facing PHP pages ──────────────────────────────────
+    - /bin/cp contact.php $DEPLOYPATH
     - /bin/cp resident_portal.php $DEPLOYPATH
-    - /bin/cp amend_request.php $DEPLOYPATH
-    - /bin/cp logout_resident.php $DEPLOYPATH
+    - /bin/cp resident_form.php $DEPLOYPATH
     - /bin/cp pet_form.php $DEPLOYPATH
     - /bin/cp modification_form.php $DEPLOYPATH
     - /bin/cp move_in_form.php $DEPLOYPATH
-    - /bin/cp resident_form.php $DEPLOYPATH
+    - /bin/cp move_out_form.php $DEPLOYPATH
+    - /bin/cp approve_moveout.php $DEPLOYPATH
     - /bin/cp owner_approve_tenant.php $DEPLOYPATH
-    # Copies all files to public_html. 
-    # NOTE: If your site is in a subdirectory (e.g. public_html/villatobago), 
-    # update the DEPLOYPATH above.
+    - /bin/cp amend_request.php $DEPLOYPATH
+    - /bin/cp logout_resident.php $DEPLOYPATH
+    - /bin/cp test_db.php $DEPLOYPATH
+    # ── Config & routing ───────────────────────────────────────────
+    - /bin/cp .htaccess $DEPLOYPATH
+    # ── SQL Migration scripts ──────────────────────────────────────
+    - /bin/cp db_schema.sql $DEPLOYPATH
+    - /bin/cp schema_residents_pets.sql $DEPLOYPATH
+    - /bin/cp update_schema_attachments.sql $DEPLOYPATH
+    - /bin/cp move_logistics_schema.sql $DEPLOYPATH
+    # ── Uploads directory (ensure it exists) ──────────────────────
+    - mkdir -p $DEPLOYPATH/uploads
