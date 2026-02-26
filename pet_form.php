@@ -85,23 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
 
             $allowed_img_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
 
-            function save_pet_upload($file_key, $upload_dir, $allowed_types)
-            {
-                if (!isset($_FILES[$file_key]) || $_FILES[$file_key]['error'] !== UPLOAD_ERR_OK)
-                    return null;
-                $file = $_FILES[$file_key];
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mime = finfo_file($finfo, $file['tmp_name']);
-                finfo_close($finfo);
-                if (!in_array($mime, $allowed_types))
-                    return null;
-                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                $dest = $upload_dir . $file_key . '.' . strtolower($ext);
-                move_uploaded_file($file['tmp_name'], $dest);
-                return "uploads/pets/{$GLOBALS['pet_id_global']}/{$file_key}." . strtolower($ext);
-            }
-
-            // Simple upload helper
             $updates = [];
             $upload_fields = [
                 'photo' => 'photo_path',
@@ -112,9 +95,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
             foreach ($upload_fields as $file_key => $col) {
                 if (isset($_FILES[$file_key]) && $_FILES[$file_key]['error'] === UPLOAD_ERR_OK) {
                     $file = $_FILES[$file_key];
-                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                    $mime = finfo_file($finfo, $file['tmp_name']);
-                    finfo_close($finfo);
+
+                    // Safely check mime type
+                    $mime = $file['type']; // Fallback
+                    if (function_exists('finfo_open')) {
+                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                        if ($finfo) {
+                            $mime = finfo_file($finfo, $file['tmp_name']);
+                            finfo_close($finfo);
+                        }
+                    }
+
                     if (in_array($mime, $allowed_img_types)) {
                         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
                         $dest_rel = "uploads/pets/{$pet_id}/{$file_key}.{$ext}";
@@ -133,11 +124,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
                 $pdo->prepare("UPDATE pets SET {$set} WHERE id = ?")->execute($vals);
             }
 
-            $message = "Pet application submitted successfully! It is now pending review by the Trustees.";
+            // Redirect back to resident portal seamlessly instead of stranding them here
+            header("Location: resident_portal.php?step=D&saved=1");
+            exit;
 
         }
-        catch (Exception $e) {
-            $error = "Database Error: " . $e->getMessage();
+        catch (Throwable $e) {
+            $error = "System Error: " . $e->getMessage();
         }
     }
 }
