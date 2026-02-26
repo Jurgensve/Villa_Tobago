@@ -18,13 +18,24 @@ $tenant_count = $stmt->fetchColumn();
 
 $stmt = $pdo->query("SELECT COUNT(*) FROM modifications WHERE status = 'pending'");
 $pending_modifications = $stmt->fetchColumn();
+
+$pending_moves = 0;
+$pending_approvals = 0;
+try {
+    $stmt = $pdo->query("SELECT COUNT(*) FROM move_logistics WHERE status = 'Pending'");
+    $pending_moves = $stmt->fetchColumn();
+    $pending_approvals = $pdo->query("SELECT COUNT(*) FROM tenants WHERE status NOT IN ('Approved','Declined','Completed') AND is_active=1")->fetchColumn()
+        + $pdo->query("SELECT COUNT(*) FROM owners WHERE COALESCE(status,'Pending') NOT IN ('Approved','Declined','Completed') AND is_active=1")->fetchColumn();
+}
+catch (PDOException $e) { /* Tables not yet created */
+}
 ?>
 
 <div class="mb-6">
     <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
     <!-- Card 1: Units -->
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
@@ -88,6 +99,21 @@ $pending_modifications = $stmt->fetchColumn();
             </div>
         </div>
     </div>
+    <!-- Card 5: Pending Moves -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <dt class="text-sm font-medium text-gray-500 truncate">Pending Moves</dt>
+            <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                <?= $pending_moves?>
+            </dd>
+        </div>
+        <div class="bg-gray-50 px-4 py-4 sm:px-6">
+            <div class="text-sm">
+                <a href="move_management.php" class="font-medium text-blue-600 hover:text-blue-500">Manage moves <span
+                        aria-hidden="true">&rarr;</span></a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="bg-white shadow sm:rounded-lg">
@@ -109,6 +135,14 @@ $pending_modifications = $stmt->fetchColumn();
             <a href="import.php"
                 class="inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 shadow-sm">
                 <i class="fas fa-file-import mr-2"></i> Import Data
+            </a>
+            <a href="move_management.php"
+                class="inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 shadow-sm">
+                <i class="fas fa-truck-moving mr-2"></i> Manage Moves
+            </a>
+            <a href="pending_approvals.php"
+                class="inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm">
+                <i class="fas fa-clipboard-check mr-2"></i> Pending Approvals
             </a>
         </div>
     </div>

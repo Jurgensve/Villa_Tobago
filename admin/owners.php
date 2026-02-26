@@ -195,23 +195,42 @@ elseif ($action === 'edit'):
             $agent_approval = isset($_POST['agent_approval']) ? 1 : 0;
             $pet_approval = isset($_POST['pet_approval']) ? 1 : 0;
 
+            // === APPROVAL INTERLOCK ===
+            // For Owners: status can only be 'Approved' if BOTH agent_approval AND pet_approval are true.
+            $interlock_warning = '';
+            if ($status === 'Approved' && !($agent_approval && $pet_approval)) {
+                $status = 'Pending';
+                $interlock_warning = "Status was reset to 'Pending' because both Agent Approval and Pet Approval must be checked before an owner can be Approved.";
+            }
+
             $stmt = $pdo->prepare("UPDATE owners SET full_name=?, id_number=?, email=?, phone=?, status=?, agent_approval=?, pet_approval=? WHERE id=?");
             $stmt->execute([$full_name, $id_number, $email, $phone, $status, $agent_approval, $pet_approval, $id]);
 
-            // Move-in logistics form logic
+            // When marked Approved, send the token-gated Move-In Logistics Form link (once only)
             if ($status === 'Approved') {
-                $o = $pdo->prepare("SELECT email, full_name, move_in_sent FROM owners WHERE id = ?");
+                $o = $pdo->prepare("SELECT email, full_name, move_in_sent, move_in_token FROM owners WHERE id = ?");
                 $o->execute([$id]);
                 $res = $o->fetch();
+
                 if ($res && !$res['move_in_sent']) {
-                    $subject = "Move-In Logistics Form - Villa Tobago";
-                    $body = "Dear {$res['full_name']},\n\nYour resident application is Approved!\nPlease complete the Move-In Logistics Form here: " . SITE_URL . "/move_in_form.php\n\nWelcome!";
+                    $move_in_token = $res['move_in_token'] ?: bin2hex(random_bytes(32));
+                    $pdo->prepare("UPDATE owners SET move_in_token = ? WHERE id = ?")->execute([$move_in_token, $id]);
+
+                    $move_in_link = SITE_URL . "/move_in_form.php?token=" . $move_in_token;
+                    $subject = "Congratulations – Your Owner Application is Approved! | Move-In Form";
+                    $body = "<p>Dear " . h($res['full_name']) . ",</p>";
+                    $body .= "<p>Your owner resident application for <strong>Villa Tobago</strong> has been <strong>Approved</strong>!</p>";
+                    $body .= "<p>Please complete the Move-In Logistics Form so that the security team can be notified of your move-in date:</p>";
+                    $body .= "<p><a href='{$move_in_link}' style='background:#2563eb;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;'>Complete Move-In Form</a></p>";
+                    $body .= "<p style='color:#999;font-size:0.85em;'>This link is personal and single-use. Villa Tobago Management.</p>";
                     send_notification_email($res['email'], $subject, $body);
                     $pdo->prepare("UPDATE owners SET move_in_sent = 1 WHERE id = ?")->execute([$id]);
                 }
             }
 
-            echo "<script>window.location.href = 'owners.php?action=list&msg=updated';</script>";
+            $redirect_msg = $interlock_warning ?: 'Owner updated successfully.';
+            echo "<script>window.location.href = 'owners.php?action=list&msg=" . urlencode($redirect_msg) . "';</script>";
+
         }
 ?>
 <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
@@ -252,7 +271,7 @@ elseif ($action === 'edit'):
                     <label class="block text-sm font-bold text-gray-700 mb-2">Overall Status</label>
                     <select name="status" class="w-full border rounded p-2">
                         <?php foreach (['Pending', 'Information Requested', 'Pending Updated', 'Approved', 'Declined', 'Completed'] as $st): ?>
-                        <option value="<?= $st?>" <?=($owner['status'] ?? 'Pending' )===$st ? 'selected' : ''?>>
+                        <option value="<?= $st?>" <?=($owner['status'] ?? 'Pending') === $st ? 'selected' : '' ?>>
                             <?= $st?>
                         </option>
                         <?php
@@ -260,13 +279,13 @@ elseif ($action === 'edit'):
                     </select>
                 </div>
                 <div class="flex items-center mt-6">
-                    <input type="checkbox" name="agent_approval" value="1" <?=empty($owner['agent_approval']) ? ''
-                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <input type="checkbox" name="agent_approval" value="1" <?= empty($owner['agent_approval']) ? ''
+            : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
                     <label class="font-bold text-sm text-gray-700">Managing Agent Approved</label>
                 </div>
                 <div class="flex items-center mt-6">
-                    <input type="checkbox" name="pet_approval" value="1" <?=empty($owner['pet_approval']) ? ''
-                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <input type="checkbox" name="pet_approval" value="1" <?= empty($owner['pet_approval']) ? ''
+            : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
                     <label class="font-bold text-sm text-gray-700">Pet Approved</label>
                 </div>
             </div>

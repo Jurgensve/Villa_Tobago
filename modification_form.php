@@ -1,6 +1,8 @@
 <?php
 // modification_form.php
+session_start();
 require_once 'admin/config/db.php';
+require_once 'admin/includes/functions.php';
 
 if (!isset($_SESSION['auth_resident'])) {
     header("Location: resident_portal.php");

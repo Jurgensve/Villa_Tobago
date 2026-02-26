@@ -90,24 +90,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $owner_approval = isset($_POST['owner_approval']) ? 1 : 0;
         $pet_approval = isset($_POST['pet_approval']) ? 1 : 0;
 
+        // === APPROVAL INTERLOCK ===
+        // For Tenants: status can only be 'Approved' if BOTH owner_approval AND pet_approval are true.
+        $interlock_warning = '';
+        if ($status === 'Approved' && !($owner_approval && $pet_approval)) {
+            $status = 'Pending';
+            $interlock_warning = "Status reset to Pending: both Owner Approval and Pet Approval must be ticked to Approve a tenant.";
+        }
+
         $pdo->prepare("UPDATE tenants SET status = ?, owner_approval = ?, pet_approval = ? WHERE id = ?")
             ->execute([$status, $owner_approval, $pet_approval, $tenant_id]);
 
-        // Move-in logistics form logic
+        // When marked Approved, send the token-gated Move-In Logistics Form link
         if ($status === 'Approved') {
-            $t = $pdo->prepare("SELECT email, full_name, move_in_sent FROM tenants WHERE id = ?");
+            $t = $pdo->prepare("SELECT email, full_name, move_in_sent, move_in_token FROM tenants WHERE id = ?");
             $t->execute([$tenant_id]);
             $res = $t->fetch();
+
             if ($res && !$res['move_in_sent']) {
-                $subject = "Move-In Logistics Form - Villa Tobago";
-                $body = "Dear {$res['full_name']},\n\nYour resident application is Approved!\nPlease complete the Move-In Logistics Form here: " . SITE_URL . "/move_in_form.php\n\nWelcome!";
+                // Generate a one-time token if not already set
+                $move_in_token = $res['move_in_token'] ?: bin2hex(random_bytes(32));
+                $pdo->prepare("UPDATE tenants SET move_in_token = ? WHERE id = ?")->execute([$move_in_token, $tenant_id]);
+
+                $move_in_link = SITE_URL . "/move_in_form.php?token=" . $move_in_token;
+                $subject = "Congratulations – Your Application is Approved! | Move-In Form";
+                $body = "<p>Dear " . h($res['full_name']) . ",</p>";
+                $body .= "<p>Your resident application for <strong>Villa Tobago</strong> has been <strong>Approved</strong>!</p>";
+                $body .= "<p>Please complete the Move-In Logistics Form so that the security team can be notified of your move-in date:</p>";
+                $body .= "<p><a href='{$move_in_link}' style='background:#2563eb;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;'>Complete Move-In Form</a></p>";
+                $body .= "<p style='color:#999;font-size:0.85em;'>This link is personal and single-use. Villa Tobago Management.</p>";
                 send_notification_email($res['email'], $subject, $body);
                 $pdo->prepare("UPDATE tenants SET move_in_sent = 1 WHERE id = ?")->execute([$tenant_id]);
             }
         }
 
-        $message = "Approval status updated.";
-        header("Location: tenants.php?action=view&id=" . $tenant_id . "&msg=approved");
+        $message = $interlock_warning ?: 'Approval status updated.';
+        header("Location: tenants.php?action=view&id=" . $tenant_id . "&msg=" . urlencode($message));
         exit;
     }
 }
@@ -307,7 +325,8 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                             <label class="block text-sm font-bold text-gray-700 mb-2">Overall Status</label>
                             <select name="status" class="w-full border rounded p-2">
                                 <?php foreach (['Pending', 'Information Requested', 'Pending Updated', 'Approved', 'Declined', 'Completed'] as $st): ?>
-                                <option value="<?= $st?>" <?=($tenant['status'] ?? 'Pending' )===$st ? 'selected' : ''?>>
+                                <option value="<?= $st?>" <?=($tenant['status'] ?? 'Pending' )===$st ? 'selected' : ''
+    ?>>
                                     <?= $st?>
                                 </option>
                                 <?php

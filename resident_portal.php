@@ -1,6 +1,8 @@
 <?php
 // resident_portal.php
+session_start();
 require_once 'admin/config/db.php';
+require_once 'admin/includes/functions.php';
 
 $message = '';
 $error = '';
@@ -69,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <select name="unit_id" class="w-full border rounded px-3 py-2" required>
                         <option value="">-- Select Unit --</option>
                         <?php
-    $units = $pdo->query("SELECT id, unit_number FROM units ORDER BY unit_number ASC")->fetchAll();
+    $units = $pdo->query("SELECT id, unit_number FROM units ORDER BY CAST(unit_number AS UNSIGNED) ASC, unit_number ASC")->fetchAll();
     foreach ($units as $u) {
         echo "<option value='{$u['id']}'>{$u['unit_number']}</option>";
     }
