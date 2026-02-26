@@ -195,6 +195,7 @@ elseif ($action === 'edit'):
             $status = $_POST['status'];
             $agent_approval = isset($_POST['agent_approval']) ? 1 : 0;
             $pet_approval = isset($_POST['pet_approval']) ? 1 : 0;
+            $portal_access_granted = isset($_POST['portal_access_granted']) ? 1 : 0;
 
             // === APPROVAL INTERLOCK ===
             // For Owners: status can only be 'Approved' if BOTH agent_approval AND pet_approval are true.
@@ -204,8 +205,8 @@ elseif ($action === 'edit'):
                 $interlock_warning = "Status was reset to 'Pending' because both Agent Approval and Pet Approval must be checked before an owner can be Approved.";
             }
 
-            $stmt = $pdo->prepare("UPDATE owners SET full_name=?, id_number=?, email=?, phone=?, status=?, agent_approval=?, pet_approval=? WHERE id=?");
-            $stmt->execute([$full_name, $id_number, $email, $phone, $status, $agent_approval, $pet_approval, $id]);
+            $stmt = $pdo->prepare("UPDATE owners SET full_name=?, id_number=?, email=?, phone=?, status=?, agent_approval=?, pet_approval=?, portal_access_granted=? WHERE id=?");
+            $stmt->execute([$full_name, $id_number, $email, $phone, $status, $agent_approval, $pet_approval, $portal_access_granted, $id]);
 
             // When marked Approved, send the token-gated Move-In Logistics Form link (once only)
             if ($status === 'Approved') {
@@ -267,27 +268,36 @@ elseif ($action === 'edit'):
         <div class="mt-8 pt-6 border-t border-gray-100">
             <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Resident Application Approval
             </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div class="md:col-span-2">
                     <label class="block text-sm font-bold text-gray-700 mb-2">Overall Status</label>
                     <select name="status" class="w-full border rounded p-2">
                         <?php foreach (['Pending', 'Information Requested', 'Pending Updated', 'Approved', 'Declined', 'Completed'] as $st): ?>
-                        <option value="<?= $st?>" <?=($owner['status'] ?? 'Pending') === $st ? 'selected' : '' ?>>
+                        <option value="<?= $st?>" <?=($owner['status'] ?? 'Pending' )===$st ? 'selected' : ''?>>
                             <?= $st?>
                         </option>
                         <?php
         endforeach; ?>
                     </select>
                 </div>
-                <div class="flex items-center mt-6">
-                    <input type="checkbox" name="agent_approval" value="1" <?= empty($owner['agent_approval']) ? ''
-            : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
-                    <label class="font-bold text-sm text-gray-700">Managing Agent Approved</label>
+                <div class="flex items-center mt-2">
+                    <input type="checkbox" name="portal_access_granted" value="1"
+                        <?=empty($owner['portal_access_granted']) ? '' : 'checked'?> class="mr-2 h-5 w-5
+                    text-indigo-600">
+                    <label class="font-bold text-sm text-gray-700">1. Portal Access Granted</label>
                 </div>
-                <div class="flex items-center mt-6">
-                    <input type="checkbox" name="pet_approval" value="1" <?= empty($owner['pet_approval']) ? ''
-            : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
-                    <label class="font-bold text-sm text-gray-700">Pet Approved</label>
+                <div class="text-xs text-gray-500 mt-2 flex items-center">
+                    (Allows owner to complete profile)
+                </div>
+                <div class="flex items-center mt-2">
+                    <input type="checkbox" name="agent_approval" value="1" <?=empty($owner['agent_approval']) ? ''
+                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <label class="font-bold text-sm text-gray-700">2. Agent Final Approval</label>
+                </div>
+                <div class="flex items-center mt-2">
+                    <input type="checkbox" name="pet_approval" value="1" <?=empty($owner['pet_approval']) ? ''
+                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <label class="font-bold text-sm text-gray-700">3. Pet Approved</label>
                 </div>
             </div>
             <?php if (!empty($owner['move_in_sent'])): ?>
