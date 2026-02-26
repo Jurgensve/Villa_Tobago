@@ -1,7 +1,7 @@
 <?php
 // admin/move_management.php  — Management queue for all move-in/out logistics
+$required_roles = ['admin', 'managing_agent'];
 require_once 'includes/header.php';
-require_role(['admin', 'managing_agent']); // Trustees: approvals only
 
 $message = '';
 $error = '';

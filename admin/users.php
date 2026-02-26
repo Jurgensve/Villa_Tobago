@@ -1,6 +1,6 @@
 <?php
+$required_roles = ['admin'];
 require_once 'includes/header.php';
-require_admin(); // Only admins may manage users
 
 $success = '';
 $error = '';

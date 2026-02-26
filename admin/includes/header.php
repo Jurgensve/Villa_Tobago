@@ -9,6 +9,12 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/functions.php';
 
 require_login();
+
+// Role gate — pages set $required_roles before including this file.
+// This runs BEFORE any HTML so header() redirects still work.
+if (!empty($required_roles)) {
+    require_role($required_roles);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -261,7 +267,7 @@ endif; // end admin/agent nav ?>
             if (!e.target.closest('.nav-dropdown-wrapper')) {
                 document.querySelectorAll('.nav-dropdown').forEach(m => m.classList.add('hidden'));
             }
-        });
+    });
     </script>
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
