@@ -22,6 +22,7 @@ deployment:
     - /bin/cp amend_request.php $DEPLOYPATH
     - /bin/cp logout_resident.php $DEPLOYPATH
     - /bin/cp test_db.php $DEPLOYPATH
+    - /bin/cp approve_logistics.php $DEPLOYPATH
     # ── Config & routing ───────────────────────────────────────────
     - /bin/cp .htaccess $DEPLOYPATH
     # ── SQL Migration scripts ──────────────────────────────────────
@@ -31,5 +32,7 @@ deployment:
     - /bin/cp move_logistics_schema.sql $DEPLOYPATH
     - /bin/cp user_management_schema.sql $DEPLOYPATH
     - /bin/cp residency_migration.sql $DEPLOYPATH
+    - /bin/cp patch_db.sql $DEPLOYPATH
+    # ── Uploads directory (ensure it exists) ──────────────────────
     - mkdir -p $DEPLOYPATH/uploads
     # Trigger rebuild test

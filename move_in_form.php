@@ -44,16 +44,17 @@ else {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $move_data && !$error) {
     $preferred_date = $_POST['move_in_date'] ?? null;
     $truck_reg = trim($_POST['truck_reg'] ?? '');
+    $truck_gwm = !empty($_POST['truck_gwm']) ? (int)$_POST['truck_gwm'] : null;
     $moving_company = trim($_POST['moving_company'] ?? '');
     $notes = trim($_POST['notes'] ?? '');
 
     try {
         $pdo->beginTransaction();
 
-        // Insert into move_logistics
+        // Insert into move_logistics as Pending (Agent must approve first)
         $stmt = $pdo->prepare(
-            "INSERT INTO move_logistics (unit_id, resident_type, resident_id, move_type, preferred_date, truck_reg, moving_company, notes, status)
-             VALUES (?, ?, ?, 'move_in', ?, ?, ?, ?, 'Approved')"
+            "INSERT INTO move_logistics (unit_id, resident_type, resident_id, move_type, preferred_date, truck_reg, truck_gwm, moving_company, notes, status)
+             VALUES (?, ?, ?, 'move_in', ?, ?, ?, ?, ?, 'Pending')"
         );
         $stmt->execute([
             $move_data['unit_id'],
@@ -61,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $move_data && !$error) {
             $move_data['resident_id'],
             $preferred_date,
             $truck_reg,
+            $truck_gwm,
             $moving_company,
             $notes
         ]);
@@ -74,21 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $move_data && !$error) {
             $pdo->prepare("UPDATE owners SET move_in_token = NULL WHERE id = ?")->execute([$move_data['resident_id']]);
         }
 
-        // Send security notification immediately for move-ins
-        $notify_data = array_merge($move_data, [
-            'move_type' => 'move_in',
-            'preferred_date' => $preferred_date,
-            'truck_reg' => $truck_reg,
-            'moving_company' => $moving_company,
-            'resident_name' => $move_data['full_name'],
-        ]);
-        send_security_notification($pdo, $notify_data);
-
-        // Mark security notified
-        $pdo->prepare("UPDATE move_logistics SET security_notified = 1, security_notified_at = NOW() WHERE id = ?")->execute([$logistics_id]);
-
         $pdo->commit();
-        $message = "Thank you, {$move_data['full_name']}! Your move-in details have been submitted. Security has been notified and will expect your arrival on the date provided.";
+        $message = "Thank you, {$move_data['full_name']}! Your move-in details have been submitted. These details are now pending final review by the Managing Agent. You will receive an email confirmation once approved and security has been notified.";
         $move_data = null; // hide the form
 
     }
@@ -97,6 +86,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $move_data && !$error) {
         $error = "A system error occurred. Please try again or contact the Managing Agent. (" . $e->getMessage() . ")";
     }
 }
+
+// Fetch max truck weight setting
+$max_gwm = 3500;
+try {
+    $gwm_setting = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'max_truck_gwm'")->fetchColumn();
+    if (is_numeric($gwm_setting))
+        $max_gwm = (int)$gwm_setting;
+}
+catch (Exception $e) {
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -121,14 +121,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $move_data && !$error) {
         </div>
 
         <?php if ($message): ?>
-        <div class="bg-green-50 border-l-4 border-green-500 text-green-800 px-4 py-4 rounded text-center mb-4">
-            <i class="fas fa-check-circle text-2xl text-green-500 mb-2 block"></i>
+        <div class="bg-green-50 border-l-4 border-green-500 text-green-800 px-6 py-5 rounded shadow text-center mb-4">
+            <i class="fas fa-clock text-3xl text-green-500 mb-3 block"></i>
             <strong>
                 <?= h($message)?>
             </strong>
         </div>
         <div class="text-center mt-4">
-            <a href="index.html" class="text-blue-600 hover:underline text-sm">Return to Homepage</a>
+            <a href="index.html" class="text-blue-600 font-bold hover:underline text-sm"><i
+                    class="fas fa-home mr-1"></i> Return to Homepage</a>
         </div>
 
         <?php
@@ -175,6 +176,26 @@ elseif ($move_data): ?>
                 <p class="text-xs text-gray-400 mt-1">This will be shared with the security team at the gate.</p>
             </div>
             <div>
+                <label class="block text-gray-700 text-sm font-bold mb-1" for="truck_gwm">
+                    Gross Vehicle Mass (GWM) of Truck in kg
+                </label>
+                <input type="number" id="truck_gwm" name="truck_gwm" step="1" min="0"
+                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="e.g. 2000">
+                <p class="text-xs text-gray-500 mt-1">The maximum permitted weight inside the complex is <strong>
+                        <?= number_format($max_gwm)?>kg
+                    </strong>.</p>
+
+                <div id="gwm_warning" class="hidden mt-2 bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                    <p class="text-red-700 text-xs font-bold leading-tight flex items-start gap-2">
+                        <i class="fas fa-exclamation-triangle mt-0.5"></i>
+                        <span><strong>Warning:</strong> Your truck exceeds the max allowed weight. It must park outside
+                            the complex to avoid paving damage. Any damage inside will be for the owner's
+                            account.</span>
+                    </p>
+                </div>
+            </div>
+            <div>
                 <label class="block text-gray-700 text-sm font-bold mb-1" for="moving_company">
                     Moving Company Name <span class="text-gray-400 font-normal">(if applicable)</span>
                 </label>
@@ -198,6 +219,22 @@ elseif ($move_data): ?>
         <?php
 endif; ?>
     </div>
+</body>
+
+</html>     const maxGwm = <?= $max_gwm ?>;
+
+            if(gwmInput) {
+                gwmInput.addEventListener('input', function() {
+                    const val = parseInt(this.value, 10);
+                    if (!isNaN(val) && val > maxGwm) {
+                        gwmWarning.classList.remove('hidden');
+                    } else {
+                        gwmWarning.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

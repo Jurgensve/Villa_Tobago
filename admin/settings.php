@@ -89,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_system_settings'
 
         $stmt->execute(['security_email', trim($_POST['security_email'] ?? '')]);
         $stmt->execute(['footer_text', trim($_POST['footer_text'] ?? '')]);
+        $stmt->execute(['max_truck_gwm', (int)($_POST['max_truck_gwm'] ?? 3500)]);
 
         if (!empty($_FILES['logo_file']['name'])) {
             $logo_ext = strtolower(pathinfo($_FILES['logo_file']['name'], PATHINFO_EXTENSION));
@@ -144,6 +145,7 @@ try {
     $footer_text_val = $sys['footer_text'] ?? '';
     $logo_path_val = $sys['logo_path'] ?? '';
     $rules_pdf_val = $sys['complex_rules_pdf'] ?? '';
+    $max_truck_gwm_val = (int)($sys['max_truck_gwm'] ?? 3500);
     $total_units_val = (int)($sys['total_units'] ?? 0);
     $current_units_count = (int)$pdo->query("SELECT COUNT(*) FROM units")->fetchColumn();
 }
@@ -186,8 +188,8 @@ endif; ?>
                         <p class="text-sm text-gray-500">Allow pets to be registered against residents.</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="pet_management_enabled" value="1" <?= $pet_enabled ? 'checked' : ''
-                            ?> class="sr-only peer">
+                        <input type="checkbox" name="pet_management_enabled" value="1" <?=$pet_enabled ? 'checked' : ''
+    ?> class="sr-only peer">
                         <div
                             class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                         </div>
@@ -312,6 +314,17 @@ endif; ?>
                         download this document.</p>
                 </div>
 
+                <!-- Maximum Permitted Truck GWM -->
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="max_truck_gwm">
+                        <i class="fas fa-truck-moving text-blue-400 mr-1"></i> Maximum Permitted Truck GWM (kg)
+                    </label>
+                    <input type="number" id="max_truck_gwm" name="max_truck_gwm" value="<?= $max_truck_gwm_val?>"
+                        class="shadow border rounded w-32 py-2 px-3 text-gray-700 focus:outline-none" step="1" min="0">
+                    <p class="text-xs text-gray-500 mt-1">Maximum allowed weight for moving trucks. Residents will be
+                        warned if they exceed this limit during move-in/out.</p>
+                </div>
+
                 <!-- System Initialization: Total Units -->
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <label class="block text-yellow-800 text-sm font-bold mb-2">
@@ -325,7 +338,7 @@ endif; ?>
 endif; ?>
                     </label>
                     <input type="number" name="total_units" value="<?= $total_units_val ?: ''?>"
-                        <?= $current_units_count > 0 ? 'disabled' : ''?>
+                        <?=$current_units_count> 0 ? 'disabled' : ''?>
                     min="1" max="1000"
                     class="shadow border rounded w-32 py-2 px-3 text-gray-700 focus:outline-none
                     <?= $current_units_count > 0 ? 'opacity-50 cursor-not-allowed' : ''?>"

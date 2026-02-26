@@ -77,6 +77,11 @@ function send_security_notification($pdo, $move)
     $truck_label = $move['truck_reg'] ? h($move['truck_reg']) : 'Not specified';
     $company_label = $move['moving_company'] ? h($move['moving_company']) : 'Not specified';
 
+    $gwm_row = '';
+    if (!empty($move['truck_gwm'])) {
+        $gwm_row = "<tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>Truck GWM</td><td style='padding:8px;border:1px solid #ddd;color:orange;font-weight:bold;'>" . number_format($move['truck_gwm']) . " kg</td></tr>";
+    }
+
     $subject = "Security Notice: {$move_type_label} – Unit {$move['unit_number']}";
 
     $body = "<p>Dear Security Team,</p>";
@@ -87,6 +92,7 @@ function send_security_notification($pdo, $move)
     $body .= "<tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>Resident</td><td style='padding:8px;border:1px solid #ddd;'>" . h($move['resident_name']) . "</td></tr>";
     $body .= "<tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>Date</td><td style='padding:8px;border:1px solid #ddd;'>{$date_label}</td></tr>";
     $body .= "<tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>Truck Reg</td><td style='padding:8px;border:1px solid #ddd;'>{$truck_label}</td></tr>";
+    $body .= $gwm_row;
     $body .= "<tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>Moving Company</td><td style='padding:8px;border:1px solid #ddd;'>{$company_label}</td></tr>";
     $body .= "</table>";
     $body .= "<p style='color:#666;font-size:0.85em;'>This is an automated notification from Villa Tobago Management.</p>";

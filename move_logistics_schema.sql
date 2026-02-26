@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS move_logistics (
     move_type       ENUM('move_in','move_out') NOT NULL,
     preferred_date  DATE,
     truck_reg       VARCHAR(50),
+    truck_gwm       INT DEFAULT NULL,      -- Gross Vehicle Mass in kg
     moving_company  VARCHAR(100),
     notes           TEXT,
     status          ENUM('Pending','Approved','Completed','Cancelled') DEFAULT 'Pending',
@@ -42,7 +43,8 @@ INSERT IGNORE INTO system_settings (setting_key, setting_value, description) VAL
     ('complex_rules_pdf','',  'Path to uploaded Body Corporate rules PDF'),
     ('logo_path',        '',  'Path to uploaded complex logo image'),
     ('footer_text',      '',  'Custom footer text for resident-facing pages'),
-    ('total_units',      '0', 'Total number of units in the complex (locked once set)');
+    ('total_units',      '0', 'Total number of units in the complex (locked once set)'),
+    ('max_truck_gwm',    '3500', 'Maximum allowed weight (kg) for moving trucks entering the complex');
 
 -- 5. Add move_in_token to owners (mirrors tenants)
 ALTER TABLE owners

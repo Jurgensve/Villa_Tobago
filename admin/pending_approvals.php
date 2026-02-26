@@ -24,6 +24,20 @@ $owners = $pdo->query(
      ORDER BY o.created_at ASC"
 )->fetchAll();
 
+// ── Fetch all pending MOVE LOGISTICS ─────────────────────────────────────────
+$moves = $pdo->query(
+    "SELECT ml.*, u.unit_number,
+            COALESCE(t.full_name, o.full_name) AS resident_name,
+            COALESCE(t.email, o.email) AS resident_email
+     FROM move_logistics ml
+     JOIN units u ON ml.unit_id = u.id
+     LEFT JOIN tenants t ON ml.resident_type = 'tenant' AND ml.resident_id = t.id
+     LEFT JOIN owners o ON ml.resident_type = 'owner' AND ml.resident_id = o.id
+     WHERE ml.status = 'Pending'
+       AND (ml.owner_approval IS NULL OR ml.owner_approval = 1)
+     ORDER BY ml.created_at ASC"
+)->fetchAll();
+
 // ── Helper badge ─────────────────────────────────────────────────────────────
 function approval_badge($val, $label)
 {
@@ -212,6 +226,7 @@ endif; ?>
     $(document).ready(function () {
         $('#tenantsApprovalTable').DataTable({ pageLength: 25, order: [[3, 'asc']], searching: false });
         $('#ownersApprovalTable').DataTable({ pageLength: 25, order: [[2, 'asc']], searching: false });
+        $('#movesApprovalTable').DataTable({ pageLength: 25, order: [[3, 'asc']], searching: false });
     });
 </script>
 

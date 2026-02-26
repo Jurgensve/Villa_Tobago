@@ -50,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_moveout'])) {
     $resident_id = (int)($_POST['resident_id'] ?? 0);
     $preferred_date = $_POST['move_out_date'] ?? null;
     $truck_reg = trim($_POST['truck_reg'] ?? '');
+    $truck_gwm = !empty($_POST['truck_gwm']) ? (int)$_POST['truck_gwm'] : null;
     $moving_company = trim($_POST['moving_company'] ?? '');
     $notes = trim($_POST['notes'] ?? '');
 
@@ -83,17 +84,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_moveout'])) {
             $move_out_token = bin2hex(random_bytes(32));
 
             $stmt = $pdo->prepare(
-                "INSERT INTO move_logistics (unit_id, resident_type, resident_id, move_type, preferred_date, truck_reg, moving_company, notes, status, move_out_token)
-                 VALUES (?, ?, ?, 'move_out', ?, ?, ?, ?, 'Pending', ?)"
+                "INSERT INTO move_logistics (unit_id, resident_type, resident_id, move_type, preferred_date, truck_reg, truck_gwm, moving_company, notes, status, move_out_token)
+                 VALUES (?, ?, ?, 'move_out', ?, ?, ?, ?, ?, 'Pending', ?)"
             );
             $stmt->execute([
                 $unit_id, $resident_type, $resident_id,
-                $preferred_date, $truck_reg, $moving_company, $notes,
+                $preferred_date, $truck_reg, $truck_gwm, $moving_company, $notes,
                 $move_out_token
             ]);
             $logistics_id = $pdo->lastInsertId();
 
-            // If TENANT move-out → send approval request to the unit's Owner
+            // If TENANT move-out → send approval request to the unit's Owner first
             if ($resident_type === 'tenant') {
                 $ownerStmt = $pdo->prepare("SELECT o.full_name, o.email FROM owners o
                                             JOIN ownership_history oh ON o.id = oh.owner_id AND oh.is_current = 1
@@ -111,11 +112,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_moveout'])) {
                     $body .= "<p style='color:#999;font-size:0.85em;'>Villa Tobago Management</p>";
                     send_notification_email($owner['email'], $subject, $body);
                 }
-                $message = "Your move-out request has been submitted. The unit owner has been notified and must approve it. You will be contacted once a decision has been made.";
+                $message = "Your move-out request has been submitted. The unit owner has been notified and must approve it. You will be contacted once a decision has been made by the Owner and Managing Agent.";
             }
             else {
-                // OWNER move-out → no owner step needed, goes straight to Agent approval queue
-                $message = "Your move-out request has been submitted to the Managing Agent for approval. You will be notified once it has been processed.";
+                // OWNER move-out → Goes straight to Agent approval queue
+                $message = "Your move-out request has been submitted to the Managing Agent for approval. You will receive an email confirmation once approved and security has been notified.";
             }
 
             $pdo->commit();
@@ -125,6 +126,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_moveout'])) {
             $error = "A system error occurred. Please try again. (" . $e->getMessage() . ")";
         }
     }
+}
+
+// Fetch max truck weight setting
+$max_gwm = 3500;
+try {
+    $gwm_setting = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'max_truck_gwm'")->fetchColumn();
+    if (is_numeric($gwm_setting))
+        $max_gwm = (int)$gwm_setting;
+}
+catch (Exception $e) {
 }
 
 // Load all unit numbers for the dropdown
@@ -247,6 +258,26 @@ else: ?>
                         placeholder="e.g. CA 123-456">
                 </div>
                 <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-1" for="truck_gwm">
+                        Gross Vehicle Mass (GWM) of Truck in kg
+                    </label>
+                    <input type="number" id="truck_gwm" name="truck_gwm" step="1" min="0"
+                        class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="e.g. 2000">
+                    <p class="text-xs text-gray-500 mt-1">The maximum permitted weight inside the complex is <strong>
+                            <?= number_format($max_gwm)?>kg
+                        </strong>.</p>
+
+                    <div id="gwm_warning" class="hidden mt-2 bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                        <p class="text-red-700 text-xs font-bold leading-tight flex items-start gap-2">
+                            <i class="fas fa-exclamation-triangle mt-0.5"></i>
+                            <span><strong>Warning:</strong> Your truck exceeds the max allowed weight. It must park
+                                outside the complex to avoid paving damage. Any damage inside will be for the owner's
+                                account.</span>
+                        </p>
+                    </div>
+                </div>
+                <div>
                     <label class="block text-gray-700 text-sm font-bold mb-1" for="moving_company">
                         Moving Company Name <span class="text-gray-400 font-normal">(if applicable)</span>
                     </label>
@@ -323,6 +354,24 @@ endif; ?>
                     btnText.textContent = 'Verify My Identity';
                     document.getElementById('btn-verify').disabled = false;
                 });
+        });
+
+        // GWM Warning Script
+        document.addEventListener('DOMContentLoaded', function () {
+            const gwmInput = document.getElementById('truck_gwm');
+            const gwmWarning = document.getElementById('gwm_warning');
+            const maxGwm = <?= $max_gwm?>;
+
+            if (gwmInput) {
+                gwmInput.addEventListener('input', function () {
+                    const val = parseInt(this.value, 10);
+                    if (!isNaN(val) && val > maxGwm) {
+                        gwmWarning.classList.remove('hidden');
+                    } else {
+                        gwmWarning.classList.add('hidden');
+                    }
+                });
+            }
         });
     </script>
 </body>
