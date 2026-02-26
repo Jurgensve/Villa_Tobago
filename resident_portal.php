@@ -321,22 +321,26 @@ else: ?>
     $agent_final = (int)($step_data['agent_approved'] ?? 0);
     $move_in_sent = (int)($step_data['move_in_sent'] ?? 0);
 
-    function status_dot($done, $label, $sub = '')
-    {
-        $color = $done ? 'bg-green-500' : 'bg-gray-200';
-        $text = $done ? 'text-green-700' : 'text-gray-400';
-        $icon = $done ? 'fa-check' : 'fa-circle';
-        echo "<div class='flex flex-col items-center text-center min-w-[80px]'>";
-        echo "<div class='w-9 h-9 rounded-full {$color} flex items-center justify-center mb-1'><i class='fas {$icon} text-white text-sm'></i></div>";
-        echo "<span class='text-xs font-bold {$text}'>{$label}</span>";
-        if ($sub)
-            echo "<span class='text-xs text-gray-400'>{$sub}</span>";
-        echo "</div>";
+    if (!function_exists('status_dot')) {
+        function status_dot($done, $label, $sub = '')
+        {
+            $color = $done ? 'bg-green-500' : 'bg-gray-200';
+            $text = $done ? 'text-green-700' : 'text-gray-400';
+            $icon = $done ? 'fa-check' : 'fa-circle';
+            echo "<div class='flex flex-col items-center text-center min-w-[80px]'>";
+            echo "<div class='w-9 h-9 rounded-full {$color} flex items-center justify-center mb-1'><i class='fas {$icon} text-white text-sm'></i></div>";
+            echo "<span class='text-xs font-bold {$text}'>{$label}</span>";
+            if ($sub)
+                echo "<span class='text-xs text-gray-400'>{$sub}</span>";
+            echo "</div>";
+        }
     }
-    function status_line($done)
-    {
-        $color = $done ? 'bg-green-400' : 'bg-gray-200';
-        echo "<div class='flex-1 h-1 {$color} mt-4 mx-1'></div>";
+    if (!function_exists('status_line')) {
+        function status_line($done)
+        {
+            $color = $done ? 'bg-green-400' : 'bg-gray-200';
+            echo "<div class='flex-1 h-1 {$color} mt-4 mx-1'></div>";
+        }
     }
 ?>
             <div class="flex items-start">

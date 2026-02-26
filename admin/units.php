@@ -495,11 +495,13 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                 <?php if ($resident_detail): ?>
                 <div class="mt-4 flex flex-wrap gap-2">
                     <?php
-            function res_badge($val, $label)
-            {
-                $cls = $val ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500';
-                $icon = $val ? 'fa-check' : 'fa-clock';
-                echo "<span class='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold {$cls}'><i class='fas {$icon}'></i>{$label}</span>";
+            if (!function_exists('res_badge')) {
+                function res_badge($val, $label)
+                {
+                    $cls = $val ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500';
+                    $icon = $val ? 'fa-check' : 'fa-clock';
+                    echo "<span class='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold {$cls}'><i class='fas {$icon}'></i>{$label}</span>";
+                }
             }
             $oa = ($resident['resident_type'] ?? '') === 'tenant' ? ($resident_detail['owner_approval'] ?? 0) : ($resident_detail['agent_approval'] ?? 0);
             res_badge($oa, ($resident['resident_type'] ?? '') === 'tenant' ? 'Owner Approved' : 'Agent Verified');
