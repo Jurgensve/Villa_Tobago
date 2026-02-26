@@ -286,7 +286,9 @@ endif; // end admin/agent nav ?>
         }
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.nav-dropdown-wrapper')) {
-                document.querySelectorAll('.nav-dropdown').forEach(m => m.classList.add('hidden                         }     });
+                document.querySelectorAll('.nav-dropdown').forEach(m => m.classList.add('hidden'));
+            }
+        });
     </script>
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
