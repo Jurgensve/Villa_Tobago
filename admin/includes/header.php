@@ -10,22 +10,20 @@ require_once __DIR__ . '/functions.php';
 
 require_login();
 
-// Refresh role + full_name from DB if missing (stale session after code update,
-// or before the user_management migration has been run).
-if (empty($_SESSION['role'])) {
-    try {
-        $__stmt = $pdo->prepare("SELECT full_name, role FROM users WHERE id = ?");
-        $__stmt->execute([$_SESSION['user_id']]);
-        $__row = $__stmt->fetch();
-        // If the role column doesn't exist yet (migration not run), default to 'admin'
-        $_SESSION['role'] = $__row['role'] ?? 'admin';
-        $_SESSION['full_name'] = $__row['full_name'] ?? $_SESSION['username'];
-    }
-    catch (PDOException $__e) {
-        // Column doesn't exist yet — treat as admin so no one gets locked out
-        $_SESSION['role'] = 'admin';
-        $_SESSION['full_name'] = $_SESSION['full_name'] ?? $_SESSION['username'];
-    }
+// Always refresh role + full_name from DB on each request so stale sessions
+// (e.g., after code deployments) self-heal without requiring a logout.
+try {
+    $__stmt = $pdo->prepare("SELECT full_name, role FROM users WHERE id = ?");
+    $__stmt->execute([$_SESSION['user_id']]);
+    $__row = $__stmt->fetch();
+    // If the role column doesn't exist yet (migration not run), default to 'admin'
+    $_SESSION['role'] = $__row['role'] ?? 'admin';
+    $_SESSION['full_name'] = $__row['full_name'] ?? $_SESSION['username'];
+}
+catch (PDOException $__e) {
+    // Column doesn't exist yet — treat as admin so no one gets locked out
+    $_SESSION['role'] = $_SESSION['role'] ?? 'admin';
+    $_SESSION['full_name'] = $_SESSION['full_name'] ?? $_SESSION['username'];
 }
 
 // Role gate — pages set $required_roles before including this file.
@@ -284,8 +282,8 @@ endif; // end admin/agent nav ?>
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.nav-dropdown-wrapper')) {
                 document.querySelectorAll('.nav-dropdown').forEach(m => m.classList.add('hidden'));
-        }
-    });
+            }
+        });
     </script>
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
