@@ -156,6 +156,13 @@ require_login();
                                 <a href="run_migrations.php" class="nav-drop-item">
                                     <i class="fas fa-database text-gray-400 w-4"></i> Run Migrations
                                 </a>
+                                <?php if (($_SESSION['role'] ?? '') === 'super_admin'): ?>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="users.php" class="nav-drop-item">
+                                    <i class="fas fa-users-cog text-gray-400 w-4"></i> User Management
+                                </a>
+                                <?php
+endif; ?>
                             </div>
                         </div>
 
@@ -165,10 +172,10 @@ require_login();
                 <!-- Right: user info -->
                 <div class="flex items-center gap-4">
                     <span class="text-gray-600 text-sm">Hello, <strong>
-                            <?= h($_SESSION['username'])?>
+                            <?= h($_SESSION['full_name'] ?? $_SESSION['username'])?>
                         </strong></span>
-                    <a href="change_password.php" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Change
-                        Password</a>
+                    <a href="profile.php" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i
+                            class="fas fa-user-circle mr-1"></i>Profile</a>
                     <a href="logout.php" class="text-red-600 hover:text-red-800 text-sm font-medium">Logout</a>
                 </div>
             </div>

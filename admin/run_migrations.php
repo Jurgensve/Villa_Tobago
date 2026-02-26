@@ -33,6 +33,13 @@ $migrations = [
         'icon'        => 'fa-truck-moving',
         'color'       => 'orange',
     ],
+    'user_management' => [
+        'label'       => 'User Management Schema (user_management_schema.sql)',
+        'description' => 'Adds full_name, email, phone, role, and is_active columns to the users table. Promotes the first user to super_admin.',
+        'file'        => __DIR__ . '/../user_management_schema.sql',
+        'icon'        => 'fa-users-cog',
+        'color'       => 'purple',
+    ],
 ];
 
 // ─── Execute a migration ───────────────────────────────────────────────────────

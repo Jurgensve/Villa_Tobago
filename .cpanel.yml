@@ -29,5 +29,6 @@ deployment:
     - /bin/cp schema_residents_pets.sql $DEPLOYPATH
     - /bin/cp update_schema_attachments.sql $DEPLOYPATH
     - /bin/cp move_logistics_schema.sql $DEPLOYPATH
+    - /bin/cp user_management_schema.sql $DEPLOYPATH
     # ── Uploads directory (ensure it exists) ──────────────────────
     - mkdir -p $DEPLOYPATH/uploads
