@@ -110,6 +110,10 @@ require_login();
                                 <a href="owners.php" class="nav-drop-item">
                                     <i class="fas fa-key text-gray-400 w-4"></i> Owners
                                 </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="modifications.php" class="nav-drop-item">
+                                    <i class="fas fa-hammer text-gray-400 w-4"></i> Modifications
+                                </a>
                             </div>
                         </div>
 
@@ -128,10 +132,6 @@ require_login();
                                 </a>
                                 <a href="move_management.php" class="nav-drop-item">
                                     <i class="fas fa-truck-moving text-gray-400 w-4"></i> Moves
-                                </a>
-                                <div class="border-t border-gray-100 my-1"></div>
-                                <a href="modifications.php" class="nav-drop-item">
-                                    <i class="fas fa-hammer text-gray-400 w-4"></i> Modifications
                                 </a>
                             </div>
                         </div>
