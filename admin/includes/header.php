@@ -89,94 +89,158 @@ require_login();
     <nav class="bg-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <span class="font-bold text-xl text-blue-600">Villa Tobago Admin</span>
-                    </div>
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-6 sm:items-center">
-                        <a href="index.php"
-                            class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            <i class="fas fa-home mr-1"></i> Dashboard
-                        </a>
-                        <a href="units.php"
-                            class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            <i class="fas fa-building mr-1"></i> Units
-                        </a>
-                        <a href="owners.php"
-                            class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            <i class="fas fa-key mr-1"></i> Owners
-                        </a>
-                        <a href="tenants.php"
-                            class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            <i class="fas fa-users mr-1"></i> Tenants
-                        </a>
-                        <a href="pets.php"
-                            class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            <i class="fas fa-paw mr-1"></i> Pets
-                        </a>
-                        <a href="modifications.php"
-                            class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            <i class="fas fa-hammer mr-1"></i> Modifications
-                        </a>
-                        <a href="move_management.php"
-                            class="border-transparent text-gray-500 hover:border-blue-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            <i class="fas fa-truck-moving mr-1"></i> Moves
-                        </a>
+                <div class="flex items-center">
+                    <!-- Brand = dashboard link -->
+                    <a href="index.php" class="font-bold text-xl text-blue-600 hover:text-blue-800 mr-8 flex-shrink-0">
+                        Villa Tobago Admin
+                    </a>
+
+                    <div class="hidden sm:flex sm:space-x-2 sm:items-center">
+
+                        <!-- Units dropdown -->
+                        <div class="relative nav-dropdown-wrapper">
+                            <button type="button" onclick="toggleDropdown(this)" class="nav-btn">
+                                <i class="fas fa-building mr-1"></i> Units
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="nav-dropdown hidden">
+                                <a href="units.php" class="nav-drop-item">
+                                    <i class="fas fa-building text-gray-400 w-4"></i> All Units
+                                </a>
+                                <a href="owners.php" class="nav-drop-item">
+                                    <i class="fas fa-key text-gray-400 w-4"></i> Owners
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Residents dropdown -->
+                        <div class="relative nav-dropdown-wrapper">
+                            <button type="button" onclick="toggleDropdown(this)" class="nav-btn">
+                                <i class="fas fa-users mr-1"></i> Residents
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="nav-dropdown hidden">
+                                <a href="tenants.php" class="nav-drop-item">
+                                    <i class="fas fa-users text-gray-400 w-4"></i> Tenants
+                                </a>
+                                <a href="pets.php" class="nav-drop-item">
+                                    <i class="fas fa-paw text-gray-400 w-4"></i> Pets
+                                </a>
+                                <a href="move_management.php" class="nav-drop-item">
+                                    <i class="fas fa-truck-moving text-gray-400 w-4"></i> Moves
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="modifications.php" class="nav-drop-item">
+                                    <i class="fas fa-hammer text-gray-400 w-4"></i> Modifications
+                                </a>
+                            </div>
+                        </div>
 
                         <!-- Settings dropdown -->
-                        <div class="relative" id="settingsDropdownWrapper">
-                            <button onclick="toggleSettingsMenu()" type="button"
-                                class="border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium focus:outline-none">
+                        <div class="relative nav-dropdown-wrapper">
+                            <button type="button" onclick="toggleDropdown(this)" class="nav-btn">
                                 <i class="fas fa-cog mr-1"></i> Settings
                                 <i class="fas fa-chevron-down ml-1 text-xs"></i>
                             </button>
-                            <div id="settingsDropdownMenu"
-                                class="hidden absolute right-0 mt-1 w-52 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1">
-                                <a href="settings.php"
-                                    class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                            <div class="nav-dropdown hidden">
+                                <a href="settings.php" class="nav-drop-item">
                                     <i class="fas fa-sliders-h text-gray-400 w-4"></i> Settings
                                 </a>
-                                <a href="pending_approvals.php"
-                                    class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <a href="pending_approvals.php" class="nav-drop-item">
                                     <i class="fas fa-clipboard-check text-gray-400 w-4"></i> Pending Approvals
                                 </a>
-                                <a href="import.php"
-                                    class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <a href="import.php" class="nav-drop-item">
                                     <i class="fas fa-file-import text-gray-400 w-4"></i> Import Data
                                 </a>
                                 <div class="border-t border-gray-100 my-1"></div>
-                                <a href="run_migrations.php"
-                                    class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <a href="run_migrations.php" class="nav-drop-item">
                                     <i class="fas fa-database text-gray-400 w-4"></i> Run Migrations
                                 </a>
                             </div>
                         </div>
-                    </div>
 
-                </div>
-                <div class="flex items-center">
-                    <span class="text-gray-700 mr-4">Hello,
-                        <?= h($_SESSION['username'])?>
-                    </span>
-                    <div class="flex space-x-4">
-                        <a href="change_password.php"
-                            class="text-blue-600 hover:text-blue-800 text-sm font-medium">Change Password</a>
-                        <a href="logout.php" class="text-red-600 hover:text-red-800 text-sm font-medium">Logout</a>
                     </div>
+                </div>
+
+                <!-- Right: user info -->
+                <div class="flex items-center gap-4">
+                    <span class="text-gray-600 text-sm">Hello, <strong>
+                            <?= h($_SESSION['username'])?>
+                        </strong></span>
+                    <a href="change_password.php" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Change
+                        Password</a>
+                    <a href="logout.php" class="text-red-600 hover:text-red-800 text-sm font-medium">Logout</a>
                 </div>
             </div>
         </div>
     </nav>
-    <script>
-    function toggleSettingsMenu() {
-        document.getElementById('settingsDropdownMenu').classList.toggle('hidden');
-    }
-    document.addEventListener('click', function(e) {
-        var wrapper = document.getElementById('settingsDropdownWrapper');
-        if (wrapper && !wrapper.contains(e.target)) {
-            var menu = document.getElementById('settingsDropdownMenu');
-            if (menu) menu.classList.add('hidden');
+
+    <style>
+        .nav-btn {
+            @apply border-transparent text-gray-500 hover:text-gray-800 inline-flex items-center px-3 py-2 rounded text-sm font-medium focus:outline-none hover:bg-gray-50 transition;
         }
-    });
+
+        .nav-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            min-width: 185px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+            z-index: 100;
+            padding: 4px 0;
+        }
+
+        .nav-drop-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            font-size: 0.875rem;
+            color: #374151;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .nav-drop-item:hover {
+            background: #f9fafb;
+        }
+
+        .nav-btn {
+            border: none;
+            background: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .nav-btn:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+    </style>
+
+    <script>
+        function toggleDropdown(btn) {
+            const menu = btn.nextElementSibling;
+            const isOpen = !menu.classList.contains('hidden');
+            // close all
+            document.querySelectorAll('.nav-dropdown').forEach(m => m.classList.add('hidden'));
+            if (!isOpen) menu.classList.remove('hidden');
+        }
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.nav-dropdown-wrapper')) {
+                document.querySelectorAll('.nav-dropdown').forEach(m => m.classList.add('hidden'));
+            }
+        });
     </script>
+
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
