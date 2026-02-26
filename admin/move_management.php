@@ -31,6 +31,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($move) {
                 $pdo->prepare("UPDATE move_logistics SET status = 'Approved' WHERE id = ?")->execute([$logistics_id]);
 
+                // Fetch max GWM for the email warning
+                $max_gwm = 3500;
+                try {
+                    $gwm_setting = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'max_truck_gwm'")->fetchColumn();
+                    if (is_numeric($gwm_setting))
+                        $max_gwm = (int)$gwm_setting;
+                }
+                catch (Exception $e) {
+                }
+
+                // Send confirmation to Resident
+                $move_str = $move['move_type'] === 'move_in' ? 'Move-In' : 'Move-Out';
+                $subject = "{$move_str} Request Approved – Villa Tobago";
+                $body = "<p>Dear " . h($move['resident_name']) . ",</p>";
+                $body .= "<p>Your {$move_str} request for Unit " . h($move['unit_number']) . " has been <strong>approved</strong> by the Managing Agent.</p>";
+                $body .= "<p><strong>Date:</strong> " . ($move['preferred_date'] ? format_date($move['preferred_date']) : 'Not specified') . "</p>";
+                $body .= "<p>Security has been notified and will expect your arrival.</p>";
+                if ($move['truck_gwm'] > $max_gwm) {
+                    $body .= "<p style='color:red;'><strong>Important:</strong> Your truck exceeds the max allowed weight limit. It must park outside the complex.</p>";
+                }
+                $body .= "<p>Regards,<br>Villa Tobago Management</p>";
                 // Send security notification if not already sent
                 if (!$move['security_notified']) {
                     $move['resident_name'] = $move['resident_name'] ?? 'Resident';
