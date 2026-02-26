@@ -180,14 +180,24 @@ if (isset($_SESSION['auth_resident'])) {
     $step_data = $stmt->fetch();
 
     // Vehicles
-    $vstmt = $pdo->prepare("SELECT * FROM vehicles WHERE unit_id = ? ORDER BY created_at ASC");
-    $vstmt->execute([$uid]);
-    $vehicles = $vstmt->fetchAll();
+    try {
+        $vstmt = $pdo->prepare("SELECT * FROM vehicles WHERE unit_id = ? ORDER BY created_at ASC");
+        $vstmt->execute([$uid]);
+        $vehicles = $vstmt->fetchAll();
+    }
+    catch (PDOException $e) {
+        $error = "Database error: vehicles table missing. Please run the database migration in the Admin portal.";
+    }
 
     // Pets
-    $pstmt = $pdo->prepare("SELECT * FROM pets WHERE unit_id = ? ORDER BY created_at DESC");
-    $pstmt->execute([$uid]);
-    $pets = $pstmt->fetchAll();
+    try {
+        $pstmt = $pdo->prepare("SELECT * FROM pets WHERE unit_id = ? ORDER BY created_at DESC");
+        $pstmt->execute([$uid]);
+        $pets = $pstmt->fetchAll();
+    }
+    catch (PDOException $e) {
+        $error = "Database error: pets table missing or outdated. Please run migrations.";
+    }
 
     // Max vehicles
     $max_vehicles = (int)($pdo->query("SELECT setting_value FROM pet_settings WHERE setting_key = 'max_vehicles_per_unit'")->fetchColumn() ?: 2);
