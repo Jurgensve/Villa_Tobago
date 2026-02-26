@@ -38,6 +38,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($owner_id) {
                     $stmt = $pdo->prepare("INSERT INTO ownership_history (unit_id, owner_id, start_date, is_current) VALUES (?, ?, NOW(), 1)");
                     $stmt->execute([$unit_id, $owner_id]);
+
+                    // Send Welcome Onboarding Email if it's a NEW owner
+                    if (isset($owner_email) && !empty($owner_email) && empty($_POST['owner_id'])) {
+                        $subject = "Welcome to Villa Tobago – Please Complete Your Profile";
+                        $portal_url = SITE_URL . "/resident_portal.php";
+                        $body = "<p>Dear " . h($owner_name) . ",</p>";
+                        $body .= "<p>Welcome to Villa Tobago! You have been successfully added to our system as the owner for Unit " . h($unit_number) . ".</p>";
+                        $body .= "<p>To ensure we have all your correct details, vehicle registrations, and emergency contacts, please visit our Resident Portal and complete the onboarding form.</p>";
+                        $body .= "<p style='margin: 20px 0;'><a href='{$portal_url}' style='background-color:#4F46E5;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;font-weight:bold;'>Go to Resident Portal</a></p>";
+                        $body .= "<p>If you have any questions, please contact the managing agent.</p>";
+                        $body .= "<p>Warm regards,<br>Villa Tobago Management</p>";
+
+                        send_notification_email($owner_email, $subject, $body);
+                    }
                 }
 
                 $pdo->commit();
@@ -96,6 +110,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $pdo->prepare("INSERT INTO ownership_history (unit_id, owner_id, start_date, is_current) VALUES (?, ?, NOW(), 1)");
                     $stmt->execute([$unit_id, $owner_id]);
                     $message = "Ownership updated successfully.";
+
+                    // Send Welcome Onboarding Email if it's a NEW owner we just created
+                    $assigned_email = trim($_POST['email'] ?? '');
+                    if (empty($_POST['owner_id']) && !empty($assigned_email) && !empty($full_name)) {
+                        $unit_number = $pdo->query("SELECT unit_number FROM units WHERE id = " . (int)$unit_id)->fetchColumn();
+                        $subject = "Welcome to Villa Tobago – Please Complete Your Profile";
+                        $portal_url = SITE_URL . "/resident_portal.php";
+                        $body = "<p>Dear " . h($full_name) . ",</p>";
+                        $body .= "<p>Welcome to Villa Tobago! You have been successfully added to our system as the owner for Unit " . h($unit_number) . ".</p>";
+                        $body .= "<p>To ensure we have all your correct details, vehicle registrations, and emergency contacts, please visit our Resident Portal and complete the onboarding form.</p>";
+                        $body .= "<p style='margin: 20px 0;'><a href='{$portal_url}' style='background-color:#4F46E5;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;font-weight:bold;'>Go to Resident Portal</a></p>";
+                        $body .= "<p>If you have any questions, please contact the managing agent.</p>";
+                        $body .= "<p>Warm regards,<br>Villa Tobago Management</p>";
+
+                        send_notification_email($assigned_email, $subject, $body);
+                    }
                 }
                 else {
                     $error = "This person is already a current owner of this unit.";
