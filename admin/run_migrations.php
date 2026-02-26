@@ -48,6 +48,13 @@ $migrations = [
         'icon' => 'fa-key',
         'color' => 'blue',
     ],
+    'patch_gwm' => [
+        'label' => 'Truck GWM Migration (patch_db.sql)',
+        'description' => 'Adds the new truck_gwm column to move_logistics and max_truck_gwm to system_settings.',
+        'file' => __DIR__ . '/../patch_db.sql',
+        'icon' => 'fa-truck-loading',
+        'color' => 'orange',
+    ],
 ];
 
 // ─── Execute a migration ───────────────────────────────────────────────────────
@@ -208,7 +215,7 @@ endif; ?>
             <form method="POST"
                 onsubmit="return confirm('Run migration: <?= h(addslashes($m['label']))?>?\n\nThis is safe to re-run.')">
                 <input type="hidden" name="run_migration" value="<?= h($key)?>">
-                <button type="submit" <?=!$file_exists ? 'disabled' : ''?>
+                <button type="submit" <?=!$file_exists ? 'disabled' : '' ?>
                     class="w-full
                     <?= $c['btn']?> text-white text-sm font-bold py-2 px-4 rounded shadow
                     disabled:opacity-40 disabled:cursor-not-allowed transition duration-150 flex items-center
@@ -243,7 +250,7 @@ endforeach; ?>
     function runAllSequentially() {
         if (!confirm('Run ALL migrations in order?\n\nThis is safe on an existing database — all scripts use IF NOT EXISTS / INSERT IGNORE.')) return;
 
-        const keys = <?= json_encode(array_keys($migrations))?>;
+        const keys = <?= json_encode(array_keys($migrations)) ?>;
         let idx = 0;
 
         function next() {
@@ -278,7 +285,7 @@ endforeach; ?>
     // Auto-resume "Run All" sequence if we were mid-way
     document.addEventListener('DOMContentLoaded', function () {
         const pending = parseInt(sessionStorage.getItem('migration_pending_idx') || '0');
-        const keys = <?= json_encode(array_keys($migrations))?>;
+        const keys = <?= json_encode(array_keys($migrations)) ?>;
         if (pending > 0 && pending < keys.length) {
             // We just came back from a sequential run, continue with the next one
             const form = document.createElement('form');
