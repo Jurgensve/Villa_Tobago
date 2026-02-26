@@ -22,7 +22,7 @@ deployment:
     - /bin/cp amend_request.php $DEPLOYPATH
     - /bin/cp logout_resident.php $DEPLOYPATH
     - /bin/cp test_db.php $DEPLOYPATH
-    - /bin/cp approve_logistics.php $DEPLOYPATH
+
     # ── Config & routing ───────────────────────────────────────────
     - /bin/cp .htaccess $DEPLOYPATH
     # ── SQL Migration scripts ──────────────────────────────────────
