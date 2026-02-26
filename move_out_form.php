@@ -360,7 +360,8 @@ endif; ?>
         document.addEventListener('DOMContentLoaded', function () {
             const gwmInput = document.getElementById('truck_gwm');
             const gwmWarning = document.getElementById('gwm_warning');
-            const maxGwm = <?= $max_gwm?>;
+            const form = document.getElementById('moveout-form');
+            const maxGwm = <?= $max_gwm ?>;
 
             if (gwmInput) {
                 gwmInput.addEventListener('input', function () {
@@ -371,6 +372,16 @@ endif; ?>
                         gwmWarning.classList.add('hidden');
                     }
                 });
+
+                if (form) {
+                    form.addEventListener('submit', function (e) {
+                        const val = parseInt(gwmInput.value, 10);
+                        if (!isNaN(val) && val > maxGwm) {
+                            e.preventDefault();
+                            alert("Your truck exceeds the maximum allowed weight (" + maxGwm + "kg) and cannot enter the complex. Please update your logistics.");
+                        }
+                    });
+                }
             }
         });
     </script>

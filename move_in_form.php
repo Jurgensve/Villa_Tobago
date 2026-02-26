@@ -219,12 +219,16 @@ elseif ($move_data): ?>
         <?php
 endif; ?>
     </div>
-</body>
 
-</html>     const maxGwm = <?= $max_gwm ?>;
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const gwmInput = document.getElementById('truck_gwm');
+            const gwmWarning = document.getElementById('gwm_warning');
+            const form = document.querySelector('form');
+            const maxGwm = <?= $max_gwm?>;
 
-            if(gwmInput) {
-                gwmInput.addEventListener('input', function() {
+            if (gwmInput) {
+                gwmInput.addEventListener('input', function () {
                     const val = parseInt(this.value, 10);
                     if (!isNaN(val) && val > maxGwm) {
                         gwmWarning.classList.remove('hidden');
@@ -232,6 +236,16 @@ endif; ?>
                         gwmWarning.classList.add('hidden');
                     }
                 });
+
+                if (form) {
+                    form.addEventListener('submit', function (e) {
+                        const val = parseInt(gwmInput.value, 10);
+                        if (!isNaN(val) && val > maxGwm) {
+                            e.preventDefault();
+                            alert("Your truck exceeds the maximum allowed weight (" + maxGwm + "kg) and cannot enter the complex. Please update your logistics.");
+                        }
+                    });
+                }
             }
         });
     </script>
