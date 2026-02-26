@@ -19,6 +19,11 @@ try {
     // If the role column doesn't exist yet (migration not run), default to 'admin'
     $_SESSION['role'] = $__row['role'] ?? 'admin';
     $_SESSION['full_name'] = $__row['full_name'] ?? $_SESSION['username'];
+
+    // SAFETY OVERRIDE: If you are the primary user (ID 1), force admin role
+    if ($_SESSION['user_id'] == 1 || $_SESSION['username'] === 'admin') {
+        $_SESSION['role'] = 'admin';
+    }
 }
 catch (PDOException $__e) {
     // Column doesn't exist yet — treat as admin so no one gets locked out
@@ -281,9 +286,7 @@ endif; // end admin/agent nav ?>
         }
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.nav-dropdown-wrapper')) {
-                document.querySelectorAll('.nav-dropdown').forEach(m => m.classList.add('hidden'));
-            }
-        });
+                document.querySelectorAll('.nav-dropdown').forEach(m => m.classList.add('hidden                         }     });
     </script>
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
