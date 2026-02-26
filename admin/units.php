@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/header.php';
+require_role(['admin', 'managing_agent']); // Trustees: approvals only
 
 $message = '';
 $error = '';

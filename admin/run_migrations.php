@@ -1,6 +1,7 @@
 <?php
 // admin/run_migrations.php — One-click SQL migration runner
 require_once 'includes/header.php';
+require_role(['admin', 'managing_agent']); // Trustees: approvals only
 
 // ─── Migration files registered here ──────────────────────────────────────────
 // Each migration has a key (used as POST identifier), label, and file path.

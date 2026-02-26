@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/header.php';
-require_super_admin(); // Only super-admins may manage users
+require_admin(); // Only admins may manage users
 
 $success = '';
 $error = '';
@@ -160,11 +160,16 @@ endif; ?>
     endif; ?>
                 </td>
                 <td class="px-6 py-4">
-                    <span
-                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold
-                        <?= $u['role'] === 'super_admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'?>">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold
+                        <?= match ($u['role']) {
+            'super_admin' => 'bg-purple-100 text-purple-700',
+            'admin' => 'bg-indigo-100 text-indigo-700',
+            'managing_agent' => 'bg-blue-100 text-blue-700',
+            'trustee' => 'bg-teal-100 text-teal-700',
+            default => 'bg-gray-100 text-gray-600',
+        }?>">
                         <i class="fas fa-shield-alt mr-1"></i>
-                        <?= $u['role'] === 'super_admin' ? 'Super Admin' : 'Admin'?>
+                        <?= role_label($u['role'])?>
                     </span>
                 </td>
                 <td class="px-6 py-4">
@@ -255,6 +260,8 @@ endforeach; ?>
                     <label class="block text-sm font-bold text-gray-700 mb-1">Role</label>
                     <select name="role" class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none">
                         <option value="admin">Admin</option>
+                        <option value="managing_agent">Managing Agent</option>
+                        <option value="trustee">Trustee</option>
                         <option value="super_admin">Super Admin</option>
                     </select>
                 </div>
@@ -317,6 +324,8 @@ endforeach; ?>
                 <select name="role" id="edit_role"
                     class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none">
                     <option value="admin">Admin</option>
+                    <option value="managing_agent">Managing Agent</option>
+                    <option value="trustee">Trustee</option>
                     <option value="super_admin">Super Admin</option>
                 </select>
             </div>

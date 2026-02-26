@@ -86,6 +86,7 @@ require_login();
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans">
+    <?php $__role = $_SESSION['role'] ?? 'managing_agent'; ?>
     <nav class="bg-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
@@ -96,6 +97,16 @@ require_login();
                     </a>
 
                     <div class="hidden sm:flex sm:space-x-2 sm:items-center">
+
+                        <?php if ($__role === 'trustee'): ?>
+                        <!-- Trustee: Approvals only -->
+                        <a href="pending_approvals.php" class="nav-btn">
+                            <i class="fas fa-clipboard-check mr-1"></i> Approvals
+                        </a>
+
+                        <?php
+else: ?>
+                        <!-- Admin + Managing Agent: full nav -->
 
                         <!-- Units dropdown -->
                         <div class="relative nav-dropdown-wrapper">
@@ -156,15 +167,18 @@ require_login();
                                 <a href="run_migrations.php" class="nav-drop-item">
                                     <i class="fas fa-database text-gray-400 w-4"></i> Run Migrations
                                 </a>
-                                <?php if (($_SESSION['role'] ?? '') === 'super_admin'): ?>
+                                <?php if ($__role === 'admin'): ?>
                                 <div class="border-t border-gray-100 my-1"></div>
                                 <a href="users.php" class="nav-drop-item">
                                     <i class="fas fa-users-cog text-gray-400 w-4"></i> User Management
                                 </a>
                                 <?php
-endif; ?>
+    endif; ?>
                             </div>
                         </div>
+
+                        <?php
+endif; // end admin/agent nav ?>
 
                     </div>
                 </div>
@@ -174,12 +188,12 @@ endif; ?>
                     <span class="text-gray-600 text-sm">Hello, <strong>
                             <?= h($_SESSION['full_name'] ?? $_SESSION['username'])?>
                         </strong></span>
-                    <a href="profile.php" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i
-                            class="fas fa-user-circle mr-1"></i>Profile</a>
-                    <a href="logout.php" class="text-red-600 hover:text-red-800 text-sm font-medium">Logout</a>
+                        <a href="profile.php" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i
+                                class="fas fa-user-circle mr-1"></i>Profile</a>
+                        <a href="logout.php" class="text-red-600 hover:text-red-800 text-sm font-medium">Logout</a>
+                    </div>
                 </div>
             </div>
-        </div>
     </nav>
 
     <style>
