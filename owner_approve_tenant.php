@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $tenant)
         if ($action === 'approve') {
             // Grant owner approval + portal access so tenant can complete their profile
             $pdo->prepare(
-                "UPDATE tenants SET owner_approval = 1, portal_access_granted = 1, amendment_token = NULL, status = 'Pending' WHERE id = ?"
+                "UPDATE tenants SET owner_approval = 1, portal_access_granted = 1, amendment_token = NULL WHERE id = ?"
             )->execute([$tenant_id]);
 
             // Email the tenant with portal access instructions
