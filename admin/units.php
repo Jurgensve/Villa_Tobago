@@ -28,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // 2. Determine Owner
                 $owner_id = $_POST['owner_id'] ?? null;
                 if (!$owner_id && !empty($owner_name)) {
-                    // Create New Owner
-                    $stmt = $pdo->prepare("INSERT INTO owners (full_name, id_number, email, phone) VALUES (?, ?, ?, ?)");
+                    // Create New Owner (auto-approve portal access)
+                    $stmt = $pdo->prepare("INSERT INTO owners (full_name, id_number, email, phone, portal_access_granted) VALUES (?, ?, ?, ?, 1)");
                     $stmt->execute([$owner_name, $owner_id_num, $owner_email, $owner_phone]);
                     $owner_id = $pdo->lastInsertId();
                 }
@@ -83,9 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            // If no existing owner selected, create new
+            // If no existing owner selected, create new (auto-approve portal access)
             if (!$owner_id && !empty($full_name)) {
-                $stmt = $pdo->prepare("INSERT INTO owners (full_name, id_number, email, phone) VALUES (?, ?, ?, ?)");
+                $stmt = $pdo->prepare("INSERT INTO owners (full_name, id_number, email, phone, portal_access_granted) VALUES (?, ?, ?, ?, 1)");
                 $stmt->execute([
                     $full_name,
                     trim($_POST['id_number']),
