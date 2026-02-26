@@ -64,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
             'pet_management_enabled' => isset($_POST['pet_management_enabled']) ? '1' : '0',
             'max_pets_per_unit' => (int)$_POST['max_pets_per_unit'],
             'allowed_pet_types' => trim($_POST['allowed_pet_types']),
+            'max_vehicles_per_unit' => (int)$_POST['max_vehicles_per_unit'],
         ];
 
         $stmt = $pdo->prepare("INSERT INTO pet_settings (setting_key, setting_value) 
@@ -128,6 +129,7 @@ $settings_rows = $pdo->query("SELECT setting_key, setting_value FROM pet_setting
 $pet_enabled = $settings_rows['pet_management_enabled'] ?? '1';
 $max_pets = $settings_rows['max_pets_per_unit'] ?? '2';
 $allowed_types = $settings_rows['allowed_pet_types'] ?? 'Dog, Cat, Bird, Fish';
+$max_vehicles = $settings_rows['max_vehicles_per_unit'] ?? '2';
 
 // Fetch system settings
 $security_email_val = '';
@@ -215,6 +217,18 @@ endif; ?>
                     <p class="text-xs text-gray-500 mt-1">Comma-separated list of allowed pet types.</p>
                 </div>
 
+                <!-- Max Vehicles Per Unit -->
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="max_vehicles">
+                        Maximum Vehicles Per Unit
+                    </label>
+                    <input type="number" id="max_vehicles" name="max_vehicles_per_unit" value="<?= h($max_vehicles)?>"
+                        min="0" max="10"
+                        class="shadow border rounded w-32 py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline">
+                    <p class="text-xs text-gray-500 mt-1">Set to 0 for unlimited. Enforced in the Resident Portal when
+                        residents register vehicles.</p>
+                </div>
+
             </div>
         </div>
 
@@ -240,11 +254,11 @@ endif; ?>
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="security_email">
                         <i class="fas fa-shield-alt text-gray-400 mr-1"></i> Security Gate Email Address
                     </label>
-                    <input type="email" id="security_email" name="security_email"
-                        value="<?= h($security_email_val) ?>"
+                    <input type="email" id="security_email" name="security_email" value="<?= h($security_email_val)?>"
                         class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
                         placeholder="e.g. security@villatobago.co.za">
-                    <p class="text-xs text-gray-500 mt-1">Move-in and move-out notifications will be emailed here. Leave blank to disable.</p>
+                    <p class="text-xs text-gray-500 mt-1">Move-in and move-out notifications will be emailed here. Leave
+                        blank to disable.</p>
                 </div>
 
                 <!-- Footer Text -->
@@ -252,11 +266,11 @@ endif; ?>
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="footer_text">
                         <i class="fas fa-align-center text-gray-400 mr-1"></i> Resident-Facing Footer Text
                     </label>
-                    <input type="text" id="footer_text" name="footer_text"
-                        value="<?= h($footer_text_val) ?>"
+                    <input type="text" id="footer_text" name="footer_text" value="<?= h($footer_text_val)?>"
                         class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
                         placeholder="e.g. Villa Tobago · enquiries@villatobago.co.za">
-                    <p class="text-xs text-gray-500 mt-1">Shown in the footer of public-facing pages (move forms, approval pages).</p>
+                    <p class="text-xs text-gray-500 mt-1">Shown in the footer of public-facing pages (move forms,
+                        approval pages).</p>
                 </div>
 
                 <!-- Logo Upload -->
@@ -266,10 +280,13 @@ endif; ?>
                     </label>
                     <?php if ($logo_path_val): ?>
                     <div class="mb-2 flex items-center gap-3">
-                        <img src="<?= SITE_URL . '/' . h($logo_path_val) ?>" class="h-12 rounded border border-gray-200" alt="Logo">
-                        <span class="text-xs text-green-600 font-bold"><i class="fas fa-check-circle"></i> Logo uploaded</span>
+                        <img src="<?= SITE_URL . '/' . h($logo_path_val)?>" class="h-12 rounded border border-gray-200"
+                            alt="Logo">
+                        <span class="text-xs text-green-600 font-bold"><i class="fas fa-check-circle"></i> Logo
+                            uploaded</span>
                     </div>
-                    <?php endif; ?>
+                    <?php
+endif; ?>
                     <input type="file" name="logo_file" accept="image/*"
                         class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     <p class="text-xs text-gray-500 mt-1">PNG or JPG. Saved to <code>uploads/logo.*</code>.</p>
@@ -282,15 +299,17 @@ endif; ?>
                     </label>
                     <?php if ($rules_pdf_val): ?>
                     <div class="mb-2">
-                        <a href="<?= SITE_URL . '/' . h($rules_pdf_val) ?>" target="_blank"
+                        <a href="<?= SITE_URL . '/' . h($rules_pdf_val)?>" target="_blank"
                             class="text-blue-600 hover:underline text-sm font-bold">
                             <i class="fas fa-external-link-alt mr-1"></i> View Current Rules PDF
                         </a>
                     </div>
-                    <?php endif; ?>
+                    <?php
+endif; ?>
                     <input type="file" name="rules_pdf" accept="application/pdf"
                         class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
-                    <p class="text-xs text-gray-500 mt-1">Saved to <code>uploads/complex_rules.pdf</code>. Residents can download this document.</p>
+                    <p class="text-xs text-gray-500 mt-1">Saved to <code>uploads/complex_rules.pdf</code>. Residents can
+                        download this document.</p>
                 </div>
 
                 <!-- System Initialization: Total Units -->
@@ -299,16 +318,18 @@ endif; ?>
                         <i class="fas fa-lock text-yellow-500 mr-1"></i> Total Units in Complex
                         <?php if ($current_units_count > 0): ?>
                         <span class="ml-2 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">
-                            LOCKED – <?= $current_units_count ?> units exist
+                            LOCKED –
+                            <?= $current_units_count?> units exist
                         </span>
-                        <?php endif; ?>
+                        <?php
+endif; ?>
                     </label>
-                    <input type="number" name="total_units"
-                        value="<?= $total_units_val ?: '' ?>"
-                        <?= $current_units_count > 0 ? 'disabled' : '' ?>
-                        min="1" max="1000"
-                        class="shadow border rounded w-32 py-2 px-3 text-gray-700 focus:outline-none <?= $current_units_count > 0 ? 'opacity-50 cursor-not-allowed' : '' ?>"
-                        placeholder="e.g. 72">
+                    <input type="number" name="total_units" value="<?= $total_units_val ?: ''?>"
+                        <?= $current_units_count > 0 ? 'disabled' : ''?>
+                    min="1" max="1000"
+                    class="shadow border rounded w-32 py-2 px-3 text-gray-700 focus:outline-none
+                    <?= $current_units_count > 0 ? 'opacity-50 cursor-not-allowed' : ''?>"
+                    placeholder="e.g. 72">
                     <p class="text-xs text-yellow-700 mt-2">
                         <strong>One-time setup:</strong> Set the total number of units. Locked once unit records exist.
                     </p>
