@@ -58,6 +58,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
+                // 4. Send Welcome Onboarding Email
+                if (!empty($email)) {
+                    $subject = "Welcome to Villa Tobago – Please Complete Your Profile";
+                    $portal_url = SITE_URL . "/resident_portal.php";
+                    $body = "<p>Dear " . h($full_name) . ",</p>";
+                    $body .= "<p>Welcome to Villa Tobago! You have been successfully added to our system as an owner" . ($unit_id ? " for Unit " . h($pdo->query("SELECT unit_number FROM units WHERE id = " . (int)$unit_id)->fetchColumn()) : "") . ".</p>";
+                    $body .= "<p>To ensure we have all your correct details, vehicle registrations, and emergency contacts, please visit our Resident Portal and complete the onboarding form.</p>";
+                    $body .= "<p style='margin: 20px 0;'><a href='{$portal_url}' style='background-color:#4F46E5;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;font-weight:bold;'>Go to Resident Portal</a></p>";
+                    $body .= "<p>If you have any questions, please contact the managing agent.</p>";
+                    $body .= "<p>Warm regards,<br>Villa Tobago Management</p>";
+
+                    send_notification_email($email, $subject, $body);
+                }
+
                 $pdo->commit();
                 $message = "Owner created successfully.";
                 $action = 'list'; // Go back to list
@@ -273,7 +287,7 @@ elseif ($action === 'edit'):
                     <label class="block text-sm font-bold text-gray-700 mb-2">Overall Status</label>
                     <select name="status" class="w-full border rounded p-2">
                         <?php foreach (['Pending', 'Information Requested', 'Pending Updated', 'Approved', 'Declined', 'Completed'] as $st): ?>
-                        <option value="<?= $st?>" <?=($owner['status'] ?? 'Pending' )===$st ? 'selected' : ''?>>
+                        <option value="<?= $st?>" <?=($owner['status'] ?? 'Pending') === $st ? 'selected' : '' ?>>
                             <?= $st?>
                         </option>
                         <?php
@@ -282,7 +296,7 @@ elseif ($action === 'edit'):
                 </div>
                 <div class="flex items-center mt-2">
                     <input type="checkbox" name="portal_access_granted" value="1"
-                        <?=empty($owner['portal_access_granted']) ? '' : 'checked'?> class="mr-2 h-5 w-5
+                        <?= empty($owner['portal_access_granted']) ? '' : 'checked' ?> class="mr-2 h-5 w-5
                     text-indigo-600">
                     <label class="font-bold text-sm text-gray-700">1. Portal Access Granted</label>
                 </div>
@@ -290,13 +304,13 @@ elseif ($action === 'edit'):
                     (Allows owner to complete profile)
                 </div>
                 <div class="flex items-center mt-2">
-                    <input type="checkbox" name="agent_approval" value="1" <?=empty($owner['agent_approval']) ? ''
-                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <input type="checkbox" name="agent_approval" value="1" <?= empty($owner['agent_approval']) ? ''
+            : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
                     <label class="font-bold text-sm text-gray-700">2. Agent Final Approval</label>
                 </div>
                 <div class="flex items-center mt-2">
-                    <input type="checkbox" name="pet_approval" value="1" <?=empty($owner['pet_approval']) ? ''
-                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <input type="checkbox" name="pet_approval" value="1" <?= empty($owner['pet_approval']) ? ''
+            : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
                     <label class="font-bold text-sm text-gray-700">3. Pet Approved</label>
                 </div>
             </div>
