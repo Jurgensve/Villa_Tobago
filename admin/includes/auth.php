@@ -72,13 +72,15 @@ function current_user($pdo)
 // Verify login and populate session
 function verify_login($username, $password, $pdo)
 {
+    $pre_migration = false;
     // Try with is_active filter first; fall back if column not yet added by migration
     try {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND is_active = 1");
         $stmt->execute([$username]);
     }
     catch (PDOException $e) {
-        // is_active column doesn't exist yet — query without it
+        // is_active column doesn't exist yet — migration not run, fall back
+        $pre_migration = true;
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->execute([$username]);
     }
@@ -88,7 +90,8 @@ function verify_login($username, $password, $pdo)
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['full_name'] = $user['full_name'] ?? $user['username'];
-        $_SESSION['role'] = $user['role'] ?? 'managing_agent';
+        // Pre-migration: no role column yet — treat as admin (full access)
+        $_SESSION['role'] = $pre_migration ? 'admin' : ($user['role'] ?? 'admin');
         return true;
     }
     return false;
