@@ -350,6 +350,17 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
     $stmt = $pdo->prepare("SELECT * FROM modifications WHERE unit_id = ? ORDER BY request_date DESC");
     $stmt->execute([$id]);
     $modifications = $stmt->fetchAll();
+
+    // 10. Fetch Logistics
+    $logistics = [];
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM move_logistics WHERE unit_id = ? ORDER BY created_at DESC");
+        $stmt->execute([$id]);
+        $logistics = $stmt->fetchAll();
+    }
+    catch (Exception $e) {
+    }
+
     // Rules PDF for CoC link
     $rules_pdf = '';
     try {
@@ -724,9 +735,14 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
         <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
             <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
                     class="fas fa-hammer text-gray-400"></i> Modification History</h3>
-            <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
-                <?= count($modifications)?> Total
-            </span>
+            <div class="flex items-center gap-3">
+                <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
+                    <?= count($modifications)?> Total
+                </span>
+                <a href="modifications.php?action=add&unit_id=<?= $id?>"
+                    class="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700 font-bold shadow-sm transition"><i
+                        class="fas fa-plus mr-1"></i> Log</a>
+            </div>
         </div>
         <div class="p-5">
             <?php if (empty($modifications)): ?>
@@ -768,6 +784,93 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                             </td>
                             <td class="py-2 text-gray-600 truncate max-w-xs">
                                 <?= h(mb_strimwidth($mod['description'], 0, 80, '…'))?>
+                            </td>
+                        </tr>
+                        <?php
+        endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php
+    endif; ?>
+        </div>
+    </div>
+
+    <!-- ── Row 4: Move Logistics ────────────────────────────────────────── -->
+    <div class="bg-white shadow rounded-xl overflow-hidden">
+        <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
+            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
+                    class="fas fa-truck-moving text-gray-400"></i> Move Logistics</h3>
+            <div class="flex items-center gap-3">
+                <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
+                    <?= count($logistics)?> Total
+                </span>
+                <a href="move_management.php?action=add&unit_id=<?= $id?>"
+                    class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold shadow-sm transition"><i
+                        class="fas fa-plus mr-1"></i> Log</a>
+            </div>
+        </div>
+        <div class="p-5">
+            <?php if (empty($logistics)): ?>
+            <div class="text-center py-8 text-gray-400">
+                <i class="fas fa-box-open text-3xl mb-2 block text-gray-300"></i>
+                No moves logged for this unit.
+            </div>
+            <?php
+    else: ?>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-xs font-bold text-gray-400 uppercase border-b">
+                            <th class="pb-2 text-left">Type</th>
+                            <th class="pb-2 text-left">Status</th>
+                            <th class="pb-2 text-left">Date</th>
+                            <th class="pb-2 text-left">Resident</th>
+                            <th class="pb-2 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <?php foreach ($logistics as $log):
+            $lc = 'bg-gray-100 text-gray-600';
+            if ($log['status'] === 'Approved')
+                $lc = 'bg-blue-100 text-blue-800';
+            elseif ($log['status'] === 'Completed')
+                $lc = 'bg-green-100 text-green-800';
+            elseif ($log['status'] === 'Cancelled')
+                $lc = 'bg-red-100 text-red-800';
+            elseif ($log['status'] === 'Pending')
+                $lc = 'bg-yellow-100 text-yellow-800';
+?>
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-2 pr-3 font-bold text-gray-800">
+                                <?= $log['move_type'] === 'move_in' ? 'Move-In' : 'Move-Out'?>
+                            </td>
+                            <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold <?= $lc?>">
+                                    <?= h($log['status'])?>
+                                </span></td>
+                            <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
+                                <?= $log['preferred_date'] ? format_date($log['preferred_date']) : '—'?>
+                            </td>
+                            <td class="py-2 pr-3 text-gray-600">
+                                <?= h($log['resident_name'])?>
+                            </td>
+                            <td class="py-2 text-right">
+                                <?php if ($log['status'] === 'Pending'): ?>
+                                <form method="POST" action="move_management.php" class="inline">
+                                    <input type="hidden" name="logistics_id" value="<?= $log['id']?>">
+                                    <button type="submit" name="action_approve"
+                                        class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold shadow-sm">Approve</button>
+                                </form>
+                                <?php
+            elseif ($log['status'] === 'Approved'): ?>
+                                <form method="POST" action="move_management.php" class="inline">
+                                    <input type="hidden" name="logistics_id" value="<?= $log['id']?>">
+                                    <button type="submit" name="action_complete"
+                                        class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 font-bold shadow-sm"><i
+                                            class="fas fa-check-circle mr-1"></i> Complete</button>
+                                </form>
+                                <?php
+            endif; ?>
                             </td>
                         </tr>
                         <?php
@@ -1157,10 +1260,14 @@ else: ?>
 </div>
 
 <script>
-    $(document).reataTable({
-        "pageLength": 25,
-        "order": [[0, "asc"]]
-    });
+    $(document).ready(function () {
+        $('#unitsTable').DataTable({
+            "pageLength": 25,
+            "order": [[0, "asc"]],
+            "columnDefs": [
+                { "orderable": false, "targets": -1 }
+            ]
+        });
     });
 </script>
 <?php

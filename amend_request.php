@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once 'admin/includes/functions.php';
 require_once 'admin/config/db.php';
 

@@ -117,7 +117,7 @@ endif; ?>
 <?php if ($action === 'add'): ?>
 <?php
     // Fetch units for dropdown
-    $units = $pdo->query("SELECT id, unit_number FROM units ORDER BY unit_number ASC")->fetchAll();
+    $units = $pdo->query("SELECT id, unit_number FROM units ORDER BY CAST(unit_number AS UNSIGNED) ASC, unit_number ASC")->fetchAll();
 ?>
 <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
     <h2 class="text-xl font-semibold mb-4">Add New Owner</h2>
@@ -287,7 +287,7 @@ elseif ($action === 'edit'):
                     <label class="block text-sm font-bold text-gray-700 mb-2">Overall Status</label>
                     <select name="status" class="w-full border rounded p-2">
                         <?php foreach (['Pending', 'Information Requested', 'Pending Updated', 'Approved', 'Declined', 'Completed'] as $st): ?>
-                        <option value="<?= $st?>" <?=($owner['status'] ?? 'Pending' )===$st ? 'selected' : ''?>>
+                        <option value="<?= $st?>" <?=($owner['status'] ?? 'Pending') === $st ? 'selected' : '' ?>>
                             <?= $st?>
                         </option>
                         <?php
@@ -296,7 +296,7 @@ elseif ($action === 'edit'):
                 </div>
                 <div class="flex items-center mt-2">
                     <input type="checkbox" name="portal_access_granted" value="1"
-                        <?=empty($owner['portal_access_granted']) ? '' : 'checked'?> class="mr-2 h-5 w-5
+                        <?= empty($owner['portal_access_granted']) ? '' : 'checked' ?> class="mr-2 h-5 w-5
                     text-indigo-600">
                     <label class="font-bold text-sm text-gray-700">1. Portal Access Granted</label>
                 </div>
@@ -304,13 +304,13 @@ elseif ($action === 'edit'):
                     (Allows owner to complete profile)
                 </div>
                 <div class="flex items-center mt-2">
-                    <input type="checkbox" name="agent_approval" value="1" <?=empty($owner['agent_approval']) ? ''
-                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <input type="checkbox" name="agent_approval" value="1" <?= empty($owner['agent_approval']) ? ''
+            : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
                     <label class="font-bold text-sm text-gray-700">2. Agent Final Approval</label>
                 </div>
                 <div class="flex items-center mt-2">
-                    <input type="checkbox" name="pet_approval" value="1" <?=empty($owner['pet_approval']) ? ''
-                        : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                    <input type="checkbox" name="pet_approval" value="1" <?= empty($owner['pet_approval']) ? ''
+            : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
                     <label class="font-bold text-sm text-gray-700">3. Pet Approved</label>
                 </div>
             </div>

@@ -180,7 +180,7 @@ endif; ?>
 
 <?php if ($action === 'add' || $action === 'edit'): ?>
 <?php
-    $units = $pdo->query("SELECT id, unit_number FROM units ORDER BY unit_number ASC")->fetchAll();
+    $units = $pdo->query("SELECT id, unit_number FROM units ORDER BY CAST(unit_number AS UNSIGNED) ASC, unit_number ASC")->fetchAll();
     $tenant = ['id' => '', 'unit_id' => $_GET['unit_id'] ?? '', 'full_name' => '', 'id_number' => '', 'email' => '', 'phone' => '', 'lease_agreement_path' => ''];
     if ($action === 'edit' && isset($_GET['id'])) {
         $stmt = $pdo->prepare("SELECT * FROM tenants WHERE id = ?");
@@ -206,7 +206,7 @@ endif; ?>
                     id="unit_id" name="unit_id" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id']==$unit['id']) ? 'selected' : '' ?>>
+                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id'] == $unit['id']) ? 'selected' : ''?>>
                         <?= h($unit['unit_number'])?>
                     </option>
                     <?php
@@ -350,14 +350,14 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         <div class="flex space-x-6">
                             <div class="flex items-center">
                                 <input type="checkbox" name="owner_approval" value="1"
-                                    <?=empty($tenant['owner_approval']) ? '' : 'checked' ?> class="mr-2 h-5 w-5
+                                    <?= empty($tenant['owner_approval']) ? '' : 'checked'?> class="mr-2 h-5 w-5
                                 text-blue-600">
                                 <label class="font-bold text-sm text-gray-700">Owner Approved</label>
                             </div>
                             <?php if ($tenant_has_pets): ?>
                             <div class="flex items-center">
-                                <input type="checkbox" name="pet_approval" value="1" <?=empty($tenant['pet_approval'])
-                                    ? '' : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
+                                <input type="checkbox" name="pet_approval" value="1" <?= empty($tenant['pet_approval'])
+            ? '' : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
                                 <label class="font-bold text-sm text-gray-700">Pet Approved</label>
                             </div>
                             <?php

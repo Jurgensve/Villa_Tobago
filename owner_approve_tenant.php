@@ -1,5 +1,6 @@
 <?php
 // owner_approve_tenant.php
+session_start();
 require_once 'admin/config/db.php';
 require_once 'admin/includes/functions.php';
 
