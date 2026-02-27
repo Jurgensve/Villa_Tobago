@@ -37,6 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $tenant)
                 "UPDATE tenants SET owner_approval = 1, portal_access_granted = 1, amendment_token = NULL WHERE id = ?"
             )->execute([$tenant_id]);
 
+            // Update the residents table — make this tenant the active resident of the unit
+            $pdo->prepare(
+                "INSERT INTO residents (unit_id, resident_type, resident_id)
+                 VALUES (?, 'tenant', ?)
+                 ON DUPLICATE KEY UPDATE resident_type = 'tenant', resident_id = VALUES(resident_id)"
+            )->execute([$tenant['unit_id'], $tenant_id]);
+
+            // Clear the pending application reference on the unit
+            $pdo->prepare("UPDATE units SET pending_app_type = NULL, pending_app_id = NULL WHERE id = ?")
+                ->execute([$tenant['unit_id']]);
+
             // Email the tenant with portal access instructions
             $portal_url = SITE_URL . "/resident_portal.php";
             $subject = "Great News! Your Tenancy Application Has Been Approved";
@@ -51,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $tenant)
             $body .= "<li>Accept the Villa Tobago Code of Conduct</li>";
             $body .= "</ul><br>";
             $body .= "Please visit the Resident Portal to complete these steps:<br>";
-            $body .= "<a href='{$portal_url}'>{$portal_url}</a><br><br>";
+            $body .= "<a href='{$portal_url}' style='background:#4F46E5;color:white;padding:8px 16px;text-decoration:none;border-radius:5px;font-weight:bold;display:inline-block;margin-top:8px;'>Go to Resident Portal</a><br><br>";
             $body .= "You can log in using your <strong>Unit Number</strong> and <strong>ID Number</strong>.<br><br>";
             $body .= "Once all steps are complete, the Managing Agent will do a final review and you will receive your Move-In Form.<br><br>";
             $body .= "Kind regards,<br>Villa Tobago Management";

@@ -361,6 +361,24 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
     catch (Exception $e) {
     }
 
+    // 11. Fetch Pending Resident Application (if any)
+    $pending_app = null;
+    $pending_app_detail = null;
+    try {
+        $unit_pending = $pdo->prepare("SELECT pending_app_type, pending_app_id FROM units WHERE id = ?");
+        $unit_pending->execute([$id]);
+        $unit_pending_row = $unit_pending->fetch();
+        if ($unit_pending_row && $unit_pending_row['pending_app_type'] && $unit_pending_row['pending_app_id']) {
+            $pending_app = $unit_pending_row;
+            $pending_table = $unit_pending_row['pending_app_type'] === 'owner' ? 'owners' : 'tenants';
+            $pstmt = $pdo->prepare("SELECT * FROM {$pending_table} WHERE id = ?");
+            $pstmt->execute([$unit_pending_row['pending_app_id']]);
+            $pending_app_detail = $pstmt->fetch();
+        }
+    }
+    catch (Exception $e) { /* migration may not have run yet */
+    }
+
     // Rules PDF for CoC link
     $rules_pdf = '';
     try {
@@ -569,6 +587,41 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                 <?php
     else: ?>
                 <p class="text-gray-400 italic text-sm mb-3">No resident assigned yet.</p>
+                <?php
+    endif; ?>
+
+                <?php if ($pending_app && $pending_app_detail): ?>
+                <div class="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="font-bold text-amber-900 flex items-center gap-2">
+                                <i class="fas fa-user-clock text-amber-600"></i>
+                                Pending Resident Application
+                            </p>
+                            <p class="text-amber-800 text-sm mt-1">
+                                <strong>
+                                    <?= h($pending_app_detail['full_name'])?>
+                                </strong>
+                                is applying as a
+                                <span class="font-semibold">
+                                    <?= ucfirst($pending_app['pending_app_type'])?>
+                                </span>.
+                                <?php
+        $oa = ($pending_app['pending_app_type'] === 'tenant')
+            ? ($pending_app_detail['owner_approval'] ?? 0)
+            : ($pending_app_detail['agent_approval'] ?? 0);
+        echo $oa
+            ? '<span class="text-green-700"><i class="fas fa-check-circle"></i> Owner Approved</span>'
+            : '<span class="text-amber-600"><i class="fas fa-clock"></i> Awaiting Approval</span>';
+?>
+                            </p>
+                        </div>
+                        <a href="resident_application.php?unit_id=<?= $id?>"
+                            class="whitespace-nowrap inline-flex items-center bg-amber-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-amber-700 transition text-sm">
+                            <i class="fas fa-clipboard-list mr-1.5"></i> Review Application
+                        </a>
+                    </div>
+                </div>
                 <?php
     endif; ?>
 

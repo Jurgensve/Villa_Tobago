@@ -35,33 +35,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
                 $pdo->prepare("UPDATE owners SET email = ?, phone = ?, status = 'Pending', portal_access_granted = 0 WHERE id = ?")
                     ->execute([$email, $phone, $owner_id]);
 
-                // Register as resident
-                $pdo->prepare(
-                    "INSERT INTO residents (unit_id, resident_type, resident_id) VALUES (?, 'owner', ?)
-                     ON DUPLICATE KEY UPDATE resident_type = 'owner', resident_id = VALUES(resident_id)"
-                )->execute([$unit_id, $owner_id]);
+                // Track this as the pending application on the unit
+                $pdo->prepare("UPDATE units SET pending_app_type = 'owner', pending_app_id = ? WHERE id = ?")
+                    ->execute([$owner_id, $unit_id]);
 
                 // Handle secondary owner note (informational only at this stage)
                 $secondary_note = trim($_POST['secondary_owner_name'] ?? '');
-                // If there's a secondary owner noted, we store it in notes for the agent to action
-                if ($secondary_note) {
-                // Stored as a notation in the owner record for now via trustee/agent review
-                // The admin can add them via the Manage Owners flow
-                }
 
                 // Notify the managing agent that an owner has applied
                 $agent_email_setting = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'security_email'")->fetchColumn();
                 if ($agent_email_setting) {
+                    $admin_link = SITE_URL . "/admin/resident_application.php?unit_id=" . $unit_id;
                     $subject = "Owner Access Application: Unit " . $unit_id;
                     $body = "Dear Managing Agent,<br><br>";
                     $body .= "An owner has applied for resident portal access.<br><br>";
                     $body .= "<strong>Name:</strong> " . h($full_name) . "<br>";
                     $body .= "<strong>Email:</strong> " . h($email) . "<br>";
                     $body .= "<strong>Phone:</strong> " . h($phone) . "<br>";
-                    if ($secondary_note) {
+                    if (!empty($secondary_note)) {
                         $body .= "<strong>Co-owner noted:</strong> " . h($secondary_note) . "<br>";
                     }
-                    $body .= "<br>Please review and grant portal access via the Admin Panel → Pending Approvals.<br><br>";
+                    $body .= "<br><a href='{$admin_link}' style='background:#4F46E5;color:white;padding:8px 16px;text-decoration:none;border-radius:5px;font-weight:bold;'>Review Application</a><br><br>";
                     $body .= "Regards,<br>Villa Tobago System";
                     send_notification_email($agent_email_setting, $subject, $body);
                 }
@@ -84,6 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
             $stmt->execute([$unit_id, $full_name, $id_number, $email, $phone, $token]);
             $tenant_id = $pdo->lastInsertId();
 
+            // Track this as the pending application on the unit
+            $pdo->prepare("UPDATE units SET pending_app_type = 'tenant', pending_app_id = ? WHERE id = ?")
+                ->execute([$tenant_id, $unit_id]);
+
             // Find the owner to send approval
             $ownerStmt = $pdo->prepare(
                 "SELECT o.id, o.full_name, o.email FROM owners o
@@ -104,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
                 $body .= "Email: " . h($email) . "<br>";
                 $body .= "Phone: " . h($phone) . "<br><br>";
                 $body .= "Please review and approve or decline this application using the link below:<br>";
-                $body .= "<a href='{$approval_link}'>{$approval_link}</a><br><br>";
+                $body .= "<a href='{$approval_link}' style='background:#16A34A;color:white;padding:8px 16px;text-decoration:none;border-radius:5px;font-weight:bold;'>Review Tenant Application</a><br><br>";
                 $body .= "Regards,<br>Villa Tobago Management";
 
                 send_notification_email($owner['email'], $subject, $body);
