@@ -4,6 +4,12 @@
  */
 function run_pending_migrations($pdo)
 {
+    $result = [
+        'ran_migrations' => false,
+        'success' => true,
+        'messages' => []
+    ];
+
     // 1. Ensure migrations table exists
     $createTableSql = "
         CREATE TABLE IF NOT EXISTS system_migrations (
@@ -18,13 +24,15 @@ function run_pending_migrations($pdo)
     }
     catch (PDOException $e) {
         error_log("Migration system error (create table): " . $e->getMessage());
-        return;
+        $result['success'] = false;
+        $result['messages'][] = "Error creating migrations table: " . $e->getMessage();
+        return $result;
     }
 
     // 2. Scan directory
     $migrationsDir = __DIR__ . '/../../database/migrations/';
     if (!is_dir($migrationsDir)) {
-        return; // Nothing to do
+        return $result; // Nothing to do
     }
 
     $files = scandir($migrationsDir);
@@ -64,15 +72,25 @@ function run_pending_migrations($pdo)
             $stmt->execute([$file]);
 
             $pdo->commit();
+
+            $result['ran_migrations'] = true;
+            $result['messages'][] = "Success: Applied " . $file;
             error_log("Migration applied successfully: " . $file);
 
         }
         catch (PDOException $e) {
             $pdo->rollBack();
+
+            $result['ran_migrations'] = true;
+            $result['success'] = false;
+            $result['messages'][] = "Failed: Could not apply " . $file . " - " . $e->getMessage();
+
             error_log("Failed to apply migration {$file}: " . $e->getMessage());
             // Stop on first error to prevent cascading failures
             break;
         }
     }
+
+    return $result;
 }
 ?>

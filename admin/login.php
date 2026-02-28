@@ -19,10 +19,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (verify_login($username, $password, $pdo)) {
         // Run pending migrations before redirecting
         require_once 'includes/migrations.php';
-        run_pending_migrations($pdo);
+        $migration_results = run_pending_migrations($pdo);
 
-        header("Location: index.php");
-        exit;
+        if ($migration_results && $migration_results['ran_migrations']) {
+            $show_migration_results = true;
+        }
+        else {
+            header("Location: index.php");
+            exit;
+        }
     }
     else {
         $error = "Invalid username or password.";
@@ -41,6 +46,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <body class="bg-gray-100 h-screen flex items-center justify-center">
     <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
+        <?php if (!empty($show_migration_results)): ?>
+        <div class="text-center mb-6">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                <i class="fas fa-database text-3xl text-blue-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Database Updated</h2>
+            <p class="text-gray-600">The system automatically applied new database migrations during your login.</p>
+        </div>
+
+        <div class="bg-gray-50 border rounded-lg p-4 mb-6 max-h-48 overflow-y-auto">
+            <ul class="space-y-2 text-sm">
+                <?php if (empty($migration_results['messages'])): ?>
+                <li class="text-gray-500 italic">No detailed messages.</li>
+                <?php
+    else: ?>
+                <?php foreach ($migration_results['messages'] as $msg): ?>
+                <li class="flex items-start">
+                    <?php if (str_contains($msg, 'Failed') || str_contains($msg, 'Error')): ?>
+                    <i class="fas fa-times-circle text-red-500 mt-0.5 mr-2"></i>
+                    <span class="text-red-700 font-medium">
+                        <?= h($msg)?>
+                    </span>
+                    <?php
+            else: ?>
+                    <i class="fas fa-check-circle text-green-500 mt-0.5 mr-2"></i>
+                    <span class="text-green-700 font-medium">
+                        <?= h($msg)?>
+                    </span>
+                    <?php
+            endif; ?>
+                </li>
+                <?php
+        endforeach; ?>
+                <?php
+    endif; ?>
+            </ul>
+        </div>
+
+        <a href="index.php"
+            class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition">
+            Continue to Dashboard <i class="fas fa-arrow-right ml-2"></i>
+        </a>
+
+        <?php
+else: ?>
         <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Admin Login</h2>
 
         <?php if ($error): ?>
@@ -48,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?= h($error)?>
         </div>
         <?php
-endif; ?>
+    endif; ?>
 
         <form method="POST">
             <div class="mb-4">
@@ -71,6 +121,8 @@ endif; ?>
                 </button>
             </div>
         </form>
+        <?php
+endif; ?>
     </div>
 </body>
 
