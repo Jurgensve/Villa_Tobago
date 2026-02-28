@@ -24,6 +24,7 @@ deployment:
     - /bin/cp test_db.php $DEPLOYPATH
     - /bin/cp force_migration.php $DEPLOYPATH
     - /bin/cp test_data_dump.php $DEPLOYPATH
+    - /bin/cp fix_pending_app.php $DEPLOYPATH
 
     # ── Config & routing ───────────────────────────────────────────
     - /bin/cp .htaccess $DEPLOYPATH

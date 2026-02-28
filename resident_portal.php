@@ -18,13 +18,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lookup'])) {
     $unit_id = (int)$_POST['unit_id'];
     $id_number = trim($_POST['id_number']);
 
-    // Try owner
+    // Try owner (Check if they are the active resident OR the pending application)
     $stmtOwner = $pdo->prepare(
         "SELECT o.*, u.unit_number, u.id AS unit_id, 'owner' AS type
          FROM owners o
-         JOIN ownership_history oh ON o.id = oh.owner_id
-         JOIN units u ON oh.unit_id = u.id
-         WHERE u.id = ? AND o.id_number = ? AND oh.is_current = 1 LIMIT 1"
+         JOIN units u ON u.id = ?
+         LEFT JOIN residents r ON r.unit_id = u.id AND r.resident_type = 'owner' AND r.resident_id = o.id
+         WHERE o.id_number = ? 
+           AND (r.id IS NOT NULL OR (u.pending_app_type = 'owner' AND u.pending_app_id = o.id))
+         LIMIT 1"
     );
     $stmtOwner->execute([$unit_id, $id_number]);
     $resident_record = $stmtOwner->fetch();
