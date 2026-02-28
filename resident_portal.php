@@ -121,6 +121,17 @@ if (isset($_SESSION['auth_resident'])) {
         header("Location: resident_portal.php?step=C");
         exit;
     }
+    // ── WhatsApp Acceptance ───────────────────────────────────────────────────
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accept_whatsapp'])) {
+        try {
+            $pdo->prepare("UPDATE {$table} SET whatsapp_terms_accepted = 1 WHERE id = ?")->execute([$rid]);
+            $_SESSION['auth_resident']['whatsapp_terms_accepted'] = 1;
+        }
+        catch (PDOException $e) {
+        } // Ignore if column missing
+        header("Location: resident_portal.php?saved=1");
+        exit;
+    }
 
     // ── Step E: Code of Conduct ───────────────────────────────────────────────
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accept_coc'])) {
@@ -381,6 +392,173 @@ else: ?>
         </div>
 
         <?php
+    elseif ($res['status'] === 'Approved'):
+        // ── DASHBOARD VIEW ───────────────────────────────────────────────────
+        $has_wa = !empty($step_data['whatsapp_terms_accepted']);
+?>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Quick Action: Pets -->
+            <a href="pet_form.php"
+                class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-yellow-400 group">
+                <div
+                    class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                    <i class="fas fa-paw text-yellow-500 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Manage Pets</h3>
+                    <p class="text-gray-500 text-sm">Register a new pet for Body Corporate approval, or view your
+                        existing approved pets.</p>
+                </div>
+            </a>
+
+            <!-- Quick Action: Modification (Owners Only) -->
+            <?php if ($rtype === 'owner'): ?>
+            <a href="modification_form.php"
+                class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-blue-500 group">
+                <div
+                    class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                    <i class="fas fa-hammer text-blue-500 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Unit Modifications</h3>
+                    <p class="text-gray-500 text-sm">Apply for structural or exterior modifications to your unit.</p>
+                </div>
+            </a>
+            <?php
+        endif; ?>
+
+            <!-- Quick Action: Intercom -->
+            <a href="resident_portal.php?step=A"
+                class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-purple-500 group">
+                <div
+                    class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                    <i class="fas fa-phone text-purple-500 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Intercom Access</h3>
+                    <p class="text-gray-500 text-sm">Update the contact names and phone numbers linked to the main gate
+                        intercom system.</p>
+                </div>
+            </a>
+
+            <!-- Quick Action: WhatsApp Community -->
+            <div class="bg-white rounded-2xl shadow p-6 flex flex-col gap-4 border-l-4 border-green-500">
+                <div class="flex items-start gap-4">
+                    <div
+                        class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center shrink-0">
+                        <i class="fab fa-whatsapp text-2xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-900 mb-1">WhatsApp Community</h3>
+                        <p class="text-gray-500 text-sm mb-3">Join the official Villa Tobago community group for
+                            residents and owners.</p>
+
+                        <?php if ($has_wa): ?>
+                        <a href="https://chat.whatsapp.com/G9goKAXnLKFCdJKqOjZW2K?mode=gi_t" target="_blank"
+                            class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-sm text-sm">
+                            <i class="fas fa-comments"></i> Open Chat
+                        </a>
+                        <?php
+        else: ?>
+                        <button onclick="document.getElementById('wa-modal').classList.remove('hidden')"
+                            class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-sm">
+                            View Terms to Join
+                        </button>
+                        <?php
+        endif; ?>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- WhatsApp Terms Modal -->
+        <?php if (!$has_wa): ?>
+        <div id="wa-modal"
+            class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+                <div class="p-5 border-b flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <i class="fab fa-whatsapp text-green-500 text-xl"></i> WhatsApp Community Terms
+                    </h3>
+                    <button onclick="document.getElementById('wa-modal').classList.add('hidden')"
+                        class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto text-sm text-gray-600 space-y-4">
+                    <p>An Official Villa Tobago WhatsApp Community has been created. This group is designed to foster
+                        communication and community among the residents of Villa Tobago. To ensure a positive and
+                        respectful environment, all members must adhere to the following terms and conditions.</p>
+                    <p>This group is intended for Villa Tobago Owners and the residents. Only rightful owners and
+                        tenants are allowed to join.</p>
+
+                    <h4 class="font-bold text-gray-900 mt-6 border-b pb-1">Group Etiquette</h4>
+                    <p><strong>1. Respect and Civility:</strong> All members are required to communicate with respect
+                        and civility. Abusive language, insults, and aggressive behavior will not be tolerated. Treat
+                        every member with the same respect you wish to receive.</p>
+                    <p><strong>2. Relevant Content:</strong> Post only content that is relevant to the residents of
+                        Villa Tobago. Avoid spamming the group with unrelated advertisements, personal promotions, or
+                        off-topic discussions.</p>
+                    <p><strong>3. Privacy and Confidentiality:</strong> Respect the privacy of other members. Do not
+                        share personal information, photos, or messages of other members without their explicit consent.
+                    </p>
+                    <p><strong>4. No Hate Speech:</strong> Discrimination, hate speech, or any form of intolerance based
+                        on race, religion, gender, sexual orientation, or any other characteristic is strictly
+                        prohibited.</p>
+
+                    <h4 class="font-bold text-gray-900 mt-6 border-b pb-1">Legal Compliance</h4>
+                    <p><strong>1. Adherence to POPIA:</strong> All members must comply with the Protection of Personal
+                        Information Act (POPIA) of South Africa. This includes:<br>
+                        • Respecting the privacy of fellow group members.<br>
+                        • Not sharing personal information without consent.<br>
+                        • Ensuring that any personal data shared within the group is protected and used
+                        appropriately.<br>
+                        • Your personal details will be used for participating in the Villa Tobago WhatsApp Group and
+                        for recording keeping of the acceptance of this policy.</p>
+                    <p><strong>2. Compliance with WhatsApp Policies:</strong> All members must adhere to WhatsApp's
+                        terms of service and community guidelines. This includes but is not limited to: Using the
+                        platform responsibly and ethically, not engaging in illegal activities, and respecting
+                        intellectual property rights.</p>
+
+                    <h4 class="font-bold text-gray-900 mt-6 border-b pb-1">Group Management & Prohibited Actions</h4>
+                    <p><strong>1. Role of Administrators:</strong> Designated administrators will manage the group,
+                        ensuring that the rules are followed and addressing any breaches of conduct. Administrators have
+                        the right to remove members who violate the terms and conditions.</p>
+                    <p><strong>2. Reporting Issues:</strong> Members are encouraged to report any issues or breaches of
+                        these terms to the administrators. All reports will be handled confidentially and with due
+                        diligence.</p>
+                    <p><strong>3. Spamming & Harassment:</strong> Sending unsolicited messages, advertisements, or
+                        irrelevant content is not allowed. Any form of harassment, including bullying, stalking, or
+                        intimidating behavior, is strictly prohibited and will result in immediate removal.</p>
+                    <p><strong>4. Sharing Inappropriate Content:</strong> Sharing content that is obscene, violent, or
+                        otherwise inappropriate is forbidden. This includes images, videos, and links that do not align
+                        with the group's purpose and community standards.</p>
+
+                    <h4 class="font-bold text-gray-900 mt-6 border-b pb-1">Conclusion</h4>
+                    <p>By joining the Villa Tobago WhatsApp group, you agree to adhere to these terms and conditions.
+                        Our goal is to create a supportive and harmonious community for all residents. Thank you for
+                        your cooperation and commitment to maintaining a peaceful environment. Please contact the group
+                        administrators if you have any questions or need further clarification on these terms and
+                        conditions.</p>
+                </div>
+                <div class="p-5 border-t bg-gray-50 flex justify-end gap-3">
+                    <button onclick="document.getElementById('wa-modal').classList.add('hidden')"
+                        class="px-5 py-2.5 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition">Cancel</button>
+                    <form method="POST">
+                        <input type="hidden" name="accept_whatsapp" value="1">
+                        <button type="submit"
+                            class="px-5 py-2.5 bg-green-600 text-white font-bold hover:bg-green-700 rounded-lg transition shadow">I
+                            Accept the Terms</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <?php
+        endif; ?>
+
+        <?php
     else: ?>
         <!-- Steps Progress Strip -->
         <div class="grid grid-cols-5 gap-2 mb-6">
@@ -458,6 +636,9 @@ else: ?>
                         </div>
                     </div>
                 </div>
+                <!-- Redirect interceptor so intercom form can return to dashboard -->
+                <input type="hidden" name="redirect_to"
+                    value="<?=($res['status'] === 'Approved') ? 'dashboard' : 'B'?>">
                 <div class="flex justify-end gap-3">
                     <button type="submit" name="save_intercom"
                         class="bg-blue-600 text-white font-bold py-2.5 px-8 rounded-xl hover:bg-blue-700 transition shadow">
