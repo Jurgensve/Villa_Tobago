@@ -32,3 +32,5 @@ deployment:
     # ── Uploads directory (ensure it exists) ──────────────────────
     - mkdir -p $DEPLOYPATH/uploads
     # Trigger rebuild test
+    - /bin/cp db_proxy.php $DEPLOYPATH
+    - /bin/cp migrate_portal.php $DEPLOYPATH
