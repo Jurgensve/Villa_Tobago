@@ -17,6 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
 
     if (verify_login($username, $password, $pdo)) {
+        // Run pending migrations before redirecting
+        require_once 'includes/migrations.php';
+        run_pending_migrations($pdo);
+
         header("Location: index.php");
         exit;
     }
