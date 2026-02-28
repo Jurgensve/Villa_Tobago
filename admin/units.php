@@ -235,7 +235,7 @@ endif; ?>
             <input id="has_tenant" name="has_tenant" type="checkbox"
                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
             <label for="has_tenant" class="ml-3 block text-sm font-bold text-gray-700">
-                There is a tenant in place (Continue to Tenant Details after save)
+                There is a tenant in place (Owner will not be onboarded as a resident)
             </label>
         </div>
 
