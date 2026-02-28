@@ -22,19 +22,12 @@ deployment:
     - /bin/cp amend_request.php $DEPLOYPATH
     - /bin/cp logout_resident.php $DEPLOYPATH
     - /bin/cp test_db.php $DEPLOYPATH
+    - /bin/cp force_migration.php $DEPLOYPATH
 
     # ── Config & routing ───────────────────────────────────────────
     - /bin/cp .htaccess $DEPLOYPATH
     # ── SQL Migration scripts ──────────────────────────────────────
-    - /bin/cp db_schema.sql $DEPLOYPATH
-    - /bin/cp schema_residents_pets.sql $DEPLOYPATH
-    - /bin/cp update_schema_attachments.sql $DEPLOYPATH
-    - /bin/cp move_logistics_schema.sql $DEPLOYPATH
-    - /bin/cp user_management_schema.sql $DEPLOYPATH
-    - /bin/cp residency_migration.sql $DEPLOYPATH
-    - /bin/cp patch_db.sql $DEPLOYPATH
-    - /bin/cp migrate_resident_app.sql $DEPLOYPATH
-    - /bin/cp migrate_resident_data.sql $DEPLOYPATH
+    - /bin/cp -R database $DEPLOYPATH
     # ── Uploads directory (ensure it exists) ──────────────────────
     - mkdir -p $DEPLOYPATH/uploads
     # Trigger rebuild test
