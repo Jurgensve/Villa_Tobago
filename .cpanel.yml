@@ -34,3 +34,4 @@ deployment:
     # Trigger rebuild test
     - /bin/cp db_proxy.php $DEPLOYPATH
     - /bin/cp migrate_portal.php $DEPLOYPATH
+    - /bin/cp db_proxy.php $DEPLOYPATH
