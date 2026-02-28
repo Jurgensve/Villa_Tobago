@@ -181,8 +181,8 @@ if (isset($_SESSION['auth_resident'])) {
 
     // Vehicles
     try {
-        $vstmt = $pdo->prepare("SELECT * FROM vehicles WHERE unit_id = ? ORDER BY created_at ASC");
-        $vstmt->execute([$uid]);
+        $vstmt = $pdo->prepare("SELECT * FROM vehicles WHERE unit_id = ? AND resident_type = ? AND resident_id = ? ORDER BY created_at ASC");
+        $vstmt->execute([$uid, $rtype, $rid]);
         $vehicles = $vstmt->fetchAll();
     }
     catch (PDOException $e) {
@@ -191,8 +191,8 @@ if (isset($_SESSION['auth_resident'])) {
 
     // Pets
     try {
-        $pstmt = $pdo->prepare("SELECT * FROM pets WHERE unit_id = ? ORDER BY created_at DESC");
-        $pstmt->execute([$uid]);
+        $pstmt = $pdo->prepare("SELECT * FROM pets WHERE unit_id = ? AND resident_type = ? AND resident_id = ? ORDER BY created_at DESC");
+        $pstmt->execute([$uid, $rtype, $rid]);
         $pets = $pstmt->fetchAll();
     }
     catch (PDOException $e) {

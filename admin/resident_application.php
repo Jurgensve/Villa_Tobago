@@ -39,6 +39,14 @@ if (!$app) {
     exit;
 }
 
+$vstmt = $pdo->prepare("SELECT * FROM vehicles WHERE resident_type = ? AND resident_id = ? AND unit_id = ? ORDER BY created_at ASC");
+$vstmt->execute([$app_type, $app_id, $unit_id]);
+$app_vehicles = $vstmt->fetchAll();
+
+$pstmt = $pdo->prepare("SELECT * FROM pets WHERE resident_type = ? AND resident_id = ? AND unit_id = ? ORDER BY created_at DESC");
+$pstmt->execute([$app_type, $app_id, $unit_id]);
+$app_pets = $pstmt->fetchAll();
+
 // ── Handle POST actions ───────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action_taken = $_POST['action'] ?? '';
@@ -109,6 +117,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header("Location: units.php?action=view&id={$unit_id}&msg=resident_declined");
             exit;
 
+        }
+        elseif ($action_taken === 'approve_pet') {
+            $pet_id = (int)$_POST['pet_id'];
+            $pdo->prepare("UPDATE pets SET status = 'Approved' WHERE id = ?")->execute([$pet_id]);
+
+            // Auto-check if all pets are approved to satisfy the pet_approval requirement
+            $unapproved = $pdo->prepare("SELECT COUNT(*) FROM pets WHERE resident_type = ? AND resident_id = ? AND status != 'Approved'");
+            $unapproved->execute([$app_type, $app_id]);
+            if ($unapproved->fetchColumn() == 0) {
+                $pdo->prepare("UPDATE {$app_table} SET pet_approval = 1 WHERE id = ?")->execute([$app_id]);
+            }
+            $pdo->commit();
+            header("Location: resident_application.php?unit_id={$unit_id}&msg=" . urlencode("Pet approved."));
+            exit;
+        }
+        elseif ($action_taken === 'decline_pet') {
+            $pet_id = (int)$_POST['pet_id'];
+            $pdo->prepare("UPDATE pets SET status = 'Declined' WHERE id = ?")->execute([$pet_id]);
+            $pdo->commit();
+            header("Location: resident_application.php?unit_id={$unit_id}&err=" . urlencode("Pet declined."));
+            exit;
         }
         elseif ($action_taken === 'request_info') {
             // Generate amendment token and set status
@@ -311,7 +340,106 @@ endif; ?>
         </div>
     </div>
 
-    <!-- Action Buttons -->
+    <!-- Intercom Contacts -->
+    <div class="bg-white shadow rounded-xl overflow-hidden mt-6">
+        <div class="px-6 py-4 bg-gray-50 border-b">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-phone text-gray-500"></i> Intercom Contacts
+            </h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <p class="text-xs font-bold text-blue-900 uppercase mb-1">Contact 1</p>
+                <p class="font-bold text-gray-900"><?= h($app['intercom_contact1_name'] ?: 'Not provided') ?></p>
+                <p class="text-gray-600 text-sm"><?= h($app['intercom_contact1_phone'] ?: '—') ?></p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-xs font-bold text-gray-500 uppercase mb-1">Contact 2</p>
+                <p class="font-bold text-gray-900"><?= h($app['intercom_contact2_name'] ?: 'Not provided') ?></p>
+                <p class="text-gray-600 text-sm"><?= h($app['intercom_contact2_phone'] ?: '—') ?></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicles -->
+    <div class="bg-white shadow rounded-xl overflow-hidden mt-6">
+        <div class="px-6 py-4 bg-gray-50 border-b">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-car text-gray-500"></i> Vehicles
+            </h2>
+        </div>
+        <div class="p-6">
+            <?php if (empty($app_vehicles)): ?>
+                <p class="text-gray-500 italic">No vehicles registered.</p>
+            <?php else: ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <?php foreach ($app_vehicles as $v): ?>
+                        <div class="flex items-center gap-4 bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <i class="fas fa-car-side"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900"><?= h($v['registration']) ?></p>
+                                <p class="text-sm text-gray-500"><?= h($v['make_model'] ?: 'Unknown Make') ?> • <?= h($v['color'] ?: 'Unknown Color') ?></p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Pets -->
+    <div class="bg-white shadow rounded-xl overflow-hidden mt-6 mb-6">
+        <div class="px-6 py-4 bg-gray-50 border-b mb-6 border-b">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-paw text-gray-500"></i> Pets
+            </h2>
+        </div>
+        <div class="px-6 pb-6">
+            <?php if (empty($app_pets)): ?>
+                <p class="text-gray-500 italic">No pets registered.</p>
+            <?php else: ?>
+                <div class="space-y-4">
+                    <?php foreach ($app_pets as $p): ?>
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl">
+                                    <i class="fas fa-<?= strtolower($p['type']) === 'cat' ? 'cat' : (strtolower($p['type']) === 'bird' ? 'dove' : (strtolower($p['type']) === 'fish' ? 'fish' : 'dog')) ?>"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-900"><?= h($p['name']) ?> <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full ml-1"><?= h($p['type']) ?></span></p>
+                                    <p class="text-sm text-gray-500">
+                                        <?= h($p['breed'] ?: 'Mixed') ?> 
+                                        <?= $p['adult_size'] ? ' • ' . h($p['adult_size']) . ' Size' : '' ?>
+                                        <?= $p['status'] === 'Approved' ? '<span class="text-green-600 font-bold ml-2"><i class="fas fa-check-circle mr-1"></i>Approved</span>' : '<span class="text-amber-600 font-bold ml-2"><i class="fas fa-clock mr-1"></i>Pending</span>' ?>
+                                    </p>
+                                </div>
+                            </div>
+                            <?php if ($p['status'] !== 'Approved' && $p['status'] !== 'Declined'): ?>
+                            <div class="flex gap-2">
+                                <form method="POST" class="inline" onsubmit="return confirm('Approve this pet?');">
+                                    <input type="hidden" name="action" value="approve_pet">
+                                    <input type="hidden" name="pet_id" value="<?= $p['id'] ?>">
+                                    <button type="submit" class="text-sm bg-green-100 hover:bg-green-200 text-green-800 font-bold py-1.5 px-3 rounded shadow-sm">
+                                        Approve Pet
+                                    </button>
+                                </form>
+                                <form method="POST" class="inline" onsubmit="return confirm('Decline this pet?');">
+                                    <input type="hidden" name="action" value="decline_pet">
+                                    <input type="hidden" name="pet_id" value="<?= $p['id'] ?>">
+                                    <button type="submit" class="text-sm bg-red-100 hover:bg-red-200 text-red-800 font-bold py-1.5 px-3 rounded shadow-sm">
+                                        Decline
+                                    </button>
+                                </form>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
     <?php if ($status !== 'Approved' && $status !== 'Declined'): ?>
     <div class="bg-white shadow rounded-xl overflow-hidden">
         <div class="px-6 py-4 bg-gray-50 border-b">

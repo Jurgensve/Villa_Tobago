@@ -34,6 +34,7 @@ deployment:
     - /bin/cp residency_migration.sql $DEPLOYPATH
     - /bin/cp patch_db.sql $DEPLOYPATH
     - /bin/cp migrate_resident_app.sql $DEPLOYPATH
+    - /bin/cp migrate_resident_data.sql $DEPLOYPATH
     # ── Uploads directory (ensure it exists) ──────────────────────
     - mkdir -p $DEPLOYPATH/uploads
     # Trigger rebuild test

@@ -319,14 +319,19 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
         }
 
         // 6. Fetch Pets
-        $stmt = $pdo->prepare("SELECT * FROM pets WHERE unit_id = ? ORDER BY created_at DESC");
-        $stmt->execute([$id]);
-        $pets = $stmt->fetchAll();
-
+        $pets = [];
         // 7. Fetch Vehicles
-        $vstmt = $pdo->prepare("SELECT * FROM vehicles WHERE unit_id = ? ORDER BY created_at ASC");
-        $vstmt->execute([$id]);
-        $vehicles = $vstmt->fetchAll();
+        $vehicles = [];
+
+        if ($resident && !empty($resident['resident_id'])) {
+            $stmt = $pdo->prepare("SELECT * FROM pets WHERE unit_id = ? AND resident_type = ? AND resident_id = ? ORDER BY created_at DESC");
+            $stmt->execute([$id, $resident['resident_type'], $resident['resident_id']]);
+            $pets = $stmt->fetchAll();
+
+            $vstmt = $pdo->prepare("SELECT * FROM vehicles WHERE unit_id = ? AND resident_type = ? AND resident_id = ? ORDER BY created_at ASC");
+            $vstmt->execute([$id, $resident['resident_type'], $resident['resident_id']]);
+            $vehicles = $vstmt->fetchAll();
+        }
 
         // 8. Fetch Pet Settings
         $pet_settings = $pdo->query("SELECT setting_key, setting_value FROM pet_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -345,12 +350,14 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
 
     // 10. Fetch Logistics
     $logistics = [];
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM move_logistics WHERE unit_id = ? ORDER BY created_at DESC");
-        $stmt->execute([$id]);
-        $logistics = $stmt->fetchAll();
-    }
-    catch (Exception $e) {
+    if ($resident && !empty($resident['resident_id'])) {
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM move_logistics WHERE unit_id = ? AND resident_type = ? AND resident_id = ? ORDER BY created_at DESC");
+            $stmt->execute([$id, $resident['resident_type'], $resident['resident_id']]);
+            $logistics = $stmt->fetchAll();
+        }
+        catch (Exception $e) {
+        }
     }
 
     // 11. Fetch Pending Resident Application (if any)

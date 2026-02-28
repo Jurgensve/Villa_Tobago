@@ -51,26 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
     }
     else {
         try {
-            // Ensure resident record exists
-            $stmt = $pdo->prepare("SELECT id FROM residents WHERE unit_id = ? AND resident_type = ? AND resident_id = ?");
-            $stmt->execute([$res['unit_id'], $res['type'], $res['id']]);
-            $resident_id_record = $stmt->fetchColumn();
-
-            if (!$resident_id_record) {
-                $ins = $pdo->prepare("INSERT INTO residents (unit_id, resident_type, resident_id) VALUES (?, ?, ?)");
-                $ins->execute([$res['unit_id'], $res['type'], $res['id']]);
-                $resident_id_record = $pdo->lastInsertId();
-            }
-
             // Insert pet record (files uploaded after we have the pet ID)
             $stmt = $pdo->prepare(
-                "INSERT INTO pets (unit_id, resident_id, name, type, breed, reg_number, adult_size, birth_date,
+                "INSERT INTO pets (unit_id, resident_type, resident_id, name, type, breed, reg_number, adult_size, birth_date,
                     is_sterilized, is_vaccinated, is_microchipped, wears_id_tag,
                     motivation_note, house_rules_accepted, status, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())"
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())"
             );
             $stmt->execute([
-                $res['unit_id'], $resident_id_record, $name, $type, $breed, $reg_number,
+                $res['unit_id'], $res['type'], $res['id'], $name, $type, $breed, $reg_number,
                 $adult_size ?: null, $birth_date,
                 $is_sterilized, $is_vaccinated, $is_microchipped, $wears_id_tag,
                 $motivation_note ?: null, $house_rules_accepted
