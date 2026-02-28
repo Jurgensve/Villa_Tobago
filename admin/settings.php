@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_database'])) {
         $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
         $pdo->exec("TRUNCATE TABLE amendment_logs;");
         $pdo->exec("TRUNCATE TABLE pets;");
+        $pdo->exec("TRUNCATE TABLE vehicles;");
         $pdo->exec("TRUNCATE TABLE modifications;");
         $pdo->exec("TRUNCATE TABLE occupants;");
         $pdo->exec("TRUNCATE TABLE residents;");
@@ -188,8 +189,8 @@ endif; ?>
                         <p class="text-sm text-gray-500">Allow pets to be registered against residents.</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="pet_management_enabled" value="1" <?=$pet_enabled ? 'checked' : ''
-    ?> class="sr-only peer">
+                        <input type="checkbox" name="pet_management_enabled" value="1" <?= $pet_enabled ? 'checked' : ''
+                            ?> class="sr-only peer">
                         <div
                             class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                         </div>
@@ -338,7 +339,7 @@ endif; ?>
 endif; ?>
                     </label>
                     <input type="number" name="total_units" value="<?= $total_units_val ?: ''?>"
-                        <?=$current_units_count> 0 ? 'disabled' : ''?>
+                        <?= $current_units_count > 0 ? 'disabled' : ''?>
                     min="1" max="1000"
                     class="shadow border rounded w-32 py-2 px-3 text-gray-700 focus:outline-none
                     <?= $current_units_count > 0 ? 'opacity-50 cursor-not-allowed' : ''?>"

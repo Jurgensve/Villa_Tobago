@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $full_name = trim($_POST['full_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
-    $role = in_array($_POST['role'] ?? '', ['super_admin', 'admin']) ? $_POST['role'] : 'admin';
+    $role = in_array($_POST['role'] ?? '', ['super_admin', 'admin', 'managing_agent', 'trustee']) ? $_POST['role'] : 'admin';
     $password = $_POST['password'] ?? '';
 
     if (!$username || !$password) {
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     $full_name = trim($_POST['full_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
-    $role = in_array($_POST['role'] ?? '', ['super_admin', 'admin']) ? $_POST['role'] : 'admin';
+    $role = in_array($_POST['role'] ?? '', ['super_admin', 'admin', 'managing_agent', 'trustee']) ? $_POST['role'] : 'admin';
 
     $pdo->prepare("UPDATE users SET full_name=?, email=?, phone=?, role=? WHERE id=?")
         ->execute([$full_name ?: null, $email ?: null, $phone ?: null, $role, $uid]);
