@@ -23,6 +23,7 @@ deployment:
     - /bin/cp logout_resident.php $DEPLOYPATH
     - /bin/cp test_db.php $DEPLOYPATH
     - /bin/cp force_migration.php $DEPLOYPATH
+    - /bin/cp test_data_dump.php $DEPLOYPATH
 
     # ── Config & routing ───────────────────────────────────────────
     - /bin/cp .htaccess $DEPLOYPATH
