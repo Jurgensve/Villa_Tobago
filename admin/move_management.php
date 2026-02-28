@@ -145,6 +145,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Error: " . $e->getMessage();
         }
     }
+
+    if (isset($_POST['redirect_to_unit']) && !empty($_POST['redirect_to_unit'])) {
+        $redir_unit_id = (int)$_POST['redirect_to_unit'];
+        $msg_param = $message ? "&msg=" . urlencode($message) : ($error ? "&err=" . urlencode($error) : "");
+        header("Location: units.php?action=view&id={$redir_unit_id}{$msg_param}");
+        exit;
+    }
 }
 
 // ─── DATA FETCH ────────────────────────────────────────────────────────────────
@@ -266,8 +273,8 @@ endif; ?>
                     required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $u): ?>
-                    <option value='<?= json_encode([' unit_id' => $u['unit_id'], 'resident_id' => $u['resident_id'],
-            'resident_type' => $u['resident_type']])?>'>
+                    <option value='<?= json_encode([' unit_id'=> $u['unit_id'], 'resident_id' => $u['resident_id'],
+                        'resident_type' => $u['resident_type']])?>'>
                         <?= h($u['unit_number'])?> -
                         <?= h($u['resident_name'])?> (
                         <?= ucfirst($u['resident_type'])?>)

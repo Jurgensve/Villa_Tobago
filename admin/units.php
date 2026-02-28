@@ -153,14 +153,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h1 class="text-3xl font-bold text-gray-900">Units</h1>
     <?php if ($action === 'view' && isset($_GET['id'])): ?>
     <div class="space-x-2">
-        <a href="modifications.php?action=add&unit_id=<?= $_GET['id']?>"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            <i class="fas fa-hammer mr-2"></i> Log Modification
-        </a>
-        <a href="units.php?action=edit&id=<?= $_GET['id']?>"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
-            <i class="fas fa-edit mr-2"></i> Edit Unit
-        </a>
         <a href="units.php" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
             <i class="fas fa-arrow-left mr-2"></i> Back to List
         </a>
@@ -858,9 +850,6 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                 <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
                     <?= count($logistics)?> Total
                 </span>
-                <a href="move_management.php?action=add&unit_id=<?= $id?>"
-                    class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold shadow-sm transition"><i
-                        class="fas fa-plus mr-1"></i> Log</a>
             </div>
         </div>
         <div class="p-5">
@@ -905,12 +894,16 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                 <?= $log['preferred_date'] ? format_date($log['preferred_date']) : '—'?>
                             </td>
                             <td class="py-2 pr-3 text-gray-600">
-                                <?= h($log['resident_name'])?>
+                                <span
+                                    class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase <?= $log['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'?>">
+                                    <?= h($log['resident_type'])?>
+                                </span>
                             </td>
                             <td class="py-2 text-right">
                                 <?php if ($log['status'] === 'Pending'): ?>
                                 <form method="POST" action="move_management.php" class="inline">
                                     <input type="hidden" name="logistics_id" value="<?= $log['id']?>">
+                                    <input type="hidden" name="redirect_to_unit" value="<?= $id?>">
                                     <button type="submit" name="action_approve"
                                         class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold shadow-sm">Approve</button>
                                 </form>
@@ -918,6 +911,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
             elseif ($log['status'] === 'Approved'): ?>
                                 <form method="POST" action="move_management.php" class="inline">
                                     <input type="hidden" name="logistics_id" value="<?= $log['id']?>">
+                                    <input type="hidden" name="redirect_to_unit" value="<?= $id?>">
                                     <button type="submit" name="action_complete"
                                         class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 font-bold shadow-sm"><i
                                             class="fas fa-check-circle mr-1"></i> Complete</button>
