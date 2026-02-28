@@ -153,6 +153,30 @@ try {
 catch (Exception $e) {
 }
 
+// Fetch Pending Residents (Owners)
+try {
+    $owners = $pdo->query("SELECT o.id, o.full_name, oh.unit_id, u.unit_number FROM owners o JOIN ownership_history oh ON o.id = oh.owner_id JOIN units u ON oh.unit_id = u.id WHERE oh.is_current = 1 AND COALESCE(o.status,'Pending') NOT IN ('Approved','Declined','Completed') AND o.is_active=1 ORDER BY o.created_at DESC")->fetchAll();
+    foreach ($owners as $o) {
+        $has_alerts = true;
+        echo "<li class='hover:bg-gray-50 transition'>
+                                <a href='resident_application.php?unit_id={$o['unit_id']}' class='block px-4 py-4 sm:px-6'>
+                                    <div class='flex items-center justify-between'>
+                                        <div class='flex items-center'>
+                                            <div class='bg-purple-100 text-purple-600 rounded-full p-2 mr-4'><i class='fas fa-user-tie fa-fw'></i></div>
+                                            <div>
+                                                <p class='text-sm font-bold text-gray-900'>Unit {$o['unit_number']} — Pending Owner Application</p>
+                                                <p class='text-xs text-gray-500 uppercase mt-0.5'>" . h($o['full_name']) . " requires sub-approvals or final review.</p>
+                                            </div>
+                                        </div>
+                                        <div><i class='fas fa-chevron-right text-gray-400'></i></div>
+                                    </div>
+                                </a>
+                              </li>";
+    }
+}
+catch (Exception $e) {
+}
+
 if (!$has_alerts):
 ?>
                 <li class="px-4 py-8 sm:px-6 text-center text-gray-500 italic">
