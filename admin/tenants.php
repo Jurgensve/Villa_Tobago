@@ -201,12 +201,13 @@ endif; ?>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="mb-4 md:col-span-2">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="unit_id">Unit *</label>
+                <?php $is_locked = ($action === 'add' && !empty($_GET['unit_id'])); ?>
                 <select
-                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="unit_id" name="unit_id" required>
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline <?= $is_locked ? 'bg-gray-100 pointer-events-none cursor-not-allowed' : ''?>"
+                    id="unit_id" name="unit_id" required <?=$is_locked ? 'tabindex="-1"' : ''?>>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id'] == $unit['id']) ? 'selected' : ''?>>
+                    <option value="<?= $unit['id']?>" <?=($tenant['unit_id']==$unit['id']) ? 'selected' : '' ?>>
                         <?= h($unit['unit_number'])?>
                     </option>
                     <?php
@@ -350,14 +351,14 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         <div class="flex space-x-6">
                             <div class="flex items-center">
                                 <input type="checkbox" name="owner_approval" value="1"
-                                    <?= empty($tenant['owner_approval']) ? '' : 'checked'?> class="mr-2 h-5 w-5
+                                    <?=empty($tenant['owner_approval']) ? '' : 'checked' ?> class="mr-2 h-5 w-5
                                 text-blue-600">
                                 <label class="font-bold text-sm text-gray-700">Owner Approved</label>
                             </div>
                             <?php if ($tenant_has_pets): ?>
                             <div class="flex items-center">
-                                <input type="checkbox" name="pet_approval" value="1" <?= empty($tenant['pet_approval'])
-            ? '' : 'checked'?> class="mr-2 h-5 w-5 text-blue-600">
+                                <input type="checkbox" name="pet_approval" value="1" <?=empty($tenant['pet_approval'])
+                                    ? '' : 'checked' ?> class="mr-2 h-5 w-5 text-blue-600">
                                 <label class="font-bold text-sm text-gray-700">Pet Approved</label>
                             </div>
                             <?php

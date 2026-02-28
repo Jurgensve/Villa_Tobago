@@ -126,9 +126,9 @@ if (!empty($required_roles)) {
                     <div class="hidden sm:flex sm:space-x-2 sm:items-center">
 
                         <?php if ($__role === 'trustee'): ?>
-                        <!-- Trustee: Approvals only -->
-                        <a href="pending_approvals.php" class="nav-btn">
-                            <i class="fas fa-clipboard-check mr-1"></i> Approvals
+                        <!-- Trustee: Dashboard access -->
+                        <a href="index.php" class="nav-btn">
+                            <i class="fas fa-chart-line mr-1"></i> Dashboard
                         </a>
 
                         <?php
@@ -183,9 +183,6 @@ else: ?>
                             <div class="nav-dropdown hidden">
                                 <a href="settings.php" class="nav-drop-item">
                                     <i class="fas fa-sliders-h text-gray-400 w-4"></i> Settings
-                                </a>
-                                <a href="pending_approvals.php" class="nav-drop-item">
-                                    <i class="fas fa-clipboard-check text-gray-400 w-4"></i> Pending Approvals
                                 </a>
                                 <a href="import.php" class="nav-drop-item">
                                     <i class="fas fa-file-import text-gray-400 w-4"></i> Import Data

@@ -5,10 +5,53 @@ require_once 'includes/header.php';
 
 $message = '';
 $error = '';
+$action = $_GET['action'] ?? 'list';
 
 // ─── POST ACTIONS ──────────────────────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    // Admin direct log move
+    if (isset($_POST['admin_log_move'])) {
+        $unit_owner_json = trim($_POST['unit_owner_json'] ?? '');
+        $move_type = trim($_POST['move_type'] ?? '');
+        $preferred_date = trim($_POST['preferred_date'] ?? '');
+        $truck_reg = trim($_POST['truck_reg'] ?? '');
+        $truck_gwm = !empty($_POST['truck_gwm']) ? (int)$_POST['truck_gwm'] : null;
+        $moving_company = trim($_POST['moving_company'] ?? '');
+        $notes = trim($_POST['notes'] ?? '');
+
+        if ($unit_owner_json && $move_type) {
+            $data = json_decode($unit_owner_json, true);
+            $unit_id = $data['unit_id'] ?? 0;
+            $resident_id = $data['resident_id'] ?? 0;
+            $resident_type = $data['resident_type'] ?? '';
+
+            if ($unit_id && $resident_type && $resident_id) {
+                try {
+                    $stmt = $pdo->prepare(
+                        "INSERT INTO move_logistics (unit_id, resident_type, resident_id, move_type, preferred_date, truck_reg, truck_gwm, moving_company, notes, status)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Approved')"
+                    );
+                    $stmt->execute([
+                        $unit_id, $resident_type, $resident_id, $move_type,
+                        $preferred_date, $truck_reg, $truck_gwm, $moving_company, $notes
+                    ]);
+                    $message = "Move successfully logged and approved.";
+                    $action = 'list';
+                }
+                catch (PDOException $e) {
+                    $error = "Error: " . $e->getMessage();
+                }
+            }
+            else {
+                $error = "Invalid resident details.";
+            }
+        }
+        else {
+            $error = "Unit, Resident, and Move Type are required.";
+        }
+    }
 
     $logistics_id = (int)($_POST['logistics_id'] ?? 0);
 
@@ -151,10 +194,21 @@ function move_type_badge($type)
         <h1 class="text-3xl font-bold text-gray-900">Move Management</h1>
         <p class="text-gray-500 text-sm mt-1">All scheduled move-ins and move-outs for the complex.</p>
     </div>
-    <a href="../move_out_form.php"
-        class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded text-sm">
-        <i class="fas fa-sign-out-alt mr-2"></i> Resident Move-Out Form
+    <?php if ($action !== 'add'): ?>
+    <div class="flex gap-2">
+        <a href="move_management.php?action=add"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm transition shadow-sm">
+            <i class="fas fa-plus mr-1"></i> Log Move
+        </a>
+    </div>
+    <?php
+else: ?>
+    <a href="move_management.php"
+        class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+        <i class="fas fa-arrow-left mr-2"></i> Back to List
     </a>
+    <?php
+endif; ?>
 </div>
 
 <?php if ($message): ?>
@@ -172,6 +226,126 @@ endif; ?>
 <?php
 endif; ?>
 
+<?php if ($action === 'add'): ?>
+<?php
+    // Fetch all current units and their occupants
+    $sql_units = "
+        SELECT u.id as unit_id, u.unit_number, 
+            CASE WHEN r.resident_type = 'owner' THEN o.id ELSE t.id END AS resident_id,
+            CASE WHEN r.resident_type = 'owner' THEN 'owner' ELSE 'tenant' END AS resident_type,
+            CASE WHEN r.resident_type = 'owner' THEN o.full_name ELSE t.full_name END AS resident_name
+        FROM units u 
+        LEFT JOIN residents r ON u.id = r.unit_id AND r.is_current = 1
+        LEFT JOIN owners o ON r.resident_type = 'owner' AND r.resident_id = o.id
+        LEFT JOIN tenants t ON r.resident_type = 'tenant' AND r.resident_id = t.id
+        ORDER BY u.unit_number ASC
+    ";
+
+    // Graceful fallback for resident associations
+    try {
+        $units = $pdo->query($sql_units)->fetchAll();
+    }
+    catch (Exception $e) {
+        $units = $pdo->query("
+            SELECT u.id as unit_id, u.unit_number, o.id as resident_id, 'owner' as resident_type, o.full_name as resident_name 
+            FROM units u 
+            JOIN ownership_history oh ON u.id = oh.unit_id AND oh.is_current = 1
+            JOIN owners o ON oh.owner_id = o.id
+            ORDER BY u.unit_number ASC
+        ")->fetchAll();
+    }
+?>
+<div class="bg-white shadow rounded-lg p-6 max-w-4xl">
+    <h2 class="text-xl font-semibold mb-6">Log Move-In / Move-Out (Auto-Approved)</h2>
+    <form method="POST">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Unit & Resident</label>
+                <select id="unit_resident_select" name="unit_owner_json"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    required>
+                    <option value="">-- Select Unit --</option>
+                    <?php foreach ($units as $u): ?>
+                    <option value='<?= json_encode([' unit_id' => $u['unit_id'], 'resident_id' => $u['resident_id'],
+            'resident_type' => $u['resident_type']])?>'>
+                        <?= h($u['unit_number'])?> -
+                        <?= h($u['resident_name'])?> (
+                        <?= ucfirst($u['resident_type'])?>)
+                    </option>
+                    <?php
+    endforeach; ?>
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Move Type</label>
+                <select name="move_type" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white" required>
+                    <option value="">-- Select Type --</option>
+                    <option value="move_in">Move-In</option>
+                    <option value="move_out">Move-Out</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Preferred Date</label>
+                <input type="date" name="preferred_date"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Moving Company</label>
+                <input type="text" name="moving_company"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Truck Registration</label>
+                <input type="text" name="truck_reg"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 uppercase"
+                    placeholder="e.g. CA 12345">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Truck GWM (kg)</label>
+                <input type="number" name="truck_gwm"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
+                    placeholder="e.g. 3500">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Notes</label>
+                <textarea name="notes" rows="2"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"></textarea>
+            </div>
+        </div>
+        <div class="mt-8">
+            <button type="submit" name="admin_log_move"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded focus:outline-none focus:shadow-outline w-full md:w-auto">
+                Save & Approve Move
+            </button>
+        </div>
+    </form>
+    <script>
+        window.onload = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const preselectedUnitId = urlParams.get('unit_id');
+            if (preselectedUnitId) {
+                const select = document.getElementById('unit_resident_select');
+                for (let i = 0; i < select.options.length; i++) {
+                    const opt = select.options[i];
+                    if (opt.value) {
+                        try {
+                            const data = JSON.parse(opt.value);
+                            if (data.unit_id == preselectedUnitId) {
+                                select.selectedIndex = i;
+                                select.classList.add('bg-gray-100', 'pointer-events-none');
+                                select.tabIndex = -1;
+                                break;
+                            }
+                        } catch (e) { }
+                    }
+                }
+            }
+        };
+    </script>
+</div>
+<?php
+else: ?>
+
 <!-- ═══ UPCOMING MOVES ════════════════════════════════════════════════════════ -->
 <div class="mb-8">
     <h2 class="text-lg font-bold text-gray-700 mb-3 flex items-center">
@@ -188,7 +362,7 @@ endif; ?>
         No upcoming moves scheduled.
     </div>
     <?php
-else: ?>
+    else: ?>
     <div class="bg-white shadow rounded-lg overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200" id="upcomingTable">
             <thead class="bg-gray-50">
@@ -236,10 +410,10 @@ else: ?>
                             <i class="fas fa-check-circle"></i>
                         </span>
                         <?php
-        else: ?>
+            else: ?>
                         <span class="text-gray-300"><i class="fas fa-minus-circle"></i></span>
                         <?php
-        endif; ?>
+            endif; ?>
                     </td>
                     <td class="px-4 py-3 text-sm">
                         <div class="flex flex-wrap gap-1">
@@ -261,7 +435,7 @@ else: ?>
                                 </button>
                             </form>
                             <?php
-        endif; ?>
+            endif; ?>
 
                             <?php if ($m['status'] === 'Approved'): ?>
                             <form method="POST" class="inline">
@@ -272,7 +446,7 @@ else: ?>
                                 </button>
                             </form>
                             <?php
-        endif; ?>
+            endif; ?>
 
                             <form method="POST" class="inline" title="Re-send security email">
                                 <input type="hidden" name="logistics_id" value="<?= $m['id']?>">
@@ -286,12 +460,12 @@ else: ?>
                     </td>
                 </tr>
                 <?php
-    endforeach; ?>
+        endforeach; ?>
             </tbody>
         </table>
     </div>
     <?php
-endif; ?>
+    endif; ?>
 </div>
 
 <!-- ═══ PAST MOVES ══════════════════════════════════════════════════════════════ -->
@@ -310,7 +484,7 @@ endif; ?>
         No past moves on record yet.
     </div>
     <?php
-else: ?>
+    else: ?>
     <div class="bg-white shadow rounded-lg overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200" id="pastTable">
             <thead class="bg-gray-50">
@@ -352,17 +526,17 @@ else: ?>
                     </td>
                     <td class="px-4 py-3 text-sm text-center">
                         <?= $m['security_notified']
-            ? "<span class='text-green-500' title='" . format_datetime($m['security_notified_at']) . "'><i class='fas fa-check-circle'></i></span>"
-            : "<span class='text-gray-300'><i class='fas fa-minus-circle'></i></span>"?>
+                ? "<span class='text-green-500' title='" . format_datetime($m['security_notified_at']) . "'><i class='fas fa-check-circle'></i></span>"
+                : "<span class='text-gray-300'><i class='fas fa-minus-circle'></i></span>"?>
                     </td>
                 </tr>
                 <?php
-    endforeach; ?>
+        endforeach; ?>
             </tbody>
         </table>
     </div>
     <?php
-endif; ?>
+    endif; ?>
 </div>
 
 <script>
@@ -372,4 +546,6 @@ endif; ?>
     });
 </script>
 
+<?php
+endif; ?>
 <?php require_once 'includes/footer.php'; ?>
