@@ -187,10 +187,6 @@ else: ?>
                                 <a href="import.php" class="nav-drop-item">
                                     <i class="fas fa-file-import text-gray-400 w-4"></i> Import Data
                                 </a>
-                                <div class="border-t border-gray-100 my-1"></div>
-                                <a href="run_migrations.php" class="nav-drop-item">
-                                    <i class="fas fa-database text-gray-400 w-4"></i> Run Migrations
-                                </a>
                                 <?php if ($__role === 'admin'): ?>
                                 <div class="border-t border-gray-100 my-1"></div>
                                 <a href="users.php" class="nav-drop-item">
