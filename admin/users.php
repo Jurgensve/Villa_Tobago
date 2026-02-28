@@ -80,6 +80,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_active'])) {
     }
 }
 
+// ── Delete user ───────────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
+    $uid = (int)$_POST['uid'];
+    if ($uid === (int)$_SESSION['user_id']) {
+        $error = 'You cannot delete your own account.';
+    }
+    else {
+        $pdo->prepare("DELETE FROM users WHERE id=?")->execute([$uid]);
+        $success = 'User deleted permanently.';
+    }
+}
+
 // ── Fetch all users ─────────────────────────────────────────────
 $users = $pdo->query("SELECT * FROM users ORDER BY role DESC, username ASC")->fetchAll();
 ?>
@@ -203,6 +215,21 @@ endif; ?>
             : 'bg-green-50 hover:bg-green-100 text-green-700'?>">
                                 <i class="fas <?= $u['is_active'] ? 'fa-user-slash' : 'fa-user-check'?> mr-1"></i>
                                 <?= $u['is_active'] ? 'Deactivate' : 'Reactivate'?>
+                            </button>
+                        </form>
+                        <?php
+    endif; ?>
+
+                        <!-- Delete User (not self) -->
+                        <?php if ($u['id'] !== $_SESSION['user_id'] && $_SESSION['role'] === 'super_admin'): // Only super admin can fully delete or we can allow admin too. Let's allow admin if they can manage users. 
+    endif; ?>
+                        <?php if ($u['id'] !== $_SESSION['user_id']): ?>
+                        <form method="POST"
+                            onsubmit="return confirm('WARNING: Are you sure you want to permanently DELETE user <?= h(addslashes($u['username']))?>? This cannot be undone!')">
+                            <input type="hidden" name="uid" value="<?= $u['id']?>">
+                            <button type="submit" name="delete_user"
+                                class="text-xs px-3 py-1.5 rounded font-bold transition bg-red-100 hover:bg-red-200 text-red-800">
+                                <i class="fas fa-trash-alt mr-1"></i>Delete
                             </button>
                         </form>
                         <?php
