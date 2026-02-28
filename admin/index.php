@@ -135,7 +135,7 @@ try {
     foreach ($tenants as $t) {
         $has_alerts = true;
         echo "<li class='hover:bg-gray-50 transition'>
-                                <a href='units.php?action=view&id={$t['unit_id']}#residents' class='block px-4 py-4 sm:px-6'>
+                                <a href='resident_application.php?unit_id={$t['unit_id']}' class='block px-4 py-4 sm:px-6'>
                                     <div class='flex items-center justify-between'>
                                         <div class='flex items-center'>
                                             <div class='bg-green-100 text-green-600 rounded-full p-2 mr-4'><i class='fas fa-user-plus fa-fw'></i></div>

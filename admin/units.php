@@ -570,6 +570,15 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
             res_badge($resident_detail['move_in_sent'] ?? 0, 'Move-in Sent');
 ?>
                 </div>
+                <?php if (($resident_detail['status'] ?? '') !== 'Approved' && ($resident_detail['status'] ?? '') !== 'Completed'): ?>
+                <div class="mt-3">
+                    <a href="resident_application.php?unit_id=<?= $id?>"
+                        class="whitespace-nowrap inline-flex items-center bg-blue-500 text-white font-bold py-1.5 px-4 rounded-lg hover:bg-blue-600 transition text-sm shadow-sm">
+                        <i class="fas fa-clipboard-list mr-1.5"></i> Review Application
+                    </a>
+                </div>
+                <?php
+            endif; ?>
                 <?php
         endif; ?>
 
@@ -709,113 +718,113 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
         </div>
 
         <!-- Pets Card -->
-        <?php if ($pet_enabled): ?>
+        <?php if (true): // always show pets ?>
         <div class="bg-white shadow rounded-xl overflow-hidden border-t-4 border-yellow-400">
             <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
                 <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
                         class="fas fa-paw text-yellow-500"></i> Pets</h3>
                 <span class="text-xs text-gray-500">Max:
                     <?= $max_pets == 0 ? 'Unlimited' : $max_pets?>
-                </span>
-            </div>
-            <div class="p-5">
-                <?php if (!empty($pets)): ?>
-                <div class="space-y-3">
-                    <?php foreach ($pets as $pet):
+        </span>
+    </div>
+    <div class="p-5">
+        <?php if (!empty($pets)): ?>
+        <div class="space-y-3">
+            <?php foreach ($pets as $pet):
                 $sc = 'bg-gray-100 text-gray-600';
                 if ($pet['status'] == 'Approved')
                     $sc = 'bg-green-100 text-green-800';
                 elseif ($pet['status'] == 'Declined')
                     $sc = 'bg-red-100 text-red-800';
 ?>
-                    <div class="p-3 bg-yellow-50 rounded-lg flex items-start justify-between">
-                        <div>
-                            <div class="font-bold text-yellow-900 text-sm flex items-center gap-1">
-                                <?= h($pet['name'])?>
-                                <span class="text-xs <?= $sc?> px-1.5 py-0.5 rounded-full">
-                                    <?= h($pet['status'] ?? 'Pending')?>
-                                </span>
-                            </div>
-                            <div class="text-xs text-yellow-700">
-                                <?= h($pet['type'])?>
-                                <?= $pet['breed'] ? ' · ' . h($pet['breed']) : ''?>
-                                <?=!empty($pet['adult_size']) ? ' · ' . h($pet['adult_size']) : ''?>
-                            </div>
-                            <?php if (!empty($pet['is_sterilized']) || !empty($pet['is_vaccinated'])): ?>
-                            <div class="flex gap-1 mt-1">
-                                <?php if ($pet['is_sterilized']): ?><span
-                                    class="text-xs bg-blue-100 text-blue-700 px-1.5 rounded">✓ Sterilized</span>
-                                <?php
+            <div class="p-3 bg-yellow-50 rounded-lg flex items-start justify-between">
+                <div>
+                    <div class="font-bold text-yellow-900 text-sm flex items-center gap-1">
+                        <?= h($pet['name'])?>
+                        <span class="text-xs <?= $sc?> px-1.5 py-0.5 rounded-full">
+                            <?= h($pet['status'] ?? 'Pending')?>
+                        </span>
+                    </div>
+                    <div class="text-xs text-yellow-700">
+                        <?= h($pet['type'])?>
+                        <?= $pet['breed'] ? ' · ' . h($pet['breed']) : ''?>
+                        <?=!empty($pet['adult_size']) ? ' · ' . h($pet['adult_size']) : ''?>
+                    </div>
+                    <?php if (!empty($pet['is_sterilized']) || !empty($pet['is_vaccinated'])): ?>
+                    <div class="flex gap-1 mt-1">
+                        <?php if ($pet['is_sterilized']): ?><span
+                            class="text-xs bg-blue-100 text-blue-700 px-1.5 rounded">✓ Sterilized</span>
+                        <?php
                     endif; ?>
-                                <?php if ($pet['is_vaccinated']): ?><span
-                                    class="text-xs bg-blue-100 text-blue-700 px-1.5 rounded">✓ Vaccinated</span>
-                                <?php
+                        <?php if ($pet['is_vaccinated']): ?><span
+                            class="text-xs bg-blue-100 text-blue-700 px-1.5 rounded">✓ Vaccinated</span>
+                        <?php
                     endif; ?>
-                            </div>
-                            <?php
-                endif; ?>
-                        </div>
-                        <a href="units.php?action=delete_pet&pet_id=<?= $pet['id']?>&unit_id=<?= $id?>"
-                            class="text-red-300 hover:text-red-500 text-xs ml-2"
-                            onclick="return confirm('Remove pet?')"><i class="fas fa-times"></i></a>
                     </div>
                     <?php
-            endforeach; ?>
+                endif; ?>
                 </div>
-                <?php
-        else: ?>
-                <p class="text-gray-400 italic text-sm mb-3">No pets registered.</p>
-                <?php
-        endif; ?>
-                <?php if ($resident && ($max_pets == 0 || count($pets) < $max_pets)): ?>
-                <div class="mt-3">
-                    <a href="units.php?action=add_pet&id=<?= $id?>"
-                        class="inline-flex items-center bg-yellow-50 text-yellow-700 font-bold py-1.5 px-4 rounded-lg hover:bg-yellow-100 text-sm w-full justify-center">
-                        <i class="fas fa-plus mr-1"></i> Register Pet
-                    </a>
-                </div>
-                <?php
-        endif; ?>
-            </div>
-        </div>
-        <?php
-    endif; ?>
-    </div>
-
-    <!-- ── Row 3: Modifications (compact) ─────────────────────────────────── -->
-    <div class="bg-white shadow rounded-xl overflow-hidden">
-        <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
-            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
-                    class="fas fa-hammer text-gray-400"></i> Modification History</h3>
-            <div class="flex items-center gap-3">
-                <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
-                    <?= count($modifications)?> Total
-                </span>
-                <a href="modifications.php?action=add&unit_id=<?= $id?>"
-                    class="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700 font-bold shadow-sm transition"><i
-                        class="fas fa-plus mr-1"></i> Log</a>
-            </div>
-        </div>
-        <div class="p-5">
-            <?php if (empty($modifications)): ?>
-            <div class="text-center py-8 text-gray-400">
-                <i class="fas fa-tools text-3xl mb-2 block text-gray-300"></i>
-                No modifications logged for this unit.
+                <a href="units.php?action=delete_pet&pet_id=<?= $pet['id']?>&unit_id=<?= $id?>"
+                    class="text-red-300 hover:text-red-500 text-xs ml-2" onclick="return confirm('Remove pet?')"><i
+                        class="fas fa-times"></i></a>
             </div>
             <?php
+            endforeach; ?>
+        </div>
+        <?php
+        else: ?>
+        <p class="text-gray-400 italic text-sm mb-3">No pets registered.</p>
+        <?php
+        endif; ?>
+        <?php if ($resident && ($max_pets == 0 || count($pets) < $max_pets)): ?>
+        <div class="mt-3">
+            <a href="units.php?action=add_pet&id=<?= $id?>"
+                class="inline-flex items-center bg-yellow-50 text-yellow-700 font-bold py-1.5 px-4 rounded-lg hover:bg-yellow-100 text-sm w-full justify-center">
+                <i class="fas fa-plus mr-1"></i> Register Pet
+            </a>
+        </div>
+        <?php
+        endif; ?>
+    </div>
+</div>
+<?php
+    endif; ?>
+</div>
+
+<!-- ── Row 3: Modifications (compact) ─────────────────────────────────── -->
+<div class="bg-white shadow rounded-xl overflow-hidden">
+    <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-hammer text-gray-400"></i>
+            Modification History</h3>
+        <div class="flex items-center gap-3">
+            <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
+                <?= count($modifications)?> Total
+            </span>
+            <a href="modifications.php?action=add&unit_id=<?= $id?>"
+                class="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700 font-bold shadow-sm transition"><i
+                    class="fas fa-plus mr-1"></i> Log</a>
+        </div>
+    </div>
+    <div class="p-5">
+        <?php if (empty($modifications)): ?>
+        <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-tools text-3xl mb-2 block text-gray-300"></i>
+            No modifications logged for this unit.
+        </div>
+        <?php
     else: ?>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead>
-                        <tr class="text-xs font-bold text-gray-400 uppercase border-b">
-                            <th class="pb-2 text-left">Category</th>
-                            <th class="pb-2 text-left">Status</th>
-                            <th class="pb-2 text-left">Date</th>
-                            <th class="pb-2 text-left">Description</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <?php foreach ($modifications as $mod):
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="text-xs font-bold text-gray-400 uppercase border-b">
+                        <th class="pb-2 text-left">Category</th>
+                        <th class="pb-2 text-left">Status</th>
+                        <th class="pb-2 text-left">Date</th>
+                        <th class="pb-2 text-left">Description</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <?php foreach ($modifications as $mod):
             $mc = 'bg-gray-100 text-gray-600';
             if (in_array($mod['status'], ['Approved', 'approved']))
                 $mc = 'bg-green-100 text-green-800';
@@ -824,62 +833,62 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
             elseif ($mod['status'] === 'Completed')
                 $mc = 'bg-blue-100 text-blue-800';
 ?>
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-2 pr-3 font-bold text-gray-800">
-                                <?= h($mod['category'] ?? '—')?>
-                            </td>
-                            <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold <?= $mc?>">
-                                    <?= ucfirst(h($mod['status']))?>
-                                </span></td>
-                            <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
-                                <?= format_date($mod['request_date'])?>
-                            </td>
-                            <td class="py-2 text-gray-600 truncate max-w-xs">
-                                <?= h(mb_strimwidth($mod['description'], 0, 80, '…'))?>
-                            </td>
-                        </tr>
-                        <?php
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2 pr-3 font-bold text-gray-800">
+                            <?= h($mod['category'] ?? '—')?>
+                        </td>
+                        <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold <?= $mc?>">
+                                <?= ucfirst(h($mod['status']))?>
+                            </span></td>
+                        <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
+                            <?= format_date($mod['request_date'])?>
+                        </td>
+                        <td class="py-2 text-gray-600 truncate max-w-xs">
+                            <?= h(mb_strimwidth($mod['description'], 0, 80, '…'))?>
+                        </td>
+                    </tr>
+                    <?php
         endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <?php
+                </tbody>
+            </table>
+        </div>
+        <?php
     endif; ?>
+    </div>
+</div>
+
+<!-- ── Row 4: Move Logistics ────────────────────────────────────────── -->
+<div class="bg-white shadow rounded-xl overflow-hidden">
+    <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
+                class="fas fa-truck-moving text-gray-400"></i> Move Logistics</h3>
+        <div class="flex items-center gap-3">
+            <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
+                <?= count($logistics)?> Total
+            </span>
         </div>
     </div>
-
-    <!-- ── Row 4: Move Logistics ────────────────────────────────────────── -->
-    <div class="bg-white shadow rounded-xl overflow-hidden">
-        <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
-            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
-                    class="fas fa-truck-moving text-gray-400"></i> Move Logistics</h3>
-            <div class="flex items-center gap-3">
-                <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
-                    <?= count($logistics)?> Total
-                </span>
-            </div>
+    <div class="p-5">
+        <?php if (empty($logistics)): ?>
+        <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-box-open text-3xl mb-2 block text-gray-300"></i>
+            No moves logged for this unit.
         </div>
-        <div class="p-5">
-            <?php if (empty($logistics)): ?>
-            <div class="text-center py-8 text-gray-400">
-                <i class="fas fa-box-open text-3xl mb-2 block text-gray-300"></i>
-                No moves logged for this unit.
-            </div>
-            <?php
+        <?php
     else: ?>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead>
-                        <tr class="text-xs font-bold text-gray-400 uppercase border-b">
-                            <th class="pb-2 text-left">Type</th>
-                            <th class="pb-2 text-left">Status</th>
-                            <th class="pb-2 text-left">Date</th>
-                            <th class="pb-2 text-left">Resident</th>
-                            <th class="pb-2 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <?php foreach ($logistics as $log):
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="text-xs font-bold text-gray-400 uppercase border-b">
+                        <th class="pb-2 text-left">Type</th>
+                        <th class="pb-2 text-left">Status</th>
+                        <th class="pb-2 text-left">Date</th>
+                        <th class="pb-2 text-left">Resident</th>
+                        <th class="pb-2 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <?php foreach ($logistics as $log):
             $lc = 'bg-gray-100 text-gray-600';
             if ($log['status'] === 'Approved')
                 $lc = 'bg-blue-100 text-blue-800';
@@ -890,52 +899,52 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
             elseif ($log['status'] === 'Pending')
                 $lc = 'bg-yellow-100 text-yellow-800';
 ?>
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-2 pr-3 font-bold text-gray-800">
-                                <?= $log['move_type'] === 'move_in' ? 'Move-In' : 'Move-Out'?>
-                            </td>
-                            <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold <?= $lc?>">
-                                    <?= h($log['status'])?>
-                                </span></td>
-                            <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
-                                <?= $log['preferred_date'] ? format_date($log['preferred_date']) : '—'?>
-                            </td>
-                            <td class="py-2 pr-3 text-gray-600">
-                                <span
-                                    class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase <?= $log['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'?>">
-                                    <?= h($log['resident_type'])?>
-                                </span>
-                            </td>
-                            <td class="py-2 text-right">
-                                <?php if ($log['status'] === 'Pending'): ?>
-                                <form method="POST" action="move_management.php" class="inline">
-                                    <input type="hidden" name="logistics_id" value="<?= $log['id']?>">
-                                    <input type="hidden" name="redirect_to_unit" value="<?= $id?>">
-                                    <button type="submit" name="action_approve"
-                                        class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold shadow-sm">Approve</button>
-                                </form>
-                                <?php
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2 pr-3 font-bold text-gray-800">
+                            <?= $log['move_type'] === 'move_in' ? 'Move-In' : 'Move-Out'?>
+                        </td>
+                        <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold <?= $lc?>">
+                                <?= h($log['status'])?>
+                            </span></td>
+                        <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
+                            <?= $log['preferred_date'] ? format_date($log['preferred_date']) : '—'?>
+                        </td>
+                        <td class="py-2 pr-3 text-gray-600">
+                            <span
+                                class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase <?= $log['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'?>">
+                                <?= h($log['resident_type'])?>
+                            </span>
+                        </td>
+                        <td class="py-2 text-right">
+                            <?php if ($log['status'] === 'Pending'): ?>
+                            <form method="POST" action="move_management.php" class="inline">
+                                <input type="hidden" name="logistics_id" value="<?= $log['id']?>">
+                                <input type="hidden" name="redirect_to_unit" value="<?= $id?>">
+                                <button type="submit" name="action_approve"
+                                    class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold shadow-sm">Approve</button>
+                            </form>
+                            <?php
             elseif ($log['status'] === 'Approved'): ?>
-                                <form method="POST" action="move_management.php" class="inline">
-                                    <input type="hidden" name="logistics_id" value="<?= $log['id']?>">
-                                    <input type="hidden" name="redirect_to_unit" value="<?= $id?>">
-                                    <button type="submit" name="action_complete"
-                                        class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 font-bold shadow-sm"><i
-                                            class="fas fa-check-circle mr-1"></i> Complete</button>
-                                </form>
-                                <?php
+                            <form method="POST" action="move_management.php" class="inline">
+                                <input type="hidden" name="logistics_id" value="<?= $log['id']?>">
+                                <input type="hidden" name="redirect_to_unit" value="<?= $id?>">
+                                <button type="submit" name="action_complete"
+                                    class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 font-bold shadow-sm"><i
+                                        class="fas fa-check-circle mr-1"></i> Complete</button>
+                            </form>
+                            <?php
             endif; ?>
-                            </td>
-                        </tr>
-                        <?php
+                        </td>
+                    </tr>
+                    <?php
         endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <?php
-    endif; ?>
+                </tbody>
+            </table>
         </div>
+        <?php
+    endif; ?>
     </div>
+</div>
 
 </div><!-- /max-w-6xl -->
 <?php
