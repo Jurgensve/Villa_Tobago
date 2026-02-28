@@ -20,24 +20,30 @@ $unit = $unit->fetch();
 $app_type = null;
 $app_id = null;
 
-if ($unit && $unit['pending_app_type'] && $unit['pending_app_id']) {
+if ($unit && !empty($unit['pending_app_type']) && !empty($unit['pending_app_id'])) {
     $app_type = $unit['pending_app_type'];
     $app_id = (int)$unit['pending_app_id'];
 }
 else {
     // Check if the active resident is pending final approval
-    $active_res = $pdo->prepare("SELECT resident_type, resident_id FROM residents WHERE unit_id = ?");
-    $active_res->execute([$unit_id]);
-    $res_row = $active_res->fetch();
-    if ($res_row) {
-        $check_table = $res_row['resident_type'] === 'owner' ? 'owners' : 'tenants';
-        $check_stmt = $pdo->prepare("SELECT status FROM {$check_table} WHERE id = ?");
-        $check_stmt->execute([$res_row['resident_id']]);
-        $status_val = $check_stmt->fetchColumn();
-        if ($status_val !== 'Approved' && $status_val !== 'Completed') {
-            $app_type = $res_row['resident_type'];
-            $app_id = (int)$res_row['resident_id'];
+    // Check if the active resident is pending final approval
+    try {
+        $active_res = $pdo->prepare("SELECT resident_type, resident_id FROM residents WHERE unit_id = ?");
+        $active_res->execute([$unit_id]);
+        $res_row = $active_res->fetch();
+        if ($res_row) {
+            $check_table = $res_row['resident_type'] === 'owner' ? 'owners' : 'tenants';
+            $check_stmt = $pdo->prepare("SELECT status FROM {$check_table} WHERE id = ?");
+            $check_stmt->execute([$res_row['resident_id']]);
+            $status_val = $check_stmt->fetchColumn();
+            if ($status_val !== 'Approved' && $status_val !== 'Completed') {
+                $app_type = $res_row['resident_type'];
+                $app_id = (int)$res_row['resident_id'];
+            }
         }
+    }
+    catch (PDOException $e) {
+    // Migration might not have run yet, ignore
     }
 }
 
@@ -61,13 +67,23 @@ if (!$app) {
     exit;
 }
 
-$vstmt = $pdo->prepare("SELECT * FROM vehicles WHERE resident_type = ? AND resident_id = ? AND unit_id = ? ORDER BY created_at ASC");
-$vstmt->execute([$app_type, $app_id, $unit_id]);
-$app_vehicles = $vstmt->fetchAll();
+$app_vehicles = [];
+try {
+    $vstmt = $pdo->prepare("SELECT * FROM vehicles WHERE resident_type = ? AND resident_id = ? AND unit_id = ? ORDER BY created_at ASC");
+    $vstmt->execute([$app_type, $app_id, $unit_id]);
+    $app_vehicles = $vstmt->fetchAll();
+}
+catch (PDOException $e) {
+}
 
-$pstmt = $pdo->prepare("SELECT * FROM pets WHERE resident_type = ? AND resident_id = ? AND unit_id = ? ORDER BY created_at DESC");
-$pstmt->execute([$app_type, $app_id, $unit_id]);
-$app_pets = $pstmt->fetchAll();
+$app_pets = [];
+try {
+    $pstmt = $pdo->prepare("SELECT * FROM pets WHERE resident_type = ? AND resident_id = ? AND unit_id = ? ORDER BY created_at DESC");
+    $pstmt->execute([$app_type, $app_id, $unit_id]);
+    $app_pets = $pstmt->fetchAll();
+}
+catch (PDOException $e) {
+}
 
 // ── Handle POST actions ───────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
