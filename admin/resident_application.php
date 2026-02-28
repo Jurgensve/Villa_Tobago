@@ -1,4 +1,5 @@
 <?php
+ob_start();
 $required_roles = ['admin', 'managing_agent', 'trustee'];
 require_once 'includes/header.php';
 
