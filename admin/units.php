@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->commit();
 
                 if ($has_tenant) {
-                    header("Location: tenants.php?action=add&unit_id=" . $unit_id);
+                    echo "<script>window.location.href = 'tenants.php?action=add&unit_id={$unit_id}';</script>";
                     exit;
                 }
 
