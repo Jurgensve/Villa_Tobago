@@ -14,6 +14,9 @@ deployment:
     - /bin/cp resident_portal.php $DEPLOYPATH
     - /bin/cp resident_form.php $DEPLOYPATH
     - /bin/cp pet_form.php $DEPLOYPATH
+    - /bin/cp manage_pets.php $DEPLOYPATH
+    - /bin/cp intercom_form.php $DEPLOYPATH
+    - /bin/cp manage_vehicles.php $DEPLOYPATH
     - /bin/cp modification_form.php $DEPLOYPATH
     - /bin/cp move_in_form.php $DEPLOYPATH
     - /bin/cp move_out_form.php $DEPLOYPATH
