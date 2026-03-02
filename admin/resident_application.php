@@ -497,24 +497,92 @@ else: ?>
                 <?php foreach ($app_pets as $p): ?>
                 <div
                     class="flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-start gap-4">
                         <div
-                            class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl">
+                            class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl flex-shrink-0 mt-1">
                             <i
                                 class="fas fa-<?= strtolower($p['type']) === 'cat' ? 'cat' : (strtolower($p['type']) === 'bird' ? 'dove' : (strtolower($p['type']) === 'fish' ? 'fish' : 'dog'))?>"></i>
                         </div>
-                        <div>
-                            <p class="font-bold text-gray-900">
-                                <?= h($p['name'])?> <span
-                                    class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full ml-1">
+                        <div class="flex-grow w-full">
+                            <div class="flex items-center gap-2 mb-1 w-full flex-wrap">
+                                <p class="font-bold text-gray-900 text-lg">
+                                    <?= h($p['name'])?>
+                                </p>
+                                <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">
                                     <?= h($p['type'])?>
                                 </span>
-                            </p>
-                            <p class="text-sm text-gray-500">
+                                <?= $p['status'] === 'Approved' ? '<span class="text-green-600 font-bold ml-auto"><i class="fas fa-check-circle mr-1"></i>Approved</span>' : '<span class="text-amber-600 font-bold ml-auto"><i class="fas fa-clock mr-1"></i>Pending</span>'?>
+                            </div>
+
+                            <p class="text-sm text-gray-600 mb-2">
                                 <?= h($p['breed'] ?: 'Mixed')?>
                                 <?= $p['adult_size'] ? ' • ' . h($p['adult_size']) . ' Size' : ''?>
-                                <?= $p['status'] === 'Approved' ? '<span class="text-green-600 font-bold ml-2"><i class="fas fa-check-circle mr-1"></i>Approved</span>' : '<span class="text-amber-600 font-bold ml-2"><i class="fas fa-clock mr-1"></i>Pending</span>'?>
+                                <?=!empty($p['birth_date']) ? ' • Born: ' . date('M Y', strtotime($p['birth_date'])) : ''?>
                             </p>
+
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                <?php if (!empty($p['is_sterilized'])): ?>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    <i class="fas fa-check text-blue-500 mr-1"></i> Sterilized
+                                </span>
+                                <?php
+        endif; ?>
+                                <?php if (!empty($p['is_vaccinated'])): ?>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-800">
+                                    <i class="fas fa-check text-teal-500 mr-1"></i> Vaccinated
+                                </span>
+                                <?php
+        endif; ?>
+                                <?php if (!empty($p['is_microchipped'])): ?>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                    <i class="fas fa-microchip text-purple-500 mr-1"></i> Microchipped
+                                </span>
+                                <?php
+        endif; ?>
+                                <?php if (!empty($p['wears_id_tag'])): ?>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <i class="fas fa-tag text-yellow-500 mr-1"></i> Wears ID Tag
+                                </span>
+                                <?php
+        endif; ?>
+                            </div>
+
+                            <?php if (!empty($p['motivation_note'])): ?>
+                            <div class="mt-2 text-sm text-gray-600 bg-white border border-gray-200 p-3 rounded italic">
+                                "
+                                <?= nl2br(h($p['motivation_note']))?>"
+                            </div>
+                            <?php
+        endif; ?>
+
+                            <?php if (!empty($p['photo_path']) || !empty($p['sterilized_proof_path']) || !empty($p['vaccination_proof_path'])): ?>
+                            <div class="mt-3 flex gap-4 text-xs font-bold border-t border-gray-200 pt-3">
+                                <?php if (!empty($p['photo_path'])): ?>
+                                <a href="../<?= h($p['photo_path'])?>" target="_blank"
+                                    class="text-indigo-600 hover:text-indigo-800 flex items-center gap-1"><i
+                                        class="fas fa-image"></i> View Photo</a>
+                                <?php
+            endif; ?>
+                                <?php if (!empty($p['sterilized_proof_path'])): ?>
+                                <a href="../<?= h($p['sterilized_proof_path'])?>" target="_blank"
+                                    class="text-indigo-600 hover:text-indigo-800 flex items-center gap-1"><i
+                                        class="fas fa-file-pdf"></i> Sterilization Proof</a>
+                                <?php
+            endif; ?>
+                                <?php if (!empty($p['vaccination_proof_path'])): ?>
+                                <a href="../<?= h($p['vaccination_proof_path'])?>" target="_blank"
+                                    class="text-indigo-600 hover:text-indigo-800 flex items-center gap-1"><i
+                                        class="fas fa-file-pdf"></i> Vaccine Proof</a>
+                                <?php
+            endif; ?>
+                            </div>
+                            <?php
+        endif; ?>
+
                         </div>
                     </div>
                     <?php if ($p['status'] !== 'Approved' && $p['status'] !== 'Declined'): ?>
