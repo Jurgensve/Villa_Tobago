@@ -487,6 +487,20 @@ else: ?>
                 </div>
             </a>
 
+            <!-- Quick Action: Vehicles -->
+            <a href="manage_vehicles.php"
+                class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-blue-400 group">
+                <div
+                    class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                    <i class="fas fa-car text-blue-500 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Vehicle Records</h3>
+                    <p class="text-gray-500 text-sm">Register new vehicles kept on the property or remove vehicles you
+                        no longer own.</p>
+                </div>
+            </a>
+
             <!-- Quick Action: Intercom -->
             <a href="intercom_form.php"
                 class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-purple-500 group">
