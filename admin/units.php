@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->commit();
 
                 if ($has_tenant) {
-                    echo "<script>window.location.href = 'tenants.php?action=add&unit_id={$unit_id}';</script>";
+                    echo "<script>window.location.href   = 'tenants.php?action=add&unit_id={$unit_id}';</script>";
                     exit;
                 }
 
@@ -142,6 +142,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $body .= "<p>Warm regards,<br>Villa Tobago Management</p>";
 
                         send_notification_email($assigned_email, $subject, $body);
+                    }
+
+                    // Check if there was a previous owner who was residing
+                    if ($replacement_type === 'replace') {
+                        $checkOldOwner = $pdo->prepare("SELECT o.email, o.full_name, r.id FROM owners o JOIN residents r ON o.id = r.resident_id WHERE r.unit_id = ? AND r.resident_type = 'owner' AND o.id != ? LIMIT 1");
+                        $checkOldOwner->execute([$unit_id, $owner_id]);
+                        $oldOwner = $checkOldOwner->fetch();
+
+                        if ($oldOwner && !empty($oldOwner['email'])) {
+                            $unit_number_query = $pdo->query("SELECT unit_number FROM units WHERE id = " . (int)$unit_id)->fetchColumn();
+                            $portal_url = SITE_URL . "/resident_portal.php"; // They can log in one last time to log move-out
+
+                            $subject = "Ownership Change - Unit " . h($unit_number_query);
+                            $body = "<p>Dear " . h($oldOwner['full_name']) . ",</p>";
+                            $body .= "<p>We have updated the records for Unit " . h($unit_number_query) . " to reflect a change in ownership.</p>";
+                            $body .= "<p>As you are currently registered as residing in this unit, please ensure you complete a <strong>Move-Out Request</strong> via the Resident Portal to coordinate your departure with security.</p>";
+                            $body .= "<p style='margin: 20px 0;'><a href='{$portal_url}' style='background-color:#D97706;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;font-weight:bold;'>Go to Resident Portal to Log Move-Out</a></p>";
+                            $body .= "<p>We wish you all the best!<br>Villa Tobago Management</p>";
+
+                            send_notification_email($oldOwner['email'], $subject, $body);
+                        }
                     }
                 }
                 else {

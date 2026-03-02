@@ -420,7 +420,7 @@ else: ?>
         </div>
 
         <?php
-    elseif ($res['status'] === 'Approved'):
+    elseif ($agent_final):
         // ── DASHBOARD VIEW ───────────────────────────────────────────────────
         $has_wa = !empty($step_data['whatsapp_terms_accepted']);
 ?>

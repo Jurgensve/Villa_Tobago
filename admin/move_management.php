@@ -72,6 +72,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $move = $stmt->fetch();
 
             if ($move) {
+                // Feature: Block Move-in approval unless the previous active resident has an Approved Move-out request.
+                if ($move['move_type'] === 'move_in') {
+                    // Check if there is an existing resident in this unit. If they are different from this move-in person,
+                    // we need to see if they have an approved move-out.
+                    $checkPrevRes = $pdo->prepare("SELECT id, resident_type, resident_id FROM residents WHERE unit_id = ? AND is_current = 1");
+                    $checkPrevRes->execute([$move['unit_id']]);
+                    $prevRes = $checkPrevRes->fetch();
+
+                    if ($prevRes) {
+                        // Are they different from the person moving in?
+                        if ($prevRes['resident_type'] !== $move['resident_type'] || $prevRes['resident_id'] !== $move['resident_id']) {
+                            // Find their latest move_out request status
+                            $checkMoveOut = $pdo->prepare("SELECT status FROM move_logistics WHERE unit_id = ? AND resident_type = ? AND resident_id = ? AND move_type = 'move_out' ORDER BY created_at DESC LIMIT 1");
+                            $checkMoveOut->execute([$move['unit_id'], $prevRes['resident_type'], $prevRes['resident_id']]);
+                            $prevMoveOutStatus = $checkMoveOut->fetchColumn();
+
+                            if ($prevMoveOutStatus !== 'Approved' && $prevMoveOutStatus !== 'Completed') {
+                                $error = "Cannot approve Move-In: The previous resident has not had an approved Move-Out request yet.";
+                                break; // Stop execution of the approval block
+                            }
+                        }
+                    }
+                }
+
                 $pdo->prepare("UPDATE move_logistics SET status = 'Approved' WHERE id = ?")->execute([$logistics_id]);
 
                 // Fetch max GWM for the email warning
@@ -555,4 +579,3 @@ else: ?>
 
 <?php
 endif; ?>
-<?php require_once 'includes/footer.php'; ?>
