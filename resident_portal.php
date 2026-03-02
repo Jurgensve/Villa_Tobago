@@ -692,20 +692,21 @@ else: ?>
 
         <?php
     else: ?>
-        <!-- Steps Progress Strip -->
+        <?php if (!$step_E_done && $active_step !== 'done'): ?>
+        <!-- Steps Progress Strip (Hidden when application is complete) -->
         <div class="grid grid-cols-5 gap-2 mb-6">
             <?php
-        $steps = [
-            'A' => ['label' => 'Intercom', 'icon' => 'fa-phone', 'done' => $step_A_done],
-            'B' => ['label' => 'Occupancy', 'icon' => 'fa-users', 'done' => $step_B_done],
-            'C' => ['label' => 'Vehicles', 'icon' => 'fa-car', 'done' => $step_C_done, 'optional' => true],
-            'D' => ['label' => 'Pets', 'icon' => 'fa-paw', 'done' => $step_D_done, 'optional' => true],
-            'E' => ['label' => 'Rules', 'icon' => 'fa-file-alt', 'done' => $step_E_done],
-        ];
-        foreach ($steps as $key => $s):
-            $is_active = $active_step === $key;
-            $bg = $s['done'] ? 'bg-green-500 text-white' : ($is_active ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border-2 border-gray-200');
-            $ring = $is_active ? 'ring-2 ring-offset-2 ring-blue-400' : '';
+            $steps = [
+                'A' => ['label' => 'Intercom', 'icon' => 'fa-phone', 'done' => $step_A_done],
+                'B' => ['label' => 'Occupancy', 'icon' => 'fa-users', 'done' => $step_B_done],
+                'C' => ['label' => 'Vehicles', 'icon' => 'fa-car', 'done' => $step_C_done, 'optional' => true],
+                'D' => ['label' => 'Pets', 'icon' => 'fa-paw', 'done' => $step_D_done, 'optional' => true],
+                'E' => ['label' => 'Rules', 'icon' => 'fa-file-alt', 'done' => $step_E_done],
+            ];
+            foreach ($steps as $key => $s):
+                $is_active = $active_step === $key;
+                $bg = $s['done'] ? 'bg-green-500 text-white' : ($is_active ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border-2 border-gray-200');
+                $ring = $is_active ? 'ring-2 ring-offset-2 ring-blue-400' : '';
 ?>
             <a href="?step=<?= $key?>"
                 class="flex flex-col items-center py-3 px-1 rounded-xl <?= $bg?> <?= $ring?> hover:opacity-90 transition text-center shadow-sm">
@@ -715,14 +716,16 @@ else: ?>
                 </span>
                 <?php if (!empty($s['optional'])): ?><span class="text-xs opacity-70">(optional)</span>
                 <?php
-            endif; ?>
+                endif; ?>
                 <?php if ($s['done']): ?><i class="fas fa-check-circle text-xs mt-0.5"></i>
                 <?php
-            endif; ?>
+                endif; ?>
             </a>
             <?php
-        endforeach; ?>
+            endforeach; ?>
         </div>
+        <?php
+        endif; ?>
 
         <!-- ── STEP A: Intercom ─────────────────────────────────────────────── -->
         <?php if ($active_step === 'A'): ?>

@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->commit();
 
                 if ($has_tenant) {
-                    echo "<script>window.location.href enants.php?action=add&unit_id={$unit_id}';</script>";
+                    echo "<script>window.location.href enants.php ? action = add & unit_id={ $unit_id } ';</script>";
                     exit;
                 }
 
@@ -635,32 +635,53 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
         endif; ?>
                 </div>
 
-                <!-- Application Status Badges -->
+                <!-- Application Status Timeline -->
                 <?php if ($resident_detail): ?>
-                <div class="mt-4 flex flex-wrap gap-2">
+                <div class="mt-4 overflow-x-auto bg-gray-50 border border-gray-100 p-4 rounded-xl">
                     <?php
-            if (!function_exists('res_badge')) {
-                function res_badge($val, $label)
+            if (!function_exists('status_dot_admin')) {
+                function status_dot_admin($done, $label, $sub = '')
                 {
-                    $cls = $val ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500';
-                    $icon = $val ? 'fa-check' : 'fa-clock';
-                    echo "<span class='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold {$cls}'><i class='fas {$icon}'></i>{$label}</span>";
+                    $color = $done ? 'bg-green-500' : 'bg-gray-200';
+                    $text = $done ? 'text-green-700' : 'text-gray-400';
+                    $icon = $done ? 'fa-check' : 'fa-circle';
+                    echo "<div class='flex flex-col items-center text-center w-[60px] md:w-[70px] shrink-0'>";
+                    echo "<div class='w-7 h-7 md:w-8 md:h-8 rounded-full {$color} flex items-center justify-center mb-1.5 shadow-sm'><i class='fas {$icon} text-white text-[10px] md:text-xs'></i></div>";
+                    echo "<span class='text-[9px] md:text-[10px] uppercase font-bold tracking-wider leading-tight {$text}'>{$label}</span>";
+                    if ($sub)
+                        echo "<span class='text-[9px] md:text-[10px] text-gray-400 leading-tight mt-0.5 hidden md:block'>{$sub}</span>";
+                    echo "</div>";
+                }
+                function status_line_admin($done)
+                {
+                    $color = $done ? 'bg-green-400' : 'bg-gray-200';
+                    echo "<div class='flex-1 h-0.5 {$color} mt-3.5 mx-0.5 md:mx-1 shrink-0'></div>";
                 }
             }
             $oa = ($resident['resident_type'] ?? '') === 'tenant' ? ($resident_detail['owner_approval'] ?? 0) : ($resident_detail['agent_approval'] ?? 0);
-            res_badge($oa, ($resident['resident_type'] ?? '') === 'tenant' ? 'Owner Approved' : 'Agent Verified');
-            res_badge($resident_detail['portal_access_granted'] ?? 0, 'Portal Access');
-            res_badge($resident_detail['details_complete'] ?? 0, 'Profile Complete');
-            res_badge($resident_detail['agent_approved'] ?? 0, 'Final Approved');
-            res_badge($resident_detail['code_of_conduct_accepted'] ?? 0, 'CoC Accepted');
-            res_badge($resident_detail['move_in_sent'] ?? 0, 'Move-in Sent');
+            $portal_access = $resident_detail['portal_access_granted'] ?? 0;
+            $all_done = $resident_detail['details_complete'] ?? 0;
+            $agent_final = $resident_detail['agent_approved'] ?? 0;
+            $move_in_sent = $resident_detail['move_in_sent'] ?? 0;
 ?>
+                    <div class="flex items-start justify-between min-w-[320px]">
+                        <?php status_dot_admin(true, 'Applied'); ?>
+                        <?php status_line_admin($portal_access); ?>
+                        <?php status_dot_admin($portal_access, ($resident['resident_type'] ?? '') === 'tenant' ? 'Owner Appr.' : 'Verified', 'Portal Access'); ?>
+                        <?php status_line_admin($all_done); ?>
+                        <?php status_dot_admin($all_done, 'Complete', 'All Steps'); ?>
+                        <?php status_line_admin($agent_final); ?>
+                        <?php status_dot_admin($agent_final, 'Approved', 'Final Review'); ?>
+                        <?php status_line_admin($move_in_sent); ?>
+                        <?php status_dot_admin($move_in_sent, 'Move-in', 'Email Sent'); ?>
+                    </div>
                 </div>
-                <?php if (($resident_detail['status'] ?? '') !== 'Approved' && ($resident_detail['status'] ?? '') !== 'Completed'): ?>
-                <div class="mt-3">
+
+                <?php if (empty($resident_detail['agent_approved'])): ?>
+                <div class="mt-4">
                     <a href="resident_application.php?unit_id=<?= $id?>"
-                        class="whitespace-nowrap inline-flex items-center bg-blue-500 text-white font-bold py-1.5 px-4 rounded-lg hover:bg-blue-600 transition text-sm shadow-sm">
-                        <i class="fas fa-clipboard-list mr-1.5"></i> Review Application
+                        class="whitespace-nowrap inline-flex items-center bg-blue-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-600 transition shadow-sm">
+                        <i class="fas fa-clipboard-list mr-2"></i> Review Application
                     </a>
                 </div>
                 <?php
@@ -824,13 +845,16 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                     $sc = 'bg-red-100 text-red-800';
 ?>
             <div class="p-3 bg-yellow-50 rounded-lg flex items-start justify-between">
-                <div class="flex-grow cursor-pointer group" onclick="document.getElementById('pet_modal_<?= $pet['id']?>').classList.remove('hidden')">
-                    <div class="font-bold text-yellow-900 text-sm flex items-center gap-1 group-hover:text-yellow-700 transition">
+                <div class="flex-grow cursor-pointer group"
+                    onclick="document.getElementById('pet_modal_<?= $pet['id']?>').classList.remove('hidden')">
+                    <div
+                        class="font-bold text-yellow-900 text-sm flex items-center gap-1 group-hover:text-yellow-700 transition">
                         <?= h($pet['name'])?>
                         <span class="text-xs <?= $sc?> px-1.5 py-0.5 rounded-full ml-1">
                             <?= h($pet['status'] ?? 'Pending')?>
                         </span>
-                        <i class="fas fa-info-circle text-gray-400 ml-1 text-xs opacity-0 group-hover:opacity-100 transition"></i>
+                        <i
+                            class="fas fa-info-circle text-gray-400 ml-1 text-xs opacity-0 group-hover:opacity-100 transition"></i>
                     </div>
                     <div class="text-xs text-yellow-700 mt-0.5">
                         <?= h($pet['type'])?>
@@ -844,70 +868,131 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
             </div>
 
             <!-- Pet Details Modal -->
-            <div id="pet_modal_<?= $pet['id']?>" class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+            <div id="pet_modal_<?= $pet['id']?>"
+                class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
                 <div class="relative w-full max-w-md shadow-2xl rounded-xl bg-white m-4">
-                    <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-start bg-gray-50 rounded-t-xl">
+                    <div
+                        class="px-5 py-4 border-b border-gray-100 flex justify-between items-start bg-gray-50 rounded-t-xl">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl border border-orange-200">
-                                <i class="fas fa-<?= strtolower($pet['type']) === 'cat' ? 'cat' : (strtolower($pet['type']) === 'bird' ? 'dove' : (strtolower($pet['type']) === 'fish' ? 'fish' : 'dog'))?>"></i>
+                            <div
+                                class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl border border-orange-200">
+                                <i
+                                    class="fas fa-<?= strtolower($pet['type']) === 'cat' ? 'cat' : (strtolower($pet['type']) === 'bird' ? 'dove' : (strtolower($pet['type']) === 'fish' ? 'fish' : 'dog'))?>"></i>
                             </div>
                             <div>
-                                <h3 class="text-lg leading-6 font-bold text-gray-900"><?= h($pet['name'])?></h3>
-                                <p class="text-sm text-gray-500 font-medium"><?= h($pet['type'])?> <?= $pet['breed'] ? ' · ' . h($pet['breed']) : ''?></p>
+                                <h3 class="text-lg leading-6 font-bold text-gray-900">
+                                    <?= h($pet['name'])?>
+                                </h3>
+                                <p class="text-sm text-gray-500 font-medium">
+                                    <?= h($pet['type'])?>
+                                    <?= $pet['breed'] ? ' · ' . h($pet['breed']) : ''?>
+                                </p>
                             </div>
                         </div>
-                        <button onclick="document.getElementById('pet_modal_<?= $pet['id']?>').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 bg-white rounded-full p-1 border border-gray-200 hover:bg-gray-100 transition">
+                        <button onclick="document.getElementById('pet_modal_<?= $pet['id']?>').classList.add('hidden')"
+                            class="text-gray-400 hover:text-gray-700 bg-white rounded-full p-1 border border-gray-200 hover:bg-gray-100 transition">
                             <i class="fas fa-times w-6 h-6 flex items-center justify-center"></i>
                         </button>
                     </div>
 
                     <div class="p-5 text-sm text-gray-700 space-y-5">
                         <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 grid grid-cols-2 gap-4">
-                            <div><span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-1">Status</span><span class="<?= $sc?> px-2.5 py-1 rounded-md text-xs font-bold shadow-sm"><?= h($pet['status'] ?? 'Pending')?></span></div>
-                            <div><span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-1">Size</span><span class="font-medium"><?=!empty($pet['adult_size']) ? h($pet['adult_size']) : '—'?></span></div>
+                            <div><span
+                                    class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-1">Status</span><span
+                                    class="<?= $sc?> px-2.5 py-1 rounded-md text-xs font-bold shadow-sm">
+                                    <?= h($pet['status'] ?? 'Pending')?>
+                                </span></div>
+                            <div><span
+                                    class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-1">Size</span><span
+                                    class="font-medium">
+                                    <?=!empty($pet['adult_size']) ? h($pet['adult_size']) : '—'?>
+                                </span></div>
                         </div>
 
                         <?php if (!empty($pet['is_sterilized']) || !empty($pet['is_vaccinated']) || !empty($pet['is_microchipped']) || !empty($pet['wears_id_tag'])): ?>
                         <div>
-                            <span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Compliance Records</span>
+                            <span
+                                class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Compliance
+                                Records</span>
                             <div class="flex flex-wrap gap-2">
-                                <?php if ($pet['is_sterilized']): ?><span class="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-lg font-medium"><i class="fas fa-check mr-1.5 text-blue-500"></i>Sterilized</span><?php endif; ?>
-                                <?php if ($pet['is_vaccinated']): ?><span class="text-xs bg-teal-50 text-teal-700 border border-teal-200 px-3 py-1.5 rounded-lg font-medium"><i class="fas fa-check mr-1.5 text-teal-500"></i>Vaccinated</span><?php endif; ?>
-                                <?php if ($pet['is_microchipped']): ?><span class="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-lg font-medium"><i class="fas fa-microchip mr-1.5 text-purple-500"></i>Microchipped</span><?php endif; ?>
-                                <?php if ($pet['wears_id_tag']): ?><span class="text-xs bg-yellow-50 text-yellow-800 border border-yellow-200 px-3 py-1.5 rounded-lg font-medium"><i class="fas fa-tag mr-1.5 text-yellow-500"></i>Wears ID Tag</span><?php endif; ?>
+                                <?php if ($pet['is_sterilized']): ?><span
+                                    class="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-lg font-medium"><i
+                                        class="fas fa-check mr-1.5 text-blue-500"></i>Sterilized</span>
+                                <?php
+                    endif; ?>
+                                <?php if ($pet['is_vaccinated']): ?><span
+                                    class="text-xs bg-teal-50 text-teal-700 border border-teal-200 px-3 py-1.5 rounded-lg font-medium"><i
+                                        class="fas fa-check mr-1.5 text-teal-500"></i>Vaccinated</span>
+                                <?php
+                    endif; ?>
+                                <?php if ($pet['is_microchipped']): ?><span
+                                    class="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-lg font-medium"><i
+                                        class="fas fa-microchip mr-1.5 text-purple-500"></i>Microchipped</span>
+                                <?php
+                    endif; ?>
+                                <?php if ($pet['wears_id_tag']): ?><span
+                                    class="text-xs bg-yellow-50 text-yellow-800 border border-yellow-200 px-3 py-1.5 rounded-lg font-medium"><i
+                                        class="fas fa-tag mr-1.5 text-yellow-500"></i>Wears ID Tag</span>
+                                <?php
+                    endif; ?>
                             </div>
                         </div>
-                        <?php endif; ?>
-                        
+                        <?php
+                endif; ?>
+
                         <?php if (!empty($pet['motivation_note'])): ?>
                         <div>
-                            <span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Owner Note</span>
-                            <div class="bg-yellow-50/50 text-gray-700 border border-yellow-200/60 p-4 rounded-xl italic">
-                                "<?= nl2br(h($pet['motivation_note'])) ?>"
+                            <span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Owner
+                                Note</span>
+                            <div
+                                class="bg-yellow-50/50 text-gray-700 border border-yellow-200/60 p-4 rounded-xl italic">
+                                "
+                                <?= nl2br(h($pet['motivation_note']))?>"
                             </div>
                         </div>
-                        <?php endif; ?>
+                        <?php
+                endif; ?>
 
                         <?php if (!empty($pet['photo_path']) || !empty($pet['sterilized_proof_path']) || !empty($pet['vaccination_proof_path'])): ?>
                         <div>
-                            <span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Attached Documents</span>
+                            <span
+                                class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Attached
+                                Documents</span>
                             <div class="flex flex-col gap-2">
                                 <?php if (!empty($pet['photo_path'])): ?>
-                                <a href="../<?= h($pet['photo_path'])?>" target="_blank" class="text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm"><span class="flex items-center gap-3"><i class="fas fa-image text-indigo-400 text-lg"></i> Pet Photo</span><i class="fas fa-external-link-alt text-xs text-indigo-300"></i></a>
-                                <?php endif; ?>
+                                <a href="../<?= h($pet['photo_path'])?>" target="_blank"
+                                    class="text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm"><span
+                                        class="flex items-center gap-3"><i
+                                            class="fas fa-image text-indigo-400 text-lg"></i> Pet Photo</span><i
+                                        class="fas fa-external-link-alt text-xs text-indigo-300"></i></a>
+                                <?php
+                    endif; ?>
                                 <?php if (!empty($pet['sterilized_proof_path'])): ?>
-                                <a href="../<?= h($pet['sterilized_proof_path'])?>" target="_blank" class="text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm"><span class="flex items-center gap-3"><i class="fas fa-file-pdf text-indigo-400 text-lg"></i> Sterilization Proof</span><i class="fas fa-external-link-alt text-xs text-indigo-300"></i></a>
-                                <?php endif; ?>
+                                <a href="../<?= h($pet['sterilized_proof_path'])?>" target="_blank"
+                                    class="text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm"><span
+                                        class="flex items-center gap-3"><i
+                                            class="fas fa-file-pdf text-indigo-400 text-lg"></i> Sterilization
+                                        Proof</span><i class="fas fa-external-link-alt text-xs text-indigo-300"></i></a>
+                                <?php
+                    endif; ?>
                                 <?php if (!empty($pet['vaccination_proof_path'])): ?>
-                                <a href="../<?= h($pet['vaccination_proof_path'])?>" target="_blank" class="text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm"><span class="flex items-center gap-3"><i class="fas fa-file-pdf text-indigo-400 text-lg"></i> Vaccination Proof</span><i class="fas fa-external-link-alt text-xs text-indigo-300"></i></a>
-                                <?php endif; ?>
+                                <a href="../<?= h($pet['vaccination_proof_path'])?>" target="_blank"
+                                    class="text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm"><span
+                                        class="flex items-center gap-3"><i
+                                            class="fas fa-file-pdf text-indigo-400 text-lg"></i> Vaccination
+                                        Proof</span><i class="fas fa-external-link-alt text-xs text-indigo-300"></i></a>
+                                <?php
+                    endif; ?>
                             </div>
                         </div>
-                        <?php endif; ?>
+                        <?php
+                endif; ?>
                     </div>
-                    
+
                     <div class="px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end">
-                        <button type="button" onclick="document.getElementById('pet_modal_<?= $pet['id']?>').classList.add('hidden')" class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
+                        <button type="button"
+                            onclick="document.getElementById('pet_modal_<?= $pet['id']?>').classList.add('hidden')"
+                            class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
                             Close
                         </button>
                     </div>
