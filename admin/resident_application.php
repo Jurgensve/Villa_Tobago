@@ -33,18 +33,20 @@ else {
         $res_row = $active_res->fetch();
         if ($res_row) {
             $check_table = $res_row['resident_type'] === 'owner' ? 'owners' : 'tenants';
-            $check_stmt = $pdo->prepare("SELECT status FROM {$check_table} WHERE id = ?");
+            $check_stmt = $pdo->prepare("SELECT status, agent_approved FROM {$check_table} WHERE id = ?");
             $check_stmt->execute([$res_row['resident_id']]);
-            $status_val = $check_stmt->fetchColumn();
-            if ($status_val !== 'Approved' && $status_val !== 'Completed') {
-                $app_type = $res_row['resident_type'];
-                $app_id = (int)$res_row['resident_id'];
+            $s_row = $check_stmt->fetch();
+            if ($s_row) {
+                if (($s_row['status'] !== 'Approved' && $s_row['status'] !== 'Completed') || empty($s_row['agent_approved'])) {
+                    $app_type = $res_row['resident_type'];
+                    $app_id = (int)$res_row['resident_id'];
+                }
             }
         }
 
         if (!$app_type) {
             // Check if there is a pending owner for this unit (e.g. created via admin but not yet approved)
-            $pending_owner = $pdo->prepare("SELECT o.id FROM owners o JOIN ownership_history oh ON o.id = oh.owner_id WHERE oh.unit_id = ? AND oh.is_current = 1 AND o.status NOT IN ('Approved','Declined','Completed')");
+            $pending_owner = $pdo->prepare("SELECT o.id FROM owners o JOIN ownership_history oh ON o.id = oh.owner_id WHERE oh.unit_id = ? AND oh.is_current = 1 AND (o.status NOT IN ('Approved','Declined','Completed') OR o.agent_approved = 0 OR o.agent_approved IS NULL)");
             $pending_owner->execute([$unit_id]);
             if ($pow = $pending_owner->fetchColumn()) {
                 $app_type = 'owner';
