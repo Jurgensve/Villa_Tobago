@@ -377,31 +377,31 @@ else: ?>
         <div class="bg-white rounded-2xl shadow p-6 mb-6 overflow-x-auto">
             <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Application Status</h2>
             <?php
-    $owner_approved = (int)($step_data['owner_approval'] ?? $step_data['agent_approval'] ?? 0);
-    $agent_final = (int)($step_data['agent_approved'] ?? 0);
-    $move_in_sent = (int)($step_data['move_in_sent'] ?? 0);
+        $owner_approved = (int)($step_data['owner_approval'] ?? $step_data['agent_approval'] ?? 0);
+        $agent_final = (int)($step_data['agent_approved'] ?? 0);
+        $move_in_sent = (int)($step_data['move_in_sent'] ?? 0);
 
-    if (!function_exists('status_dot')) {
-        function status_dot($done, $label, $sub = '')
-        {
-            $color = $done ? 'bg-green-500' : 'bg-gray-200';
-            $text = $done ? 'text-green-700' : 'text-gray-400';
-            $icon = $done ? 'fa-check' : 'fa-circle';
-            echo "<div class='flex flex-col items-center text-center min-w-[80px]'>";
-            echo "<div class='w-9 h-9 rounded-full {$color} flex items-center justify-center mb-1'><i class='fas {$icon} text-white text-sm'></i></div>";
-            echo "<span class='text-xs font-bold {$text}'>{$label}</span>";
-            if ($sub)
-                echo "<span class='text-xs text-gray-400'>{$sub}</span>";
-            echo "</div>";
+        if (!function_exists('status_dot')) {
+            function status_dot($done, $label, $sub = '')
+            {
+                $color = $done ? 'bg-green-500' : 'bg-gray-200';
+                $text = $done ? 'text-green-700' : 'text-gray-400';
+                $icon = $done ? 'fa-check' : 'fa-circle';
+                echo "<div class='flex flex-col items-center text-center min-w-[80px]'>";
+                echo "<div class='w-9 h-9 rounded-full {$color} flex items-center justify-center mb-1'><i class='fas {$icon} text-white text-sm'></i></div>";
+                echo "<span class='text-xs font-bold {$text}'>{$label}</span>";
+                if ($sub)
+                    echo "<span class='text-xs text-gray-400'>{$sub}</span>";
+                echo "</div>";
+            }
         }
-    }
-    if (!function_exists('status_line')) {
-        function status_line($done)
-        {
-            $color = $done ? 'bg-green-400' : 'bg-gray-200';
-            echo "<div class='flex-1 h-1 {$color} mt-4 mx-1'></div>";
+        if (!function_exists('status_line')) {
+            function status_line($done)
+            {
+                $color = $done ? 'bg-green-400' : 'bg-gray-200';
+                echo "<div class='flex-1 h-1 {$color} mt-4 mx-1'></div>";
+            }
         }
-    }
 ?>
             <div class="flex items-start">
                 <?php status_dot(true, 'Applied'); ?>
@@ -415,7 +415,8 @@ else: ?>
                 <?php status_dot($move_in_sent, 'Move-in Form', 'Email sent'); ?>
             </div>
         </div>
-        <?php endif; ?>
+        <?php
+    endif; ?>
 
         <?php if (!$portal_access): ?>
         <!-- Not yet approved -->
@@ -435,7 +436,7 @@ else: ?>
     elseif ($agent_final):
         // ── DASHBOARD VIEW ───────────────────────────────────────────────────
         $has_wa = !empty($step_data['whatsapp_terms_accepted']);
-        
+
         $is_moving_out = false;
         $move_out_date = null;
         foreach ($logistics as $log) {
@@ -445,7 +446,7 @@ else: ?>
                 break;
             }
         }
-        
+
         if ($is_moving_out):
 ?>
         <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center mb-6 shadow-sm">
@@ -455,7 +456,7 @@ else: ?>
             <h2 class="text-xl font-bold text-red-900 mb-2">Portal Access Locked</h2>
             <p class="text-red-700 max-w-lg mx-auto mb-4">
                 Your move-out request for <strong>
-                    <?= date('M j, Y', strtotime($move_out_date)) ?>
+                    <?= date('M j, Y', strtotime($move_out_date))?>
                 </strong> has been approved.
                 As you are finalizing your departure from Villa Tobago, your resident portal is now locked for
                 modifications.
@@ -517,13 +518,13 @@ else: ?>
                             <i class="fas fa-comments"></i> Open Chat
                         </a>
                         <?php
-        else: ?>
+            else: ?>
                         <button onclick="document.getElementById('wa-modal').classList.remove('hidden')"
                             class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-sm">
                             View Terms to Join
                         </button>
                         <?php
-        endif; ?>
+            endif; ?>
                     </div>
                 </div>
             </div>
@@ -546,16 +547,16 @@ else: ?>
                     <?php if (empty($modifications)): ?>
                     <p class="text-gray-400 italic text-sm text-center">No modification requests logged.</p>
                     <?php
-        else: ?>
+            else: ?>
                     <div class="space-y-3">
                         <?php foreach ($modifications as $mod):
-                $sc = 'bg-gray-100 text-gray-600';
-                if ($mod['status'] == 'Approved')
-                    $sc = 'bg-green-100 text-green-800';
-                elseif ($mod['status'] == 'Declined')
-                    $sc = 'bg-red-100 text-red-800';
-                elseif (strpos($mod['status'], 'Pending') !== false)
-                    $sc = 'bg-yellow-100 text-yellow-800';
+                    $sc = 'bg-gray-100 text-gray-600';
+                    if ($mod['status'] == 'Approved')
+                        $sc = 'bg-green-100 text-green-800';
+                    elseif ($mod['status'] == 'Declined')
+                        $sc = 'bg-red-100 text-red-800';
+                    elseif (strpos($mod['status'], 'Pending') !== false)
+                        $sc = 'bg-yellow-100 text-yellow-800';
 ?>
                         <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
                             <div class="flex justify-between items-start mb-2">
@@ -574,10 +575,10 @@ else: ?>
                             </div>
                         </div>
                         <?php
-            endforeach; ?>
+                endforeach; ?>
                     </div>
                     <?php
-        endif; ?>
+            endif; ?>
                 </div>
             </div>
 
@@ -595,14 +596,14 @@ else: ?>
                     <?php if (empty($logistics)): ?>
                     <p class="text-gray-400 italic text-sm text-center">No moves logged.</p>
                     <?php
-        else: ?>
+            else: ?>
                     <div class="space-y-3">
                         <?php foreach ($logistics as $log):
-                $lsc = 'bg-yellow-100 text-yellow-800';
-                if ($log['status'] == 'Approved')
-                    $lsc = 'bg-green-100 text-green-800';
-                elseif ($log['status'] == 'Declined')
-                    $lsc = 'bg-red-100 text-red-800';
+                    $lsc = 'bg-yellow-100 text-yellow-800';
+                    if ($log['status'] == 'Approved')
+                        $lsc = 'bg-green-100 text-green-800';
+                    elseif ($log['status'] == 'Declined')
+                        $lsc = 'bg-red-100 text-red-800';
 ?>
                         <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
                             <div class="flex justify-between items-start mb-2">
@@ -622,10 +623,10 @@ else: ?>
                             </p>
                         </div>
                         <?php
-            endforeach; ?>
+                endforeach; ?>
                     </div>
                     <?php
-        endif; ?>
+            endif; ?>
                 </div>
             </div>
         </div>
@@ -713,7 +714,10 @@ else: ?>
             </div>
         </div>
         <?php
-        endif; ?>
+            endif; ?>
+
+        <?php
+        endif; // end is_moving_out ?>
 
         <?php
     else: ?>
