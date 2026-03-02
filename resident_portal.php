@@ -454,14 +454,18 @@ else: ?>
             </div>
             <h2 class="text-xl font-bold text-red-900 mb-2">Portal Access Locked</h2>
             <p class="text-red-700 max-w-lg mx-auto mb-4">
-                Your move-out request for <strong><?= date('M j, Y', strtotime($move_out_date)) ?></strong> has been approved. 
-                As you are finalizing your departure from Villa Tobago, your resident portal is now locked for modifications.
+                Your move-out request for <strong>
+                    <?= date('M j, Y', strtotime($move_out_date)) ?>
+                </strong> has been approved.
+                As you are finalizing your departure from Villa Tobago, your resident portal is now locked for
+                modifications.
             </p>
             <p class="text-red-600 text-sm italic">
-                Thank you for being part of the Villa Tobago community! If you need any final assistance, please contact the Managing Agent.
+                Thank you for being part of the Villa Tobago community! If you need any final assistance, please contact
+                the Managing Agent.
             </p>
         </div>
-<?php
+        <?php
         else:
 ?>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -495,7 +499,8 @@ else: ?>
             </a>
 
             <!-- Quick Action: WhatsApp Community -->
-            <div class="bg-white rounded-2xl shadow p-6 flex flex-col gap-4 border-l-4 border-green-500 col-span-1 md:col-span-2">
+            <div
+                class="bg-white rounded-2xl shadow p-6 flex flex-col gap-4 border-l-4 border-green-500 col-span-1 md:col-span-2">
                 <div class="flex items-start gap-4">
                     <div
                         class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center shrink-0">
@@ -747,8 +752,6 @@ else: ?>
         <?php
         endif; ?>
 
-        <?php endif; ?>
-        
         <!-- ── STEP A: Intercom ─────────────────────────────────────────────── -->
         <?php if ($active_step === 'A'): ?>
         <div class="bg-white rounded-2xl shadow p-6">
