@@ -79,7 +79,9 @@ function run_pending_migrations($pdo)
 
         }
         catch (PDOException $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
 
             $result['ran_migrations'] = true;
             $result['success'] = false;
