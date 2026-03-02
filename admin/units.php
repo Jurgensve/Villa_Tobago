@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->commit();
 
                 if ($has_tenant) {
-                    echo "<script>window.location.href   = 'tenants.php?action=add&unit_id={$unit_id}';</script>";
+                    echo "<script>window.location.href = 'tenants.php?action=add&unit_id={$unit_id}';</script>";
                     exit;
                 }
 
@@ -561,6 +561,27 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         <span class="text-xs text-gray-400 font-bold uppercase">Occupants</span>
                         <div class="text-gray-700 mt-0.5">
                             <?= h($resident_detail['num_occupants'])?> person(s)
+                        </div>
+                    </div>
+                    <?php
+            endif; ?>
+                    <?php if (!empty($resident_detail['second_resident_name'])): ?>
+                    <div class="md:col-span-2">
+                        <span class="text-xs text-gray-400 font-bold uppercase">Second Resident</span>
+                        <div class="text-gray-700 mt-0.5">
+                            <?= h($resident_detail['second_resident_name'])?>
+                            <?php if (!empty($resident_detail['second_resident_phone'])): ?>
+                            •
+                            <?= h($resident_detail['second_resident_phone'])?>
+                            <?php
+                endif; ?>
+                            <?php if (!empty($resident_detail['second_resident_email'])): ?>
+                            • <a href="mailto:<?= h($resident_detail['second_resident_email'])?>"
+                                class="text-indigo-600 hover:text-indigo-800">
+                                <?= h($resident_detail['second_resident_email'])?>
+                            </a>
+                            <?php
+                endif; ?>
                         </div>
                     </div>
                     <?php

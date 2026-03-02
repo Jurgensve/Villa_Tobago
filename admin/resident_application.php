@@ -377,6 +377,34 @@ endif; ?>
 endif; ?>
             </dl>
         </div>
+
+        <?php if (!empty($app['second_resident_name'])): ?>
+        <div class="px-6 py-4 bg-gray-50 border-t border-b">
+            <h2 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-user-friends text-gray-500"></i> Second Resident
+            </h2>
+        </div>
+        <div class="p-6">
+            <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                <div>
+                    <dt class="text-xs font-bold text-gray-400 uppercase tracking-widest">Full Name</dt>
+                    <dd class="font-bold text-gray-900 mt-0.5">
+                        <?= h($app['second_resident_name'])?>
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-bold text-gray-400 uppercase tracking-widest">Contact details</dt>
+                    <dd class="text-gray-700 mt-0.5">
+                        <?= h($app['second_resident_phone'] ?? '—')?><br>
+                        <a href="mailto:<?= h($app['second_resident_email'])?>" class="text-blue-600 hover:underline">
+                            <?= h($app['second_resident_email'] ?? '—')?>
+                        </a>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+        <?php
+endif; ?>
     </div>
 
     <!-- Intercom Contacts -->

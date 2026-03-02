@@ -88,11 +88,13 @@ if (isset($_SESSION['auth_resident'])) {
     // ── Step B: Occupancy ─────────────────────────────────────────────────────
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_occupancy'])) {
         $fields = ($rtype === 'tenant')
-            ? "num_occupants = ?, rental_agency_or_owner_name = ?, move_in_date = ?"
-            : "num_occupants = ?, rental_agency_or_owner_name = ?";
+            ? "second_resident_name = ?, second_resident_phone = ?, second_resident_email = ?, num_occupants = ?, move_in_date = ?"
+            : "second_resident_name = ?, second_resident_phone = ?, second_resident_email = ?, num_occupants = ?";
+
         $vals = ($rtype === 'tenant')
-            ? [(int)$_POST['num_occupants'], trim($_POST['rental_agency_or_owner_name']), trim($_POST['move_in_date']) ?: null, $rid]
-            : [(int)$_POST['num_occupants'], trim($_POST['rental_agency_or_owner_name']), $rid];
+            ? [trim($_POST['second_resident_name']), trim($_POST['second_resident_phone']), trim($_POST['second_resident_email']), (int)$_POST['num_occupants'], trim($_POST['move_in_date']) ?: null, $rid]
+            : [trim($_POST['second_resident_name']), trim($_POST['second_resident_phone']), trim($_POST['second_resident_email']), (int)$_POST['num_occupants'], $rid];
+
         $pdo->prepare("UPDATE {$table} SET {$fields} WHERE id = ?")->execute($vals);
         header("Location: resident_portal.php?step=C&saved=1");
         exit;
