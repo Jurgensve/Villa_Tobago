@@ -27,7 +27,6 @@ if ($unit && !empty($unit['pending_app_type']) && !empty($unit['pending_app_id']
 }
 else {
     // Check if the active resident is pending final approval
-    // Check if the active resident is pending final approval
     try {
         $active_res = $pdo->prepare("SELECT resident_type, resident_id FROM residents WHERE unit_id = ?");
         $active_res->execute([$unit_id]);
@@ -40,6 +39,16 @@ else {
             if ($status_val !== 'Approved' && $status_val !== 'Completed') {
                 $app_type = $res_row['resident_type'];
                 $app_id = (int)$res_row['resident_id'];
+            }
+        }
+
+        if (!$app_type) {
+            // Check if there is a pending owner for this unit (e.g. created via admin but not yet approved)
+            $pending_owner = $pdo->prepare("SELECT o.id FROM owners o JOIN ownership_history oh ON o.id = oh.owner_id WHERE oh.unit_id = ? AND oh.is_current = 1 AND o.status NOT IN ('Approved','Declined','Completed')");
+            $pending_owner->execute([$unit_id]);
+            if ($pow = $pending_owner->fetchColumn()) {
+                $app_type = 'owner';
+                $app_id = (int)$pow;
             }
         }
     }

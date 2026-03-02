@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->commit();
 
                 if ($has_tenant) {
-                    echo "<script>window.location.href = 'tenants.php?action=add&unit_id={$unit_id}';</script>";
+                    echo "<script>window.location.href 'tenants.php?action=add&unit_id={$unit_id}';</script>";
                     exit;
                 }
 
@@ -405,11 +405,38 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
         $unit_pending = $pdo->prepare("SELECT pending_app_type, pending_app_id FROM units WHERE id = ?");
         $unit_pending->execute([$id]);
         $unit_pending_row = $unit_pending->fetch();
+
         if ($unit_pending_row && $unit_pending_row['pending_app_type'] && $unit_pending_row['pending_app_id']) {
             $pending_app = $unit_pending_row;
-            $pending_table = $unit_pending_row['pending_app_type'] === 'owner' ? 'owners' : 'tenants';
+        }
+        else {
+            // Check residents table
+            $active_res = $pdo->prepare("SELECT resident_type, resident_id FROM residents WHERE unit_id = ?");
+            $active_res->execute([$id]);
+            $res_row = $active_res->fetch();
+            if ($res_row) {
+                $check_table = $res_row['resident_type'] === 'owner' ? 'owners' : 'tenants';
+                $check_stmt = $pdo->prepare("SELECT status FROM {$check_table} WHERE id = ?");
+                $check_stmt->execute([$res_row['resident_id']]);
+                $status_val = $check_stmt->fetchColumn();
+                if ($status_val && $status_val !== 'Approved' && $status_val !== 'Completed') {
+                    $pending_app = ['pending_app_type' => $res_row['resident_type'], 'pending_app_id' => $res_row['resident_id']];
+                }
+            }
+            if (!$pending_app) {
+                // Check pending owners
+                $pending_owner = $pdo->prepare("SELECT o.id FROM owners o JOIN ownership_history oh ON o.id = oh.owner_id WHERE oh.unit_id = ? AND oh.is_current = 1 AND o.status NOT IN ('Approved','Declined','Completed')");
+                $pending_owner->execute([$id]);
+                if ($pow = $pending_owner->fetchColumn()) {
+                    $pending_app = ['pending_app_type' => 'owner', 'pending_app_id' => $pow];
+                }
+            }
+        }
+
+        if ($pending_app) {
+            $pending_table = $pending_app['pending_app_type'] === 'owner' ? 'owners' : 'tenants';
             $pstmt = $pdo->prepare("SELECT * FROM {$pending_table} WHERE id = ?");
-            $pstmt->execute([$unit_pending_row['pending_app_id']]);
+            $pstmt->execute([$pending_app['pending_app_id']]);
             $pending_app_detail = $pstmt->fetch();
         }
     }
