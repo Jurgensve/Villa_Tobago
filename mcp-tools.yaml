@@ -1,0 +1,14 @@
+sources:
+  villatobago_live:
+    kind: mysql
+    host: "154.0.174.195"
+    port: 3306
+    user: "villatobagoco_gemini"
+    password: "mamqox-norsyc-mufhI5"
+    database: "villatobagoco_coredb"
+
+tools:
+  - name: query_villatobago_db
+    description: "Execute a generic SQL query against the live Villa Tobago MySQL database."
+    source: villatobago_live
+    sql: "{query}"

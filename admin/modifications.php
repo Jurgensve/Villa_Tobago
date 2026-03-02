@@ -194,8 +194,8 @@ endif; ?>
                     name="unit_owner_json" id="unit_owner_select" onchange="updateHiddenFields()" required>
                     <option value="">-- Select Unit --</option>
                     <?php foreach ($units as $unit): ?>
-                    <option value='<?= json_encode([' unit_id' => $unit['unit_id'], 'owner_id' => $unit['owner_id']])
-    ?>'>
+                    <option value='<?= json_encode([' unit_id'=> $unit['unit_id'], 'owner_id' => $unit['owner_id']])
+                        ?>'>
                         <?= h($unit['unit_number'])?> -
                         <?= h($unit['full_name'])?>
                     </option>
@@ -339,9 +339,11 @@ else: ?>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
             <?php
-    $sql = "SELECT m.*, u.unit_number 
+    $sql = "SELECT m.*, u.unit_number, o.full_name as owner_name, t.full_name as tenant_name 
                         FROM modifications m
                         JOIN units u ON m.unit_id = u.id
+                        LEFT JOIN owners o ON m.owner_id = o.id
+                        LEFT JOIN tenants t ON m.tenant_id = t.id
                         ORDER BY m.request_date DESC";
     $stmt = $pdo->query($sql);
     while ($row = $stmt->fetch()):
@@ -372,6 +374,10 @@ else: ?>
                     </div>
                     <div class="truncate max-w-xs">
                         <?= h($row['description'])?>
+                    </div>
+                    <div class="text-xs mt-1 text-gray-400">
+                        <i class="fas fa-user mr-1"></i> Requester:
+                        <?= h(!empty($row['tenant_name']) ? $row['tenant_name'] . ' (Tenant)' : ($row['owner_name'] . ' (Owner)'))?>
                     </div>
                     <?php if (!empty($row['trustee_comments'])): ?>
                     <div class="mt-1 text-xs text-blue-600 bg-blue-50 p-1 rounded">

@@ -19,6 +19,7 @@ deployment:
     - /bin/cp move_out_form.php $DEPLOYPATH
     - /bin/cp approve_moveout.php $DEPLOYPATH
     - /bin/cp owner_approve_tenant.php $DEPLOYPATH
+    - /bin/cp owner_approve_modification.php $DEPLOYPATH
     - /bin/cp amend_request.php $DEPLOYPATH
     - /bin/cp logout_resident.php $DEPLOYPATH
     - /bin/cp test_db.php $DEPLOYPATH

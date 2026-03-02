@@ -16,20 +16,32 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category = trim($_POST['category']);
     $description = trim($_POST['description']);
-    // owner_id from auth_resident is different for tenants. 
-    // If tenant, how to get owner_id? Modification is bound to owner_id.
-    // For now, let's fetch the current owner for this unit.
-    $stmtOwnerId = $pdo->prepare("SELECT owner_id FROM ownership_history WHERE unit_id = ? AND is_current = 1 LIMIT 1");
-    $stmtOwnerId->execute([$res['unit_id']]);
-    $owner_id = $stmtOwnerId->fetchColumn() ?: 0;
+    // Determine IDs
+    $unit_id = $res['unit_id'];
+    $resident_type = $res['type'];
+    $tenant_id = ($resident_type === 'tenant') ? $res['id'] : null;
+
+    // Fetch the current owner for this unit.
+    $stmtOwnerId = $pdo->prepare("SELECT owner_id, full_name, email FROM ownership_history oh JOIN owners o ON oh.owner_id = o.id WHERE oh.unit_id = ? AND oh.is_current = 1 LIMIT 1");
+    $stmtOwnerId->execute([$unit_id]);
+    $owner_row = $stmtOwnerId->fetch();
+    $owner_id = $owner_row ? $owner_row['owner_id'] : 0;
+
+    // Determine Status and Token
+    $status = 'Pending';
+    $amendment_token = null;
+    if ($resident_type === 'tenant') {
+        $status = 'Pending Owner Approval';
+        $amendment_token = bin2hex(random_bytes(16));
+    }
 
     if (empty($category) || empty($description)) {
         $error = "Category and Description are required.";
     }
     else {
         try {
-            $stmt = $pdo->prepare("INSERT INTO modifications (unit_id, owner_id, category, description, status, request_date) VALUES (?, ?, ?, ?, 'Pending', NOW())");
-            $stmt->execute([$res['unit_id'], $owner_id, $category, $description]);
+            $stmt = $pdo->prepare("INSERT INTO modifications (unit_id, owner_id, tenant_id, category, description, status, request_date, amendment_token) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)");
+            $stmt->execute([$unit_id, $owner_id, $tenant_id, $category, $description, $status, $amendment_token]);
             $mod_id = $pdo->lastInsertId();
 
             // Handle Multiple Attachments
@@ -54,7 +66,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             }
-            $message = "Modification request submitted successfully. It is now Pending review by Trustees.";
+            if ($resident_type === 'tenant' && $owner_row && !empty($owner_row['email'])) {
+                // Send email to owner
+                $approval_url = SITE_URL . "/owner_approve_modification.php?token=" . $amendment_token;
+
+                // Fetch unit number, we don't have it in $res directly since login only stores unit_id usually, but let's query it
+                $unit_num = $pdo->query("SELECT unit_number FROM units WHERE id = " . (int)$unit_id)->fetchColumn();
+
+                $subject = "Tenant Modification Request - Unit " . h($unit_num);
+                $body = "<p>Dear " . h($owner_row['full_name']) . ",</p>";
+                $body .= "<p>Your tenant (<b>" . h($res['full_name']) . "</b>) has submitted a Modification Request (<b>" . h($category) . "</b>) for Unit " . h($unit_num) . ".</p>";
+                $body .= "<p>Description: <br>" . nl2br(h($description)) . "</p>";
+                $body .= "<p>Please review and approve or decline this request by clicking the secure link below. If approved, it will be forwarded to the Managing Agent for final review.</p>";
+                $body .= "<p style='margin: 20px 0;'><a href='{$approval_url}' style='background-color:#4F46E5;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;font-weight:bold;'>Review Modification Request</a></p>";
+                $body .= "<p>Warm regards,<br>Villa Tobago Management</p>";
+                send_notification_email($owner_row['email'], $subject, $body);
+
+                $message = "Modification request submitted successfully. It is now Pending Owner Approval.";
+            }
+            else {
+                $message = "Modification request submitted successfully. It is now Pending review by Trustees.";
+            }
         }
         catch (Exception $e) {
             $error = "Database Error: " . $e->getMessage();

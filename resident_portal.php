@@ -212,6 +212,32 @@ if (isset($_SESSION['auth_resident'])) {
         $error = "Database error: pets table missing or outdated. Please run migrations.";
     }
 
+    // Modifications
+    $modifications = [];
+    try {
+        if ($rtype === 'owner') {
+            $mstmt = $pdo->prepare("SELECT * FROM modifications WHERE unit_id = ? AND owner_id = ? ORDER BY request_date DESC");
+            $mstmt->execute([$uid, $rid]);
+        }
+        else {
+            $mstmt = $pdo->prepare("SELECT * FROM modifications WHERE unit_id = ? AND tenant_id = ? ORDER BY request_date DESC");
+            $mstmt->execute([$uid, $rid]);
+        }
+        $modifications = $mstmt->fetchAll();
+    }
+    catch (PDOException $e) {
+    }
+
+    // Logistics
+    $logistics = [];
+    try {
+        $lstmt = $pdo->prepare("SELECT * FROM move_logistics WHERE unit_id = ? AND resident_type = ? AND resident_id = ? ORDER BY created_at DESC");
+        $lstmt->execute([$uid, $rtype, $rid]);
+        $logistics = $lstmt->fetchAll();
+    }
+    catch (PDOException $e) {
+    }
+
     // Max vehicles
     $max_vehicles = (int)($pdo->query("SELECT setting_value FROM pet_settings WHERE setting_key = 'max_vehicles_per_unit'")->fetchColumn() ?: 2);
     $max_pets = (int)($pdo->query("SELECT setting_value FROM pet_settings WHERE setting_key = 'max_pets_per_unit'")->fetchColumn() ?: 2);
@@ -414,8 +440,7 @@ else: ?>
                 </div>
             </a>
 
-            <!-- Quick Action: Modification (Owners Only) -->
-            <?php if ($rtype === 'owner'): ?>
+            <!-- Quick Action: Modification -->
             <a href="modification_form.php"
                 class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-blue-500 group">
                 <div
@@ -427,8 +452,6 @@ else: ?>
                     <p class="text-gray-500 text-sm">Apply for structural or exterior modifications to your unit.</p>
                 </div>
             </a>
-            <?php
-        endif; ?>
 
             <!-- Quick Action: Intercom -->
             <a href="resident_portal.php?step=A"
@@ -441,6 +464,19 @@ else: ?>
                     <h3 class="text-lg font-bold text-gray-900 mb-1">Intercom Access</h3>
                     <p class="text-gray-500 text-sm">Update the contact names and phone numbers linked to the main gate
                         intercom system.</p>
+                </div>
+            </a>
+
+            <!-- Quick Action: Logistics (Move-Out) -->
+            <a href="move_out_form.php"
+                class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-red-500 group">
+                <div
+                    class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                    <i class="fas fa-truck-moving text-red-500 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Move-Out / Move-In</h3>
+                    <p class="text-gray-500 text-sm">Log a move-in or move-out request to coordinate with security.</p>
                 </div>
             </a>
 
@@ -473,6 +509,98 @@ else: ?>
                 </div>
             </div>
 
+        </div>
+
+        <!-- RECENT ACTIVITY SECTION -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <!-- Recent Modifications -->
+            <div class="bg-white rounded-2xl shadow overflow-hidden">
+                <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
+                            class="fas fa-hammer text-blue-500"></i> My Modifications</h3>
+                </div>
+                <div class="p-5">
+                    <?php if (empty($modifications)): ?>
+                    <p class="text-gray-400 italic text-sm text-center">No modification requests logged.</p>
+                    <?php
+        else: ?>
+                    <div class="space-y-3">
+                        <?php foreach ($modifications as $mod):
+                $sc = 'bg-gray-100 text-gray-600';
+                if ($mod['status'] == 'Approved')
+                    $sc = 'bg-green-100 text-green-800';
+                elseif ($mod['status'] == 'Declined')
+                    $sc = 'bg-red-100 text-red-800';
+                elseif (strpos($mod['status'], 'Pending') !== false)
+                    $sc = 'bg-yellow-100 text-yellow-800';
+?>
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-bold text-gray-900">
+                                    <?= h($mod['category'])?>
+                                </h4>
+                                <span class="text-xs px-2 py-1 rounded-full font-bold <?= $sc?>">
+                                    <?= h($mod['status'])?>
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">
+                                <?= h($mod['description'])?>
+                            </p>
+                            <div class="text-xs text-gray-400"><i class="far fa-calendar-alt mr-1"></i> Requested:
+                                <?= format_date($mod['request_date'])?>
+                            </div>
+                        </div>
+                        <?php
+            endforeach; ?>
+                    </div>
+                    <?php
+        endif; ?>
+                </div>
+            </div>
+
+            <!-- Recent Move Logistics -->
+            <div class="bg-white rounded-2xl shadow overflow-hidden">
+                <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
+                            class="fas fa-truck text-red-500"></i> My Move Logistics</h3>
+                </div>
+                <div class="p-5">
+                    <?php if (empty($logistics)): ?>
+                    <p class="text-gray-400 italic text-sm text-center">No moves logged.</p>
+                    <?php
+        else: ?>
+                    <div class="space-y-3">
+                        <?php foreach ($logistics as $log):
+                $lsc = 'bg-yellow-100 text-yellow-800';
+                if ($log['status'] == 'Approved')
+                    $lsc = 'bg-green-100 text-green-800';
+                elseif ($log['status'] == 'Declined')
+                    $lsc = 'bg-red-100 text-red-800';
+?>
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-bold text-gray-900 uppercase tracking-widest text-xs">
+                                    <?= h($log['request_type'])?>
+                                </h4>
+                                <span class="text-xs px-2 py-1 rounded-full font-bold <?= $lsc?>">
+                                    <?= h($log['status'])?>
+                                </span>
+                            </div>
+                            <p class="text-sm font-bold text-gray-700 mb-1"><i
+                                    class="far fa-calendar text-gray-400"></i> Move Date:
+                                <?= format_date($log['move_date'])?>
+                            </p>
+                            <p class="text-xs text-gray-500">Mover:
+                                <?= h($log['mover_company']) ?: 'Not specified'?>
+                            </p>
+                        </div>
+                        <?php
+            endforeach; ?>
+                    </div>
+                    <?php
+        endif; ?>
+                </div>
+            </div>
         </div>
 
         <!-- WhatsApp Terms Modal -->
