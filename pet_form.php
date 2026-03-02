@@ -239,7 +239,25 @@ endif; ?>
                             class="w-full border-2 border-gray-200 rounded-lg px-4 py-2.5 focus:border-yellow-400 outline-none transition"
                             placeholder="Optional">
                     </div>
-                    <div class="md:col-span-2">
+<?php if (!empty($removed_pets)): ?>
+                    <div class="md:col-span-2 mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <label class="block text-gray-700 text-sm font-bold mb-1">Is this pet replacing a previously removed pet?</label>
+                        <p class="text-xs text-gray-500 mb-3">If yes, select the pet it is replacing below. This helps the Trustees track replacements.</p>
+                        <select name="replacement_for_pet_id" class="w-full border-2 border-gray-200 rounded-lg px-4 py-2.5 focus:border-yellow-400 outline-none transition bg-white" onchange="showRemovalReason(this)">
+                            <option value="">— No, this is a new addition —</option>
+                            <?php foreach ($removed_pets as $rp): ?>
+                                <option value="<?= $rp['id'] ?>" data-reason="<?= h($rp['removal_reason']) ?>">
+                                    Replacing: <?= h($rp['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div id="replacement_reason_box" class="hidden mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                            <strong>Reason for Removal:</strong> <span id="replacement_reason_text"></span>
+                        </div>
+                    </div>
+<?php endif; ?>
+
+                    <div class="md:col-span-2 mt-4">
                         <label class="block text-gray-700 text-sm font-bold mb-1">Recent Photo of Pet <span
                                 class="text-gray-400 font-normal">(recommended)</span></label>
                         <div
@@ -421,6 +439,21 @@ endif; ?>
                 motivSection.classList.remove('hidden');
             } else {
                 motivSection.classList.add('hidden');
+            }
+        }
+
+        function showRemovalReason(selectObj) {
+            const reasonBox = document.getElementById('replacement_reason_box');
+            const reasonText = document.getElementById('replacement_reason_text');
+            if (!reasonBox) return;
+            const selectedOpt = selectObj.options[selectObj.selectedIndex];
+            const reason = selectedOpt.getAttribute('data-reason');
+            
+            if (reason) {
+                reasonText.innerText = reason;
+                reasonBox.classList.remove('hidden');
+            } else {
+                reasonBox.classList.add('hidden');
             }
         }
     </script>

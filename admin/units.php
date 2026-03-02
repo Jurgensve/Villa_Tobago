@@ -759,7 +759,36 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                 <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
                         class="fas fa-phone text-blue-400"></i> Intercom Access</h3>
             </div>
-            <div class="p-5 space-y-4">
+            <div class="p-5 space-y-4" id="intercom">
+                <?php if ($resident_detail && isset($resident_detail['intercom_update_status']) && $resident_detail['intercom_update_status'] === 'Pending'): ?>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 class="text-sm font-bold text-yellow-800 mb-2"><i class="fas fa-exclamation-circle"></i> Pending Update Requested</h4>
+                    <p class="text-xs text-yellow-700 mb-3">The resident has requested the following numbers be synced to the gate:</p>
+                    <div class="space-y-2 mb-3">
+                        <?php if ($resident_detail['pending_ic1_phone']): ?>
+                            <p class="text-sm"><strong>1:</strong> <?= h($resident_detail['pending_ic1_name']) ?> (<?= h($resident_detail['pending_ic1_phone']) ?>)</p>
+                        <?php endif; ?>
+                        <?php if ($resident_detail['pending_ic2_phone']): ?>
+                            <p class="text-sm"><strong>2:</strong> <?= h($resident_detail['pending_ic2_name']) ?> (<?= h($resident_detail['pending_ic2_phone']) ?>)</p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="flex gap-2">
+                        <form method="POST" class="inline">
+                            <input type="hidden" name="action" value="approve_intercom">
+                            <input type="hidden" name="resident_id" value="<?= $resident_detail['id'] ?>">
+                            <input type="hidden" name="resident_type" value="<?= $resident_type ?>">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-3 rounded shadow-sm">Approve & Merge</button>
+                        </form>
+                        <form method="POST" class="inline" onsubmit="return confirm('Are you sure you want to reject and clear these requested updates?');">
+                            <input type="hidden" name="action" value="reject_intercom">
+                            <input type="hidden" name="resident_id" value="<?= $resident_detail['id'] ?>">
+                            <input type="hidden" name="resident_type" value="<?= $resident_type ?>">
+                            <button type="submit" class="bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold py-1.5 px-3 rounded shadow-sm">Reject</button>
+                        </form>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
                 <?php if ($resident_detail && (!empty($resident_detail['intercom_contact1_name']) || !empty($resident_detail['intercom_contact2_name']))): ?>
                 <?php
         $contacts = [

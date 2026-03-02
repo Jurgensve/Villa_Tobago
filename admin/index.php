@@ -26,8 +26,11 @@ try {
     $pending_moves = $stmt->fetchColumn();
     $pending_approvals = $pdo->query("SELECT COUNT(*) FROM tenants WHERE status NOT IN ('Approved','Declined','Completed') AND is_active=1")->fetchColumn()
         + $pdo->query("SELECT COUNT(*) FROM owners WHERE COALESCE(status,'Pending') NOT IN ('Approved','Declined','Completed') AND is_active=1")->fetchColumn();
+    $pending_intercoms = $pdo->query("SELECT COUNT(*) FROM tenants WHERE intercom_update_status = 'Pending'")->fetchColumn()
+        + $pdo->query("SELECT COUNT(*) FROM owners WHERE intercom_update_status = 'Pending'")->fetchColumn();
 }
 catch (PDOException $e) { /* Tables not yet created */
+    $pending_intercoms = 0;
 }
 ?>
 
@@ -59,7 +62,7 @@ catch (PDOException $e) { /* Tables not yet created */
     <div class="bg-white overflow-hidden shadow rounded-lg px-4 py-5 sm:p-6 border-l-4 border-red-500">
         <dt class="text-sm font-medium text-gray-500 truncate">Total Action Required</dt>
         <dd class="mt-1 text-3xl font-semibold text-gray-900">
-            <?=($pending_modifications + $pending_moves + $pending_approvals)?>
+            <?=($pending_modifications + $pending_moves + $pending_approvals + ($pending_intercoms ?? 0))?>
         </dd>
     </div>
 </div>
@@ -72,7 +75,7 @@ catch (PDOException $e) { /* Tables not yet created */
                 <h3 class="text-lg leading-6 font-bold text-red-800"><i class="fas fa-bell mr-2"></i> Action Required
                     Feed</h3>
                 <span class="bg-red-200 text-red-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-                    <?=($pending_modifications + $pending_moves + $pending_approvals)?> Pending
+                    <?=($pending_modifications + $pending_moves + $pending_approvals + ($pending_intercoms ?? 0))?> Pending
                 </span>
             </div>
 
@@ -176,6 +179,32 @@ try {
 }
 catch (Exception $e) {
 }
+
+// Fetch Pending Intercoms
+try {
+    $intercoms = $pdo->query("SELECT id, 'tenant' as type, full_name, unit_id FROM tenants WHERE intercom_update_status = 'Pending' UNION SELECT id, 'owner' as type, full_name, unit_id FROM owners WHERE intercom_update_status = 'Pending'")->fetchAll();
+    foreach ($intercoms as $ic) {
+        $has_alerts = true;
+        // get unit number
+        $u_stmt = $pdo->prepare("SELECT unit_number FROM units WHERE id = ?");
+        $u_stmt->execute([$ic['unit_id']]);
+        $un = $u_stmt->fetchColumn();
+        echo "<li class='hover:bg-gray-50 transition'>
+            <a href='units.php?action=view&id={$ic['unit_id']}#intercom' class='block px-4 py-4 sm:px-6'>
+                <div class='flex items-center justify-between'>
+                    <div class='flex items-center'>
+                        <div class='bg-purple-100 text-purple-600 rounded-full p-2 mr-4'><i class='fas fa-phone-alt fa-fw'></i></div>
+                        <div>
+                            <p class='text-sm font-bold text-gray-900'>Unit {$un} — Pending Intercom Update</p>
+                            <p class='text-xs text-gray-500 uppercase mt-0.5'>" . h($ic['full_name']) . " requested a change to main gate numbers.</p>
+                        </div>
+                    </div>
+                    <div><i class='fas fa-chevron-right text-gray-400'></i></div>
+                </div>
+            </a>
+          </li>";
+    }
+} catch (Exception $e) {}
 
 if (!$has_alerts):
 ?>

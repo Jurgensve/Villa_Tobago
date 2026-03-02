@@ -90,7 +90,7 @@ catch (PDOException $e) {
 
 $app_pets = [];
 try {
-    $pstmt = $pdo->prepare("SELECT * FROM pets WHERE resident_type = ? AND resident_id = ? AND unit_id = ? ORDER BY created_at DESC");
+    $pstmt = $pdo->prepare("SELECT p.*, r.name as replaced_name, r.removal_reason as replaced_reason FROM pets p LEFT JOIN pets r ON p.replacement_for_pet_id = r.id WHERE p.resident_type = ? AND p.resident_id = ? AND p.unit_id = ? ORDER BY p.created_at DESC");
     $pstmt->execute([$app_type, $app_id, $unit_id]);
     $app_pets = $pstmt->fetchAll();
 }
@@ -521,6 +521,13 @@ else: ?>
                                 <?= $p['adult_size'] ? ' • ' . h($p['adult_size']) . ' Size' : ''?>
                                 <?=!empty($p['birth_date']) ? ' • Born: ' . date('M Y', strtotime($p['birth_date'])) : ''?>
                             </p>
+
+                            <?php if (!empty($p['replacement_for_pet_id'])): ?>
+                            <div class="mb-3 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                                <p class="text-yellow-800 font-bold mb-1"><i class="fas fa-exchange-alt mr-1"></i> Replaces Removed Pet: <?= h($p['replaced_name'] ?? 'Unknown') ?></p>
+                                <p class="text-yellow-700 italic">"<?= h($p['replaced_reason'] ?? 'No reason provided' ) ?>"</p>
+                            </div>
+                            <?php endif; ?>
 
                             <div class="flex flex-wrap gap-2 mb-2">
                                 <?php if (!empty($p['is_sterilized'])): ?>

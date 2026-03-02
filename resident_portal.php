@@ -373,6 +373,7 @@ else: ?>
     endif; ?>
 
         <!-- Application Status Timeline -->
+        <?php if (!$agent_final): ?>
         <div class="bg-white rounded-2xl shadow p-6 mb-6 overflow-x-auto">
             <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Application Status</h2>
             <?php
@@ -414,6 +415,7 @@ else: ?>
                 <?php status_dot($move_in_sent, 'Move-in Form', 'Email sent'); ?>
             </div>
         </div>
+        <?php endif; ?>
 
         <?php if (!$portal_access): ?>
         <!-- Not yet approved -->
@@ -433,11 +435,39 @@ else: ?>
     elseif ($agent_final):
         // ── DASHBOARD VIEW ───────────────────────────────────────────────────
         $has_wa = !empty($step_data['whatsapp_terms_accepted']);
+        
+        $is_moving_out = false;
+        $move_out_date = null;
+        foreach ($logistics as $log) {
+            if ($log['move_type'] === 'move_out' && $log['status'] === 'Approved') {
+                $is_moving_out = true;
+                $move_out_date = $log['preferred_date'];
+                break;
+            }
+        }
+        
+        if ($is_moving_out):
+?>
+        <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center mb-6 shadow-sm">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-lock text-red-500 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-red-900 mb-2">Portal Access Locked</h2>
+            <p class="text-red-700 max-w-lg mx-auto mb-4">
+                Your move-out request for <strong><?= date('M j, Y', strtotime($move_out_date)) ?></strong> has been approved. 
+                As you are finalizing your departure from Villa Tobago, your resident portal is now locked for modifications.
+            </p>
+            <p class="text-red-600 text-sm italic">
+                Thank you for being part of the Villa Tobago community! If you need any final assistance, please contact the Managing Agent.
+            </p>
+        </div>
+<?php
+        else:
 ?>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <!-- Quick Action: Pets -->
-            <a href="pet_form.php"
+            <a href="manage_pets.php"
                 class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-yellow-400 group">
                 <div
                     class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
@@ -450,21 +480,8 @@ else: ?>
                 </div>
             </a>
 
-            <!-- Quick Action: Modification -->
-            <a href="modification_form.php"
-                class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-blue-500 group">
-                <div
-                    class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
-                    <i class="fas fa-hammer text-blue-500 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Unit Modifications</h3>
-                    <p class="text-gray-500 text-sm">Apply for structural or exterior modifications to your unit.</p>
-                </div>
-            </a>
-
             <!-- Quick Action: Intercom -->
-            <a href="resident_portal.php?step=A"
+            <a href="intercom_form.php"
                 class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-purple-500 group">
                 <div
                     class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
@@ -477,21 +494,8 @@ else: ?>
                 </div>
             </a>
 
-            <!-- Quick Action: Logistics (Move-Out) -->
-            <a href="move_out_form.php"
-                class="bg-white rounded-2xl shadow hover:shadow-lg transition p-6 flex items-start gap-4 border-l-4 border-red-500 group">
-                <div
-                    class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
-                    <i class="fas fa-truck-moving text-red-500 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Move-Out / Move-In</h3>
-                    <p class="text-gray-500 text-sm">Log a move-in or move-out request to coordinate with security.</p>
-                </div>
-            </a>
-
             <!-- Quick Action: WhatsApp Community -->
-            <div class="bg-white rounded-2xl shadow p-6 flex flex-col gap-4 border-l-4 border-green-500">
+            <div class="bg-white rounded-2xl shadow p-6 flex flex-col gap-4 border-l-4 border-green-500 col-span-1 md:col-span-2">
                 <div class="flex items-start gap-4">
                     <div
                         class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center shrink-0">
@@ -528,6 +532,10 @@ else: ?>
                 <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
                             class="fas fa-hammer text-blue-500"></i> My Modifications</h3>
+                    <a href="modification_form.php"
+                        class="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm transition">
+                        <i class="fas fa-plus mr-1"></i> Log Modification
+                    </a>
                 </div>
                 <div class="p-5">
                     <?php if (empty($modifications)): ?>
@@ -573,6 +581,10 @@ else: ?>
                 <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
                             class="fas fa-truck text-red-500"></i> My Move Logistics</h3>
+                    <a href="move_out_form.php"
+                        class="text-xs bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm transition">
+                        <i class="fas fa-plus mr-1"></i> Log Move
+                    </a>
                 </div>
                 <div class="p-5">
                     <?php if (empty($logistics)): ?>
@@ -735,6 +747,8 @@ else: ?>
         <?php
         endif; ?>
 
+        <?php endif; ?>
+        
         <!-- ── STEP A: Intercom ─────────────────────────────────────────────── -->
         <?php if ($active_step === 'A'): ?>
         <div class="bg-white rounded-2xl shadow p-6">
