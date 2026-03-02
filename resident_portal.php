@@ -372,14 +372,16 @@ else: ?>
         <?php
     endif; ?>
 
+        <?php
+    $owner_approved = (int)($step_data['owner_approval'] ?? $step_data['agent_approval'] ?? 0);
+    $agent_final = (int)($step_data['agent_approved'] ?? 0);
+    $move_in_sent = (int)($step_data['move_in_sent'] ?? 0);
+?>
         <!-- Application Status Timeline -->
         <?php if (!$agent_final): ?>
         <div class="bg-white rounded-2xl shadow p-6 mb-6 overflow-x-auto">
             <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Application Status</h2>
             <?php
-        $owner_approved = (int)($step_data['owner_approval'] ?? $step_data['agent_approval'] ?? 0);
-        $agent_final = (int)($step_data['agent_approved'] ?? 0);
-        $move_in_sent = (int)($step_data['move_in_sent'] ?? 0);
 
         if (!function_exists('status_dot')) {
             function status_dot($done, $label, $sub = '')
