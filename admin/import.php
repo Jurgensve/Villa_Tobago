@@ -1,4 +1,5 @@
 <?php
+ob_start();
 $required_roles = ['admin', 'managing_agent'];
 require_once 'includes/header.php';
 
@@ -13,6 +14,7 @@ function get_csv_val($row, $index)
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['download_template'])) {
+    ob_end_clean();
     $headers = [
         "Unit Number", "Main Owner Full Name", "Main Owner ID Number", "Main Owner Email", "Main Owner Contact Number",
         "Second Owner Full Name", "Second Owner ID Number", "Second Owner Email", "Second Owner Contact Number",
