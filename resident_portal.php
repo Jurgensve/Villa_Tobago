@@ -253,10 +253,6 @@ if (isset($_SESSION['auth_resident'])) {
     }
 }
 
-// Active step from URL
-$active_step = $_GET['step'] ?? 'A';
-$just_saved = isset($_GET['saved']);
-
 // Compute step completion flags
 $step_A_done = !empty($step_data['intercom_contact1_name']) && !empty($step_data['intercom_contact1_phone']);
 $step_B_done = !empty($step_data['num_occupants']);
@@ -265,6 +261,18 @@ $step_D_done = !empty($pets);
 $step_E_done = !empty($step_data['code_of_conduct_accepted']);
 $all_done = $step_A_done && $step_B_done && $step_E_done; // C & D optional but shown
 $portal_access = !empty($step_data['portal_access_granted']);
+
+// Active step from URL
+$active_step = $_GET['step'] ?? ($step_E_done ? 'done' : 'A');
+// Safety lock: If complete, force 'done' to hide forms even if manually altered in URL
+if ($step_E_done && !isset($_GET['step'])) {
+    $active_step = 'done';
+}
+elseif ($step_E_done && isset($_GET['step']) && $_GET['step'] !== 'done') {
+    $active_step = 'done'; // Lock out traversing backwards
+}
+
+$just_saved = isset($_GET['saved']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
