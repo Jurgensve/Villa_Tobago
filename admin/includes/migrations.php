@@ -61,6 +61,9 @@ function run_pending_migrations($pdo)
         }
 
         try {
+            // MySQL DDL statements (CREATE, ALTER, DROP) cause implicit commits.
+            // Start a transaction, but we must check if one still exists before committing
+            // to avoid a "no active transaction" PDO exception.
             $pdo->beginTransaction();
 
             // Execute the script. 
@@ -71,7 +74,9 @@ function run_pending_migrations($pdo)
             $stmt = $pdo->prepare("INSERT INTO system_migrations (migration_name) VALUES (?)");
             $stmt->execute([$file]);
 
-            $pdo->commit();
+            if ($pdo->inTransaction()) {
+                $pdo->commit();
+            }
 
             $result['ran_migrations'] = true;
             $result['messages'][] = "Success: Applied " . $file;
