@@ -2,8 +2,7 @@
 
 -- 1. Expanded Pet Management
 ALTER TABLE `pets`
-ADD COLUMN `status` ENUM('Pending', 'Approved', 'Declined', 'Removed') DEFAULT 'Pending' AFTER `house_rules_accepted`,
-ADD COLUMN `removal_reason` TEXT NULL AFTER `status`,
+ADD COLUMN `removal_reason` TEXT NULL AFTER `house_rules_accepted`,
 ADD COLUMN `removed_at` DATETIME NULL AFTER `removal_reason`,
 ADD COLUMN `replacement_for_pet_id` INT NULL AFTER `removed_at`;
 
