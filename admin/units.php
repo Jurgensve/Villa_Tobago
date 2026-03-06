@@ -804,7 +804,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                 <form method="POST" class="inline">
                                     <input type="hidden" name="action" value="approve_intercom">
                                     <input type="hidden" name="resident_id" value="<?= $resident_detail['id'] ?>">
-                                    <input type="hidden" name="resident_type" value="<?= $resident_type ?>">
+                                    <input type="hidden" name="resident_type" value="<?= $resident['resident_type'] ?>">
                                     <button type="submit"
                                         class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-3 rounded shadow-sm">Updated</button>
                                 </form>
@@ -812,7 +812,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                     onsubmit="return confirm('Are you sure you want to reject and clear these requested updates?');">
                                     <input type="hidden" name="action" value="reject_intercom">
                                     <input type="hidden" name="resident_id" value="<?= $resident_detail['id'] ?>">
-                                    <input type="hidden" name="resident_type" value="<?= $resident_type ?>">
+                                    <input type="hidden" name="resident_type" value="<?= $resident['resident_type'] ?>">
                                     <button type="submit"
                                         class="bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold py-1.5 px-3 rounded shadow-sm">Reject</button>
                                 </form>
@@ -1545,16 +1545,16 @@ elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
     <script>
         function toggleNewOwn             {
             const select = document.getElementById('owner            );
-                const form = document.ge('new_owner_form');
-                                    = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
-                        form                    ents = "auto";
-                        name                     true;
+                    const form = document.ge('new_owner_form');
+                                        = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
+                            form                    ents = "auto";
+                            name                     true;
         } else {
-                                      ty        pa = "0.4";
+                                          ty        pa = "0.4";
             form.style.pointerEvents = "none";
             nameInput.required = false;
         }
-                }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
+                    }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
     </script>
     <?php
 else: ?>
