@@ -178,44 +178,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-
-// Handle Intercom Pending Updates
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['approve_intercom', 'reject_intercom'])) {
-    $r_id = (int) ($_POST['resident_id'] ?? 0);
-    $r_type = $_POST['resident_type'] ?? '';
-    $unit_id = (int) ($_GET['id'] ?? 0);
-
-    if ($r_id && in_array($r_type, ['owner', 'tenant'])) {
-        $table = $r_type === 'owner' ? 'owners' : 'tenants';
-        try {
-            if ($_POST['action'] === 'approve_intercom') {
-                $stmt = $pdo->prepare("UPDATE {$table} SET 
-                    intercom_contact1_name = pending_ic1_name,
-                    intercom_contact1_phone = pending_ic1_phone,
-                    intercom_contact2_name = pending_ic2_name,
-                    intercom_contact2_phone = pending_ic2_phone,
-                    pending_ic1_name = NULL, pending_ic1_phone = NULL,
-                    pending_ic2_name = NULL, pending_ic2_phone = NULL,
-                    intercom_update_status = NULL
-                    WHERE id = ?");
-                $stmt->execute([$r_id]);
-                header("Location: units.php?action=view&id=" . $unit_id . "&msg=intercom_approved");
-                exit;
-            } else {
-                $stmt = $pdo->prepare("UPDATE {$table} SET 
-                    pending_ic1_name = NULL, pending_ic1_phone = NULL,
-                    pending_ic2_name = NULL, pending_ic2_phone = NULL,
-                    intercom_update_status = NULL
-                    WHERE id = ?");
-                $stmt->execute([$r_id]);
-                header("Location: units.php?action=view&id=" . $unit_id . "&msg=intercom_rejected");
-                exit;
-            }
-        } catch (PDOException $e) {
-            $error = "Error updating intercom: " . $e->getMessage();
-        }
-    }
-}
 ?>
 
 <div class="mb-6 flex justify-between items-center">
@@ -1582,16 +1544,16 @@ elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
     <script>
         function toggleNewOwn             {
             const select = document.getElementById('owner            );
-                        const form = document.ge('new_owner_form');
-                                            = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
-                                form                    ents = "auto";
-                                name                     true;
+                            const form = document.ge('new_owner_form');
+                                                = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
+                                    form                    ents = "auto";
+                                    name                     true;
         } else {
-                                              ty        pa = "0.4";
+                                                  ty        pa = "0.4";
             form.style.pointerEvents = "none";
             nameInput.required = false;
         }
-                        }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
+                            }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
     </script>
     <?php
 else: ?>

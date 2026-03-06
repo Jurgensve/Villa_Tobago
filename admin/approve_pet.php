@@ -4,7 +4,7 @@ require_once 'includes/functions.php';
 require_once 'config/db.php';
 session_start();
 
-if (!isset($_SESSION['auth_admin']) || !in_array($_SESSION['auth_admin']['role'], $required_roles)) {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'] ?? '', $required_roles)) {
     die("Unauthorized Access");
 }
 
