@@ -490,24 +490,30 @@ $just_saved = isset($_GET['saved']);
                                     </div>
                                 <?php endif; ?>
 
-                                <?php if (!empty($step_data['intercom_contact1_name']) || !empty($step_data['intercom_contact2_name'])): ?>
+                                <?php if (!empty($step_data['intercom_contact1_phone']) || !empty($step_data['intercom_contact2_phone']) || !empty($step_data['intercom_contact1_name']) || !empty($step_data['intercom_contact2_name'])): ?>
                                     <?php
                                     $contacts = [
                                         ['name' => $step_data['intercom_contact1_name'] ?? '', 'phone' => $step_data['intercom_contact1_phone'] ?? ''],
                                         ['name' => $step_data['intercom_contact2_name'] ?? '', 'phone' => $step_data['intercom_contact2_phone'] ?? ''],
                                     ];
                                     foreach ($contacts as $ci => $c):
-                                        if (empty($c['name']))
+                                        if (empty($c['name']) && empty($c['phone']))
                                             continue;
                                         ?>
                                         <div class="p-3 bg-blue-50 rounded-lg">
                                             <div class="text-xs text-blue-500 font-bold mb-1">Contact <?= $ci + 1 ?></div>
-                                            <div class="font-bold text-gray-900 text-sm"><?= h($c['name']) ?></div>
-                                            <div class="text-gray-600 text-sm"><?= h($c['phone']) ?></div>
+                                            <div class="font-bold text-gray-900 text-sm"><?= h($c['name'] ?: 'No Name Provided') ?></div>
+                                            <div class="text-gray-600 text-sm"><?= h($c['phone'] ?: 'No Number provided') ?></div>
                                         </div>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <p class="text-gray-400 italic text-sm">Not yet provided.</p>
+                                    <p class="text-gray-400 italic text-sm mb-3">Not yet provided.</p>
+                                    <div class="mt-auto">
+                                        <a href="intercom_form.php"
+                                            class="inline-flex items-center justify-center w-full bg-blue-50 text-blue-700 font-bold py-2 px-4 rounded-lg hover:bg-blue-100 text-sm transition">
+                                            <i class="fas fa-plus mr-1.5"></i> Add Intercom Details
+                                        </a>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </div>

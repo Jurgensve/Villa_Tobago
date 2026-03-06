@@ -782,14 +782,14 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         </div>
                     <?php endif; ?>
 
-                    <?php if ($resident_detail && (!empty($resident_detail['intercom_contact1_name']) || !empty($resident_detail['intercom_contact2_name']))): ?>
+                    <?php if ($resident_detail && (!empty($resident_detail['intercom_contact1_phone']) || !empty($resident_detail['intercom_contact2_phone']) || !empty($resident_detail['intercom_contact1_name']) || !empty($resident_detail['intercom_contact2_name']))): ?>
                         <?php
                         $contacts = [
                             ['name' => $resident_detail['intercom_contact1_name'] ?? '', 'phone' => $resident_detail['intercom_contact1_phone'] ?? ''],
                             ['name' => $resident_detail['intercom_contact2_name'] ?? '', 'phone' => $resident_detail['intercom_contact2_phone'] ?? ''],
                         ];
                         foreach ($contacts as $ci => $c):
-                            if (empty($c['name']))
+                            if (empty($c['name']) && empty($c['phone']))
                                 continue;
                             ?>
                             <div class="p-3 bg-blue-50 rounded-lg">
@@ -797,10 +797,10 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                     <?= $ci + 1 ?>
                                 </div>
                                 <div class="font-bold text-gray-900 text-sm">
-                                    <?= h($c['name']) ?>
+                                    <?= h($c['name'] ?: 'No Name Provided') ?>
                                 </div>
                                 <div class="text-gray-600 text-sm">
-                                    <?= h($c['phone']) ?>
+                                    <?= h($c['phone'] ?: 'No Number provided') ?>
                                 </div>
                             </div>
                             <?php
@@ -1544,16 +1544,16 @@ elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
     <script>
         function toggleNewOwn             {
             const select = document.getElementById('owner            );
-                            const form = document.ge('new_owner_form');
-                                                = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
-                                    form                    ents = "auto";
-                                    name                     true;
+                                const form = document.ge('new_owner_form');
+                                                    = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
+                                        form                    ents = "auto";
+                                        name                     true;
         } else {
-                                                  ty        pa = "0.4";
+                                                      ty        pa = "0.4";
             form.style.pointerEvents = "none";
             nameInput.required = false;
         }
-                            }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
+                                }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
     </script>
     <?php
 else: ?>
