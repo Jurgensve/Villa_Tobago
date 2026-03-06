@@ -934,11 +934,16 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                             <div
                                                 class="px-5 py-4 border-b border-gray-100 flex justify-between items-start bg-gray-50 rounded-t-xl">
                                                 <div class="flex items-center gap-3">
-                                                    <div
-                                                        class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl border border-orange-200">
-                                                        <i
-                                                            class="fas fa-<?= strtolower($pet['type']) === 'cat' ? 'cat' : (strtolower($pet['type']) === 'bird' ? 'dove' : (strtolower($pet['type']) === 'fish' ? 'fish' : 'dog')) ?>"></i>
-                                                    </div>
+                                                    <?php if (!empty($pet['photo_path'])): ?>
+                                                        <img src="../<?= h($pet['photo_path']) ?>" alt="Pet Photo"
+                                                            class="w-14 h-14 rounded-full object-cover border-2 border-orange-200 shadow-sm">
+                                                    <?php else: ?>
+                                                        <div
+                                                            class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl border-2 border-orange-200 shadow-sm">
+                                                            <i
+                                                                class="fas fa-<?= strtolower($pet['type']) === 'cat' ? 'cat' : (strtolower($pet['type']) === 'bird' ? 'dove' : (strtolower($pet['type']) === 'fish' ? 'fish' : 'dog')) ?>"></i>
+                                                        </div>
+                                                    <?php endif; ?>
                                                     <div>
                                                         <h3 class="text-lg leading-6 font-bold text-gray-900">
                                                             <?= h($pet['name']) ?>
@@ -1053,10 +1058,42 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                 endif; ?>
                                             </div>
 
-                                            <div class="px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end">
+                                            <div
+                                                class="px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex flex-wrap justify-between items-center gap-2">
+                                                <div class="flex gap-2">
+                                                    <?php if (($pet['status'] ?? 'Pending') === 'Pending'): ?>
+                                                        <form method="POST" action="approve_pet.php" class="inline">
+                                                            <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
+                                                            <input type="hidden" name="action" value="approve">
+                                                            <button type="submit"
+                                                                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition">
+                                                                <i class="fas fa-check mr-1.5"></i>Approve
+                                                            </button>
+                                                        </form>
+                                                        <form method="POST" action="approve_pet.php" class="inline">
+                                                            <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
+                                                            <input type="hidden" name="action" value="request_info">
+                                                            <button type="button"
+                                                                onclick="const p = prompt('What info do you need?'); if(p){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+p+'\'>'); this.form.submit(); }"
+                                                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition">
+                                                                <i class="fas fa-question-circle mr-1.5"></i>Request Info
+                                                            </button>
+                                                        </form>
+                                                        <form method="POST" action="approve_pet.php" class="inline"
+                                                            onsubmit="return confirm('Are you sure you want to decline this pet?');">
+                                                            <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
+                                                            <input type="hidden" name="action" value="decline">
+                                                            <button type="button"
+                                                                onclick="const r = prompt('Reason for declining:'); if(r){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+r+'\'>'); this.form.submit(); }"
+                                                                class="bg-white border border-red-200 text-red-600 hover:bg-red-50 font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition">
+                                                                <i class="fas fa-times mr-1.5"></i>Decline
+                                                            </button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                                </div>
                                                 <button type="button"
                                                     onclick="document.getElementById('pet_modal_<?= $pet['id'] ?>').classList.add('hidden')"
-                                                    class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
+                                                    class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-2 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
                                                     Close
                                                 </button>
                                             </div>
@@ -1545,16 +1582,16 @@ elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
     <script>
         function toggleNewOwn             {
             const select = document.getElementById('owner            );
-                    const form = document.ge('new_owner_form');
-                                        = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
-                            form                    ents = "auto";
-                            name                     true;
+                        const form = document.ge('new_owner_form');
+                                            = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
+                                form                    ents = "auto";
+                                name                     true;
         } else {
-                                          ty        pa = "0.4";
+                                              ty        pa = "0.4";
             form.style.pointerEvents = "none";
             nameInput.required = false;
         }
-                    }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
+                        }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
     </script>
     <?php
 else: ?>
