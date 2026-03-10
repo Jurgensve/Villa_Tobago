@@ -6,6 +6,26 @@ $message = '';
 $error = '';
 $action = $_GET['action'] ?? 'list';
 
+if (isset($_GET['msg'])) {
+    switch ($_GET['msg']) {
+        case 'ownership_updated':
+            $message = 'Ownership updated successfully.';
+            break;
+        case 'intercom_approved':
+            $message = 'Intercom numbers successfully updated.';
+            break;
+        case 'intercom_rejected':
+            $message = 'Intercom updates rejected and cleared.';
+            break;
+        case 'pet_removed':
+            $message = 'Pet successfully removed.';
+            break;
+        case 'pet_added':
+            $message = 'Pet successfully added.';
+            break;
+    }
+}
+
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['create_unit'])) {
@@ -175,6 +195,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (PDOException $e) {
             $pdo->rollBack();
             $error = "Error: " . $e->getMessage();
+        }
+    }
+
+    // Handle Intercom Approval/Rejection
+    if (isset($_POST['action']) && in_array($_POST['action'], ['approve_intercom', 'reject_intercom'])) {
+        $r_id = (int) ($_POST['resident_id'] ?? 0);
+        $r_type = $_POST['resident_type'] ?? '';
+        $unit_id = (int) ($_GET['id'] ?? 0);
+
+        if ($r_id && in_array($r_type, ['owner', 'tenant'])) {
+            $table = $r_type === 'owner' ? 'owners' : 'tenants';
+            try {
+                if ($_POST['action'] === 'approve_intercom') {
+                    $stmt = $pdo->prepare("UPDATE {$table} SET 
+                        intercom_contact1_name = pending_ic1_name,
+                        intercom_contact1_phone = pending_ic1_phone,
+                        intercom_contact2_name = pending_ic2_name,
+                        intercom_contact2_phone = pending_ic2_phone,
+                        pending_ic1_name = NULL, pending_ic1_phone = NULL,
+                        pending_ic2_name = NULL, pending_ic2_phone = NULL,
+                        intercom_update_status = NULL
+                        WHERE id = ?");
+                    $stmt->execute([$r_id]);
+                    header("Location: units.php?action=view&id=" . $unit_id . "&msg=intercom_approved");
+                    exit;
+                } else {
+                    $stmt = $pdo->prepare("UPDATE {$table} SET 
+                        pending_ic1_name = NULL, pending_ic1_phone = NULL,
+                        pending_ic2_name = NULL, pending_ic2_phone = NULL,
+                        intercom_update_status = NULL
+                        WHERE id = ?");
+                    $stmt->execute([$r_id]);
+                    header("Location: units.php?action=view&id=" . $unit_id . "&msg=intercom_rejected");
+                    exit;
+                }
+            } catch (PDOException $e) {
+                $error = "Error updating intercom: " . $e->getMessage();
+            }
         }
     }
 }
@@ -1542,18 +1600,23 @@ elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
     </div>
 
     <script>
-        function toggleNewOwn             {
-            const select = document.getElementById('owner            );
-                                const form = document.ge('new_owner_form');
-                                                    = document.getElementById                           if (select && form && nameIn                       if (select.value === "") fo = "1";
-                                        form                    ents = "auto";
-                                        name                     true;
-        } else {
-                                                      ty        pa = "0.4";
-            form.style.pointerEvents = "none";
-            nameInput.required = false;
+        function toggleNewOwnerForm() {
+            const select = document.getElementById('owner_id');
+            const form = document.getElementById('new_owner_form');
+            const nameInput = document.getElementById('full_name');
+            if (select && form && nameInput) {
+                if (select.value === "") {
+                    form.style.opacity = "1";
+                    form.style.pointerEvents = "auto";
+                    nameInput.required = true;
+                } else {
+                    form.style.opacity = "0.4";
+                    form.style.pointerEvents = "none";
+                    nameInput.required = false;
+                }
+            }
         }
-                                }         cument.addEventListener('DOMCont            d', toggleNewOwnerForm);
+        document.addEventListener('DOMContentLoaded', toggleNewOwnerForm);
     </script>
     <?php
 else: ?>
