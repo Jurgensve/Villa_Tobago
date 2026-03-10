@@ -189,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $pdo->commit();
             if ($message) {
-                header("Location: units.php?action=view&id=" . $unit_id . "&msg=ownership_updated");
+                echo "<script>window.location.href='units.php?action=view&id=" . $unit_id . "&msg=ownership_updated';</script>";
                 exit;
             }
         } catch (PDOException $e) {
@@ -218,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         intercom_update_status = NULL
                         WHERE id = ?");
                     $stmt->execute([$r_id]);
-                    header("Location: units.php?action=view&id=" . $unit_id . "&msg=intercom_approved");
+                    echo "<script>window.location.href='units.php?action=view&id=" . $unit_id . "&msg=intercom_approved';</script>";
                     exit;
                 } else {
                     $stmt = $pdo->prepare("UPDATE {$table} SET 
@@ -227,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         intercom_update_status = NULL
                         WHERE id = ?");
                     $stmt->execute([$r_id]);
-                    header("Location: units.php?action=view&id=" . $unit_id . "&msg=intercom_rejected");
+                    echo "<script>window.location.href='units.php?action=view&id=" . $unit_id . "&msg=intercom_rejected';</script>";
                     exit;
                 }
             } catch (PDOException $e) {
@@ -1305,7 +1305,7 @@ elseif ($action === 'delete_pet' && isset($_GET['pet_id']) && isset($_GET['unit_
     $unit_id = (int) $_GET['unit_id'];
     $stmt = $pdo->prepare("DELETE FROM pets WHERE id = ? AND unit_id = ?");
     $stmt->execute([$pet_id, $unit_id]);
-    header("Location: units.php?action=view&id=" . $unit_id . "&msg=pet_removed");
+    echo "<script>window.location.href='units.php?action=view&id=" . $unit_id . "&msg=pet_removed';</script>";
     exit;
 elseif ($action === 'add_pet' && isset($_GET['id'])):
     $unit_id = (int) $_GET['id'];
@@ -1315,7 +1315,7 @@ elseif ($action === 'add_pet' && isset($_GET['id'])):
     $stmt->execute([$unit_id]);
     $unit = $stmt->fetch();
     if (!$unit) {
-        header("Location: units.php");
+        echo "<script>window.location.href='units.php';</script>";
         exit;
     }
 
@@ -1345,7 +1345,7 @@ elseif ($action === 'add_pet' && isset($_GET['id'])):
     $pet_count = $stmt->fetchColumn();
 
     if ($max_pets > 0 && $pet_count >= $max_pets) {
-        header("Location: units.php?action=view&id=" . $unit_id . "&error=max_pets");
+        echo "<script>window.location.href='units.php?action=view&id=" . $unit_id . "&error=max_pets';</script>";
         exit;
     }
 
@@ -1360,7 +1360,7 @@ elseif ($action === 'add_pet' && isset($_GET['id'])):
         if ($name && $type) {
             $stmt = $pdo->prepare("INSERT INTO pets (unit_id, resident_id, name, type, breed, reg_number, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([$unit_id, $resident['id'], $name, $type, $breed, $reg, $notes]);
-            header("Location: units.php?action=view&id=" . $unit_id . "&msg=pet_added");
+            echo "<script>window.location.href='units.php?action=view&id=" . $unit_id . "&msg=pet_added';</script>";
             exit;
         } else {
             $error = "Pet name and type are required.";
