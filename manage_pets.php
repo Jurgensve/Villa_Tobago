@@ -60,9 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $stmt_check = $pdo->prepare("SELECT id FROM pets WHERE id = ? AND unit_id = ? AND status = 'Declined'");
     $stmt_check->execute([$pet_id, $res['unit_id']]);
     if ($stmt_check->fetch()) {
-        $stmt_ack = $pdo->prepare("UPDATE pets SET status = 'Declined (Acknowledged)' WHERE id = ?");
+        $stmt_ack = $pdo->prepare("UPDATE pets SET status = 'Removed', removal_reason = 'Resident acknowledged declined status.', removed_at = NOW() WHERE id = ?");
         if ($stmt_ack->execute([$pet_id])) {
-            $message = "You have acknowledged the decline of this pet.";
+            $message = "You have acknowledged the decline and the pet has been removed from your active records.";
         } else {
             $error = "Error updating pet record.";
         }
