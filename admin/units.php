@@ -1099,7 +1099,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
 
                                             <div
                                                 class="px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex flex-col md:flex-row justify-between items-center gap-4">
-                                                <div class="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                                                <div class="flex flex-wrap gap-2 w-full md:w-auto pb-1 md:pb-0">
                                                     <?php if ($p_status === 'Pending' || $p_status === 'Info Required'): ?>
                                                         <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
                                                             <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
@@ -1743,18 +1743,18 @@ endif; ?>
 
 <script>
     function openLightbox(url, isPdf) {
-                                    const box = document.getElementById('document_lightbox');
-                                    const content = document.getElementById('lightbox_content');
+                                const box = document.getElementById('document_lightbox');
+                                const content = document.getElementById('lightbox_content');
 
-                                    if (isPdf) {
-                                        content.innerHTML = `<iframe src="${url}" class="w-full h-full rounded-xl shadow-2xl bg-white border-none"></iframe>`;
-                                    } else {
-                                        content.innerHTML = `<img src="${url}" class="max-w-full max-h-full rounded-xl shadow-2xl object-contain">`;
-                                    }
-
-                                    box.classList.remove('hidden');
-                                    box.classList.add('flex');
+                                if (isPdf) {
+                                    content.innerHTML = `<iframe src="${url}" class="w-full h-full rounded-xl shadow-2xl bg-white border-none"></iframe>`;
+                                } else {
+                                    content.innerHTML = `<img src="${url}" class="max-w-full max-h-full rounded-xl shadow-2xl object-contain">`;
                                 }
+
+                                box.classList.remove('hidden');
+                                box.classList.add('flex');
+                            }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
