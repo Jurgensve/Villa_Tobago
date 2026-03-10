@@ -1038,8 +1038,19 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                             <?= nl2br(h($pet['motivation_note'])) ?>"
                                                         </div>
                                                     </div>
-                                                    <?php
-                                                endif; ?>
+                                                <?php endif; ?>
+
+                                                <?php if (!empty($pet['trustee_comments'])): ?>
+                                                    <div>
+                                                        <span
+                                                            class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Admin
+                                                            Comments / Condition</span>
+                                                        <div
+                                                            class="bg-red-50/50 text-gray-700 border border-red-200/60 p-4 rounded-xl font-medium">
+                                                            <?= nl2br(h($pet['trustee_comments'])) ?>
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
 
                                                 <?php if (!empty($pet['photo_path']) || !empty($pet['sterilized_proof_path']) || !empty($pet['vaccination_proof_path'])): ?>
                                                     <div>
@@ -1097,6 +1108,16 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                                 class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
                                                                 <i class="fas fa-check md:mr-1"></i> <span
                                                                     class="hidden md:inline">Approve</span>
+                                                            </button>
+                                                        </form>
+                                                        <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
+                                                            <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
+                                                            <input type="hidden" name="action" value="approve_condition">
+                                                            <button type="button"
+                                                                onclick="const p = prompt('What is the condition?'); if(p){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+p+'\'>'); this.form.submit(); }"
+                                                                class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
+                                                                <i class="fas fa-handshake md:mr-1"></i> <span
+                                                                    class="hidden md:inline">Condition</span>
                                                             </button>
                                                         </form>
                                                         <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
@@ -1619,40 +1640,40 @@ elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
     </div>
 
     <script>
-             function toggleNewOwnerForm() {
-                const select = document.getElementById('owner_id');
-                const form = document.getElementById('new_owner_form');
-                const nameInput = document.getElementById('full_name');
-                if (select && form && nameInput) {
-                    if (select.value === "") {
-                        form.style.opacity = "1";
-                        form.style.pointerEvents = "auto";
-                        nameInput.required = true;
-                    } else {
-                        form.style.opacity = "0.4";
-                        form.style.pointerEvents = "none";
-                        nameInput.required = false;
-                    }
+        function toggleNewOwnerForm() {
+            const select = document.getElementById('owner_id');
+            const form = document.getElementById('new_owner_form');
+            const nameInput = document.getElementById('full_name');
+            if (select && form && nameInput) {
+                if (select.value === "") {
+                    form.style.opacity = "1";
+                    form.style.pointerEvents = "auto";
+                    nameInput.required = true;
+                } else {
+                    form.style.opacity = "0.4";
+                    form.style.pointerEvents = "none";
+                    nameInput.required = false;
                 }
             }
-            document.addEventListener('DOMContentLoaded', toggleNewOwnerForm);
-        </script>
-        <?php
+        }
+        document.addEventListener('DOMContentLoaded', toggleNewOwnerForm);
+    </script>
+    <?php
 else: ?>
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
-            <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left">Unit Number</th>
-                        <th class="px-6 py-3 text-left">Current Owner</th>
-                        <th class="px-6 py-3 text-left">Current Resident</th>
-                        <th class="px-6 py-3 text-left">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <?php
-                    // Query to get units with current owners and tenant
-                    $sql = "SELECT u.*, 
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
+        <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left">Unit Number</th>
+                    <th class="px-6 py-3 text-left">Current Owner</th>
+                    <th class="px-6 py-3 text-left">Current Resident</th>
+                    <th class="px-6 py-3 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <?php
+                // Query to get units with current owners and tenant
+                $sql = "SELECT u.*, 
                     GROUP_CONCAT(o.full_name SEPARATOR ', ') as owner_names, 
                     t.full_name as tenant_name,
                     t.id as tenant_id 
@@ -1662,51 +1683,51 @@ else: ?>
                     LEFT JOIN tenants t ON u.id = t.unit_id
                     GROUP BY u.id
                     ORDER BY u.unit_number ASC";
-                    $stmt = $pdo->query($sql);
-                    while ($row = $stmt->fetch()):
-                        ?>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    <?= h($row['unit_number']) ?>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <?= $row['owner_names'] ? h($row['owner_names']) : '<span class="text-red-400">No Owner</span>' ?>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <?php if ($row['tenant_id']): ?>
-                                            <a href="tenants.php?action=view&id=<?= $row['tenant_id'] ?>"
-                                                class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
-                                                <?= h($row['tenant_name']) ?>
-                                            </a>
-                                            <?php
-                                    else: ?>
-                                            <span class="text-gray-400">-</span>
-                                            <?php
-                                    endif; ?>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                                    <a href="units.php?action=view&id=<?= $row['id'] ?>"
-                                        class="text-green-600 hover:text-green-900">View</a>
-                                    <a href="units.php?action=edit&id=<?= $row['id'] ?>"
-                                        class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                                </td>
-                            </tr>
-                            <?php
-                    endwhile; ?>
-                </tbody>
-            </table>
-        </div>
+                $stmt = $pdo->query($sql);
+                while ($row = $stmt->fetch()):
+                    ?>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <?= h($row['unit_number']) ?>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <?= $row['owner_names'] ? h($row['owner_names']) : '<span class="text-red-400">No Owner</span>' ?>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <?php if ($row['tenant_id']): ?>
+                                <a href="tenants.php?action=view&id=<?= $row['tenant_id'] ?>"
+                                    class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
+                                    <?= h($row['tenant_name']) ?>
+                                </a>
+                                <?php
+                            else: ?>
+                                <span class="text-gray-400">-</span>
+                                <?php
+                            endif; ?>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                            <a href="units.php?action=view&id=<?= $row['id'] ?>"
+                                class="text-green-600 hover:text-green-900">View</a>
+                            <a href="units.php?action=edit&id=<?= $row['id'] ?>"
+                                class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                        </td>
+                    </tr>
+                    <?php
+                endwhile; ?>
+            </tbody>
+        </table>
+    </div>
 
-        <script>
-            $(document).ready(function () {
-                $('#unitsTable').DataTable({
-                    "pageLength": 25,
-                    "order": [[0, "asc"]],
-                    "columnDefs": [
-                        {
-                            "orderable": false, " });
-        </script>
-        <?php
+    <script>
+        $(document).ready(function () {
+            $('#unitsTable').DataTable({
+                "pageLength": 25,
+                "order": [[0, "asc"]],
+                "columnDefs": [
+                    {
+                        "orderable": false, " });
+    </script>
+    <?php
 endif; ?>
 
 <div id="document_lightbox"
@@ -1722,18 +1743,18 @@ endif; ?>
 
 <script>
     function openLightbox(url, isPdf) {
-                                const box = document.getElementById('document_lightbox');
-                                const content = document.getElementById('lightbox_content');
+                                    const box = document.getElementById('document_lightbox');
+                                    const content = document.getElementById('lightbox_content');
 
-                                if (isPdf) {
-                                    content.innerHTML = `<iframe src="${url}" class="w-full h-full rounded-xl shadow-2xl bg-white border-none"></iframe>`;
-                                } else {
-                                    content.innerHTML = `<img src="${url}" class="max-w-full max-h-full rounded-xl shadow-2xl object-contain">`;
+                                    if (isPdf) {
+                                        content.innerHTML = `<iframe src="${url}" class="w-full h-full rounded-xl shadow-2xl bg-white border-none"></iframe>`;
+                                    } else {
+                                        content.innerHTML = `<img src="${url}" class="max-w-full max-h-full rounded-xl shadow-2xl object-contain">`;
+                                    }
+
+                                    box.classList.remove('hidden');
+                                    box.classList.add('flex');
                                 }
-
-                                box.classList.remove('hidden');
-                                box.classList.add('flex');
-                            }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

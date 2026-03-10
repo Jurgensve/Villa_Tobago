@@ -27,6 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     if ($action === 'approve') {
         $pdo->prepare("UPDATE pets SET status = 'Approved' WHERE id = ?")->execute([$pet_id]);
         $msg = urlencode("Pet " . $pet['name'] . " approved successfully.");
+    } elseif ($action === 'approve_condition' && !empty($reason)) {
+        $pdo->prepare("UPDATE pets SET status = 'Conditional Approval', trustee_comments = ? WHERE id = ?")->execute([$reason, $pet_id]);
+        $msg = urlencode("Pet " . $pet['name'] . " approved with conditions.");
     } elseif ($action === 'decline' && !empty($reason)) {
         $pdo->prepare("UPDATE pets SET status = 'Declined', trustee_comments = ? WHERE id = ?")->execute([$reason, $pet_id]);
         $msg = urlencode("Pet " . $pet['name'] . " declined.");
