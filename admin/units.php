@@ -1114,232 +1114,232 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                             <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
                                                             <input type="hidden" name="action" value="approve_condition">
                                                             <button type="button"
-                                                                onclick="const p = prompt('What is the condition?'); if(p){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+p+'\'>'); this.form.submit(); }"
-                                                                class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
-                                                                <i class="fas fa-handshake md:mr-1"></i> <span
-                                                                    class="hidden md:inline">Condition</span>
-                                                            </button>
-                                                        </form>
-                                                        <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
-                                                            <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
-                                                            <input type="hidden" name="action" value="request_info">
-                                                            <button type="button"
-                                                                onclick="const p = prompt('What info do you need?'); if(p){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+p+'\'>'); this.form.submit(); }"
-                                                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
-                                                                <i class="fas fa-question-circle md:mr-1"></i> <span
-                                                                    class="hidden md:inline">Request Info</span>
-                                                            </button>
-                                                        </form>
-                                                        <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
-                                                            <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
-                                                            <input type="hidden" name="action" value="decline">
-                                                            <button type="button"
-                                                                onclick="const p = prompt('Reason for decline?'); if(p){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+p+'\'>'); this.form.submit(); }"
-                                                                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
-                                                                <i class="fas fa-times md:mr-1"></i> <span
-                                                                    class="hidden md:inline">Decline</span>
-                                                            </button>
-                                                        </form>
-                                                    <?php else: ?>
-                                                        <!-- Option to undo or change status if needed -->
-                                                        <span class="text-xs text-gray-500 italic flex items-center h-full">This pet is
-                                                            already <?= h($p_status) ?>.</span>
-                                                        <form method="POST" action="approve_pet.php" class="inline ml-auto flex-shrink-0">
-                                                            <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
-                                                            <input type="hidden" name="action" value="request_info">
-                                                            <button type="button"
-                                                                onclick="const p = prompt('Reason to reopen to Info Required?'); if(p){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+p+'\'>'); this.form.submit(); }"
-                                                                class="text-blue-500 hover:text-blue-700 font-bold py-1 px-2 text-sm transition text-center border rounded">
-                                                                <span class="md:hidden"><i class="fas fa-undo"></i></span> <span
-                                                                    class="hidden md:inline">Re-evaluate</span>
-                                                            </button>
-                                                        </form>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
+                                                                onclick="const p = prompt('What is the condition?'); if(p){ const i = document.createElement('input'); i.type='hidden'; i.name='reason'; i.value=p; this.form.appendChild(i); this.form.submit(); }"
+                                                                                    class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
+                                                                                    <i class="fas fa-handshake md:mr-1"></i> <span
+                                                                                        class="hidden md:inline">Condition</span>
+                                                                                </button>
+                                                                            </form>
+                                                                            <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
+                                                                                <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
+                                                                                <input type="hidden" name="action" value="request_info">
+                                                                                <button type="button"
+                                                                                    onclick="const p = prompt('What info do you need?'); if(p){ const i = document.createElement('input'); i.type='hidden'; i.name='reason'; i.value=p; this.form.appendChild(i); this.form.submit(); }"
+                                                                                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
+                                                                                    <i class="fas fa-question-circle md:mr-1"></i> <span
+                                                                                        class="hidden md:inline">Request Info</span>
+                                                                                </button>
+                                                                            </form>
+                                                                            <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
+                                                                                <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
+                                                                                <input type="hidden" name="action" value="decline">
+                                                                                <button type="button"
+                                                                                    onclick="const p = prompt('Reason for decline?'); if(p){ const i = document.createElement('input'); i.type='hidden'; i.name='reason'; i.value=p; this.form.appendChild(i); this.form.submit(); }"
+                                                                                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
+                                                                                    <i class="fas fa-times md:mr-1"></i> <span
+                                                                                        class="hidden md:inline">Decline</span>
+                                                                                </button>
+                                                                            </form>
+                                                                    <?php else: ?>
+                                                                            <!-- Option to undo or change status if needed -->
+                                                                            <span class="text-xs text-gray-500 italic flex items-center h-full">This pet is
+                                                                                already <?= h($p_status) ?>.</span>
+                                                                            <form method="POST" action="approve_pet.php" class="inline ml-auto flex-shrink-0">
+                                                                                <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
+                                                                                <input type="hidden" name="action" value="request_info">
+                                                                                <button type="button"
+                                                                                    onclick="const p = prompt('Reason to reopen to Info Required?'); if(p){ const i = document.createElement('input'); i.type='hidden'; i.name='reason'; i.value=p; this.form.appendChild(i); this.form.submit(); }"
+                                                                                    class="text-blue-500 hover:text-blue-700 font-bold py-1 px-2 text-sm transition text-center border rounded">
+                                                                                    <span class="md:hidden"><i class="fas fa-undo"></i></span> <span
+                                                                                        class="hidden md:inline">Re-evaluate</span>
+                                                                                </button>
+                                                                            </form>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <?php
+                                endforeach; ?>
                                         </div>
-                                    </div>
-                                    <?php
-                                endforeach; ?>
-                            </div>
-                            <?php
+                                        <?php
                         else: ?>
-                            <p class="text-gray-400 italic text-sm mb-3">No pets registered.</p>
-                            <?php
+                                        <p class="text-gray-400 italic text-sm mb-3">No pets registered.</p>
+                                        <?php
                         endif; ?>
-                        <?php if ($resident && ($max_pets == 0 || count($pets) < $max_pets)): ?>
-                            <div class="mt-3">
-                                <a href="units.php?action=add_pet&id=<?= $id ?>"
-                                    class="inline-flex items-center bg-yellow-50 text-yellow-700 font-bold py-1.5 px-4 rounded-lg hover:bg-yellow-100 text-sm w-full justify-center">
-                                    <i class="fas fa-plus mr-1"></i> Register Pet
-                                </a>
+                                <?php if ($resident && ($max_pets == 0 || count($pets) < $max_pets)): ?>
+                                        <div class="mt-3">
+                                            <a href="units.php?action=add_pet&id=<?= $id ?>"
+                                                class="inline-flex items-center bg-yellow-50 text-yellow-700 font-bold py-1.5 px-4 rounded-lg hover:bg-yellow-100 text-sm w-full justify-center">
+                                                <i class="fas fa-plus mr-1"></i> Register Pet
+                                            </a>
+                                        </div>
+                                        <?php
+                                endif; ?>
+                            </div>
+                        </div>
+                        <?php
+            endif; ?>
+            </div>
+
+            <!-- ── Row 3: Modifications (compact) ─────────────────────────────────── -->
+            <div class="bg-white shadow rounded-xl overflow-hidden">
+                <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
+                            class="fas fa-hammer text-gray-400"></i>
+                        Modification History</h3>
+                    <div class="flex items-center gap-3">
+                        <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
+                            <?= count($modifications) ?> Total
+                        </span>
+                        <a href="modifications.php?action=add&unit_id=<?= $id ?>"
+                            class="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700 font-bold shadow-sm transition"><i
+                                class="fas fa-plus mr-1"></i> Log</a>
+                    </div>
+                </div>
+                <div class="p-5">
+                    <?php if (empty($modifications)): ?>
+                            <div class="text-center py-8 text-gray-400">
+                                <i class="fas fa-tools text-3xl mb-2 block text-gray-300"></i>
+                                No modifications logged for this unit.
                             </div>
                             <?php
-                        endif; ?>
-                    </div>
-                </div>
-                <?php
-            endif; ?>
-        </div>
-
-        <!-- ── Row 3: Modifications (compact) ─────────────────────────────────── -->
-        <div class="bg-white shadow rounded-xl overflow-hidden">
-            <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
-                        class="fas fa-hammer text-gray-400"></i>
-                    Modification History</h3>
-                <div class="flex items-center gap-3">
-                    <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
-                        <?= count($modifications) ?> Total
-                    </span>
-                    <a href="modifications.php?action=add&unit_id=<?= $id ?>"
-                        class="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700 font-bold shadow-sm transition"><i
-                            class="fas fa-plus mr-1"></i> Log</a>
-                </div>
-            </div>
-            <div class="p-5">
-                <?php if (empty($modifications)): ?>
-                    <div class="text-center py-8 text-gray-400">
-                        <i class="fas fa-tools text-3xl mb-2 block text-gray-300"></i>
-                        No modifications logged for this unit.
-                    </div>
-                    <?php
-                else: ?>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm">
-                            <thead>
-                                <tr class="text-xs font-bold text-gray-400 uppercase border-b">
-                                    <th class="pb-2 text-left">Category</th>
-                                    <th class="pb-2 text-left">Status</th>
-                                    <th class="pb-2 text-left">Date</th>
-                                    <th class="pb-2 text-left">Description</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <?php foreach ($modifications as $mod):
-                                    $mc = 'bg-gray-100 text-gray-600';
-                                    if (in_array($mod['status'], ['Approved', 'approved']))
-                                        $mc = 'bg-green-100 text-green-800';
-                                    elseif (in_array($mod['status'], ['Declined', 'rejected']))
-                                        $mc = 'bg-red-100 text-red-800';
-                                    elseif ($mod['status'] === 'Completed')
-                                        $mc = 'bg-blue-100 text-blue-800';
-                                    ?>
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="py-2 pr-3 font-bold text-gray-800">
-                                            <?= h($mod['category'] ?? '—') ?>
-                                        </td>
-                                        <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold <?= $mc ?>">
-                                                <?= ucfirst(h($mod['status'])) ?>
-                                            </span></td>
-                                        <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
-                                            <?= format_date($mod['request_date']) ?>
-                                        </td>
-                                        <td class="py-2 text-gray-600 truncate max-w-xs">
-                                            <?= h(mb_strimwidth($mod['description'], 0, 80, '…')) ?>
-                                        </td>
-                                    </tr>
-                                    <?php
-                                endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <?php
-                endif; ?>
-            </div>
-        </div>
-
-        <!-- ── Row 4: Move Logistics ────────────────────────────────────────── -->
-        <div class="bg-white shadow rounded-xl overflow-hidden">
-            <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
-                        class="fas fa-truck-moving text-gray-400"></i> Move Logistics</h3>
-                <div class="flex items-center gap-3">
-                    <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
-                        <?= count($logistics) ?> Total
-                    </span>
-                </div>
-            </div>
-            <div class="p-5">
-                <?php if (empty($logistics)): ?>
-                    <div class="text-center py-8 text-gray-400">
-                        <i class="fas fa-box-open text-3xl mb-2 block text-gray-300"></i>
-                        No moves logged for this unit.
-                    </div>
-                    <?php
-                else: ?>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm">
-                            <thead>
-                                <tr class="text-xs font-bold text-gray-400 uppercase border-b">
-                                    <th class="pb-2 text-left">Type</th>
-                                    <th class="pb-2 text-left">Status</th>
-                                    <th class="pb-2 text-left">Date</th>
-                                    <th class="pb-2 text-left">Resident</th>
-                                    <th class="pb-2 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <?php foreach ($logistics as $log):
-                                    $lc = 'bg-gray-100 text-gray-600';
-                                    if ($log['status'] === 'Approved')
-                                        $lc = 'bg-blue-100 text-blue-800';
-                                    elseif ($log['status'] === 'Completed')
-                                        $lc = 'bg-green-100 text-green-800';
-                                    elseif ($log['status'] === 'Cancelled')
-                                        $lc = 'bg-red-100 text-red-800';
-                                    elseif ($log['status'] === 'Pending')
-                                        $lc = 'bg-yellow-100 text-yellow-800';
-                                    ?>
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="py-2 pr-3 font-bold text-gray-800">
-                                            <?= $log['move_type'] === 'move_in' ? 'Move-In' : 'Move-Out' ?>
-                                        </td>
-                                        <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold <?= $lc ?>">
-                                                <?= h($log['status']) ?>
-                                            </span></td>
-                                        <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
-                                            <?= $log['preferred_date'] ? format_date($log['preferred_date']) : '—' ?>
-                                        </td>
-                                        <td class="py-2 pr-3 text-gray-600">
-                                            <span
-                                                class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase <?= $log['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' ?>">
-                                                <?= h($log['resident_type']) ?>
-                                            </span>
-                                        </td>
-                                        <td class="py-2 text-right">
-                                            <?php if ($log['status'] === 'Pending'): ?>
-                                                <form method="POST" action="move_management.php" class="inline">
-                                                    <input type="hidden" name="logistics_id" value="<?= $log['id'] ?>">
-                                                    <input type="hidden" name="redirect_to_unit" value="<?= $id ?>">
-                                                    <button type="submit" name="action_approve"
-                                                        class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold shadow-sm">Approve</button>
-                                                </form>
+                    else: ?>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm">
+                                    <thead>
+                                        <tr class="text-xs font-bold text-gray-400 uppercase border-b">
+                                            <th class="pb-2 text-left">Category</th>
+                                            <th class="pb-2 text-left">Status</th>
+                                            <th class="pb-2 text-left">Date</th>
+                                            <th class="pb-2 text-left">Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        <?php foreach ($modifications as $mod):
+                                            $mc = 'bg-gray-100 text-gray-600';
+                                            if (in_array($mod['status'], ['Approved', 'approved']))
+                                                $mc = 'bg-green-100 text-green-800';
+                                            elseif (in_array($mod['status'], ['Declined', 'rejected']))
+                                                $mc = 'bg-red-100 text-red-800';
+                                            elseif ($mod['status'] === 'Completed')
+                                                $mc = 'bg-blue-100 text-blue-800';
+                                            ?>
+                                                <tr class="hover:bg-gray-50">
+                                                    <td class="py-2 pr-3 font-bold text-gray-800">
+                                                        <?= h($mod['category'] ?? '—') ?>
+                                                    </td>
+                                                    <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold <?= $mc ?>">
+                                                            <?= ucfirst(h($mod['status'])) ?>
+                                                        </span></td>
+                                                    <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
+                                                        <?= format_date($mod['request_date']) ?>
+                                                    </td>
+                                                    <td class="py-2 text-gray-600 truncate max-w-xs">
+                                                        <?= h(mb_strimwidth($mod['description'], 0, 80, '…')) ?>
+                                                    </td>
+                                                </tr>
                                                 <?php
-                                            elseif ($log['status'] === 'Approved'): ?>
-                                                <form method="POST" action="move_management.php" class="inline">
-                                                    <input type="hidden" name="logistics_id" value="<?= $log['id'] ?>">
-                                                    <input type="hidden" name="redirect_to_unit" value="<?= $id ?>">
-                                                    <button type="submit" name="action_complete"
-                                                        class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 font-bold shadow-sm"><i
-                                                            class="fas fa-check-circle mr-1"></i> Complete</button>
-                                                </form>
-                                                <?php
-                                            endif; ?>
-                                        </td>
-                                    </tr>
-                                    <?php
-                                endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <?php
-                endif; ?>
+                                        endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <?php
+                    endif; ?>
+                </div>
             </div>
-        </div>
 
-    </div><!-- /max-w-6xl -->
-    <?php
+            <!-- ── Row 4: Move Logistics ────────────────────────────────────────── -->
+            <div class="bg-white shadow rounded-xl overflow-hidden">
+                <div class="px-5 py-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i
+                            class="fas fa-truck-moving text-gray-400"></i> Move Logistics</h3>
+                    <div class="flex items-center gap-3">
+                        <span class="bg-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs font-bold">
+                            <?= count($logistics) ?> Total
+                        </span>
+                    </div>
+                </div>
+                <div class="p-5">
+                    <?php if (empty($logistics)): ?>
+                            <div class="text-center py-8 text-gray-400">
+                                <i class="fas fa-box-open text-3xl mb-2 block text-gray-300"></i>
+                                No moves logged for this unit.
+                            </div>
+                            <?php
+                    else: ?>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm">
+                                    <thead>
+                                        <tr class="text-xs font-bold text-gray-400 uppercase border-b">
+                                            <th class="pb-2 text-left">Type</th>
+                                            <th class="pb-2 text-left">Status</th>
+                                            <th class="pb-2 text-left">Date</th>
+                                            <th class="pb-2 text-left">Resident</th>
+                                            <th class="pb-2 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        <?php foreach ($logistics as $log):
+                                            $lc = 'bg-gray-100 text-gray-600';
+                                            if ($log['status'] === 'Approved')
+                                                $lc = 'bg-blue-100 text-blue-800';
+                                            elseif ($log['status'] === 'Completed')
+                                                $lc = 'bg-green-100 text-green-800';
+                                            elseif ($log['status'] === 'Cancelled')
+                                                $lc = 'bg-red-100 text-red-800';
+                                            elseif ($log['status'] === 'Pending')
+                                                $lc = 'bg-yellow-100 text-yellow-800';
+                                            ?>
+                                                <tr class="hover:bg-gray-50">
+                                                    <td class="py-2 pr-3 font-bold text-gray-800">
+                                                        <?= $log['move_type'] === 'move_in' ? 'Move-In' : 'Move-Out' ?>
+                                                    </td>
+                                                    <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold <?= $lc ?>">
+                                                            <?= h($log['status']) ?>
+                                                        </span></td>
+                                                    <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
+                                                        <?= $log['preferred_date'] ? format_date($log['preferred_date']) : '—' ?>
+                                                    </td>
+                                                    <td class="py-2 pr-3 text-gray-600">
+                                                        <span
+                                                            class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase <?= $log['resident_type'] === 'tenant' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800' ?>">
+                                                            <?= h($log['resident_type']) ?>
+                                                        </span>
+                                                    </td>
+                                                    <td class="py-2 text-right">
+                                                        <?php if ($log['status'] === 'Pending'): ?>
+                                                                <form method="POST" action="move_management.php" class="inline">
+                                                                    <input type="hidden" name="logistics_id" value="<?= $log['id'] ?>">
+                                                                    <input type="hidden" name="redirect_to_unit" value="<?= $id ?>">
+                                                                    <button type="submit" name="action_approve"
+                                                                        class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold shadow-sm">Approve</button>
+                                                                </form>
+                                                                <?php
+                                                        elseif ($log['status'] === 'Approved'): ?>
+                                                                <form method="POST" action="move_management.php" class="inline">
+                                                                    <input type="hidden" name="logistics_id" value="<?= $log['id'] ?>">
+                                                                    <input type="hidden" name="redirect_to_unit" value="<?= $id ?>">
+                                                                    <button type="submit" name="action_complete"
+                                                                        class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 font-bold shadow-sm"><i
+                                                                            class="fas fa-check-circle mr-1"></i> Complete</button>
+                                                                </form>
+                                                                <?php
+                                                        endif; ?>
+                                                    </td>
+                                                </tr>
+                                                <?php
+                                        endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <?php
+                    endif; ?>
+                </div>
+            </div>
+
+        </div><!-- /max-w-6xl -->
+        <?php
 elseif ($action === 'delete_pet' && isset($_GET['pet_id']) && isset($_GET['unit_id'])):
     $pet_id = (int) $_GET['pet_id'];
     $unit_id = (int) $_GET['unit_id'];
@@ -1407,273 +1407,273 @@ elseif ($action === 'add_pet' && isset($_GET['id'])):
         }
     }
     ?>
-    <div class="max-w-2xl mx-auto">
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-            <div class="px-6 py-4 bg-gray-50 border-b">
-                <h2 class="text-xl font-bold text-gray-800">
-                    <i class="fas fa-paw mr-2 text-yellow-500"></i>
-                    Register Pet for
-                    <?= h($unit['unit_number']) ?>
-                </h2>
-                <p class="text-sm text-gray-500 mt-1">Resident: <strong>
-                        <?= h($resident['resident_name']) ?>
-                    </strong></p>
-            </div>
-            <div class="p-6">
-                <?php if (!empty($error)): ?>
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                        <?= h($error) ?>
-                    </div>
-                    <?php
-                endif; ?>
-                <form method="POST" class="space-y-5">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Pet Name *</label>
-                            <input type="text" name="pet_name" required
-                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
-                                placeholder="e.g. Buddy">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Type *</label>
-                            <select name="pet_type" required
-                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline">
-                                <option value="">-- Select Type --</option>
-                                <?php foreach ($allowed_types as $t): ?>
-                                    <option value="<?= h($t) ?>">
-                                        <?= h($t) ?>
-                                    </option>
-                                    <?php
-                                endforeach; ?>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Breed</label>
-                            <input type="text" name="breed"
-                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
-                                placeholder="e.g. Labrador">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Registration / Tag
-                                Number</label>
-                            <input type="text" name="reg_number"
-                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
-                                placeholder="e.g. T-1234">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Notes</label>
-                            <textarea name="notes" rows="3"
-                                class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
-                                placeholder="Any additional notes about this pet..."></textarea>
-                        </div>
-                    </div>
-                    <div class="flex gap-4 pt-4">
-                        <button type="submit" name="save_pet"
-                            class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded shadow transition duration-150">
-                            <i class="fas fa-paw mr-2"></i> Register Pet
-                        </button>
-                        <a href="units.php?action=view&id=<?= $unit_id ?>"
-                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded transition duration-150">
-                            Cancel
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <?php
-elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
-    <?php
-    $id = $_GET['id'];
-    $stmt = $pdo->prepare("SELECT * FROM units WHERE id = ?");
-    $stmt->execute([$id]);
-    $unit = $stmt->fetch();
-
-    if (!$unit) {
-        echo "<div class='bg-red-100 p-4 rounded text-red-700'>Unit not found.</div>";
-        require_once 'includes/footer.php';
-        exit;
-    }
-
-    // Fetch current owners
-    $stmt = $pdo->prepare("SELECT o.* FROM owners o JOIN ownership_history oh ON o.id = oh.owner_id WHERE oh.unit_id = ? AND oh.is_current = 1");
-    $stmt->execute([$id]);
-    $current_owners = $stmt->fetchAll();
-
-    // Fetch all owners for dropdown
-    $all_owners = $pdo->query("SELECT id, full_name, email FROM owners WHERE is_active = 1 ORDER BY full_name ASC")->fetchAll();
-    ?>
-    <div class="max-w-4xl mx-auto">
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-            <div class="px-6 py-4 bg-gray-50 border-b">
-                <h2 class="text-xl font-bold text-gray-800">Manage Ownership:
-                    <?= h($unit['unit_number']) ?>
-                </h2>
-            </div>
-            <div class="p-8">
-                <!-- Current Owners List -->
-                <div class="mb-10">
-                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Current Owners</h3>
-                    <?php if ($current_owners): ?>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <?php foreach ($current_owners as $owner): ?>
-                                <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                    <div>
-                                        <div class="font-bold text-blue-900">
-                                            <?= h($owner['full_name']) ?>
-                                        </div>
-                                        <div class="text-xs text-blue-600">
-                                            <?= h($owner['email']) ?>
-                                        </div>
-                                    </div>
-                                    <i class="fas fa-check-circle text-blue-500"></i>
-                                </div>
-                                <?php
-                            endforeach; ?>
-                        </div>
-                        <?php
-                    else: ?>
-                        <p class="text-gray-400 italic">No owners currently assigned.</p>
-                        <?php
-                    endif; ?>
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 bg-gray-50 border-b">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-paw mr-2 text-yellow-500"></i>
+                        Register Pet for
+                        <?= h($unit['unit_number']) ?>
+                    </h2>
+                    <p class="text-sm text-gray-500 mt-1">Resident: <strong>
+                            <?= h($resident['resident_name']) ?>
+                        </strong></p>
                 </div>
-
-                <form method="POST" class="space-y-8">
-                    <input type="hidden" name="unit_id" value="<?= $id ?>">
-
-                    <div>
-                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Add or Assign
-                            Owner
-                        </h3>
-                        <div class="bg-gray-50 border rounded-lg p-6">
-                            <div class="mb-6">
-                                <label class="block text-gray-700 text-sm font-bold mb-2">Select Existing
-                                    Owner</label>
-                                <select name="owner_id"
+                <div class="p-6">
+                    <?php if (!empty($error)): ?>
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                                <?= h($error) ?>
+                            </div>
+                            <?php
+                    endif; ?>
+                    <form method="POST" class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Pet Name *</label>
+                                <input type="text" name="pet_name" required
                                     class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
-                                    id="owner_select" onchange="toggleNewOwnerForm()">
-                                    <option value="">-- Create New Owner --</option>
-                                    <?php foreach ($all_owners as $o): ?>
-                                        <option value="<?= $o['id'] ?>">
-                                            <?= h($o['full_name']) ?> (
-                                            <?= h($o['email']) ?>)
-                                        </option>
-                                        <?php
+                                    placeholder="e.g. Buddy">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Type *</label>
+                                <select name="pet_type" required
+                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline">
+                                    <option value="">-- Select Type --</option>
+                                    <?php foreach ($allowed_types as $t): ?>
+                                            <option value="<?= h($t) ?>">
+                                                <?= h($t) ?>
+                                            </option>
+                                            <?php
                                     endforeach; ?>
                                 </select>
                             </div>
-
-                            <div id="new_owner_form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="col-span-2">
-                                    <p class="text-xs font-bold text-gray-500 mb-2 border-b pb-1">NEW OWNER DETAILS
-                                    </p>
-                                </div>
-                                <div>
-                                    <label class="block text-gray-700 text-xs font-bold mb-1">Full Name *</label>
-                                    <input type="text" name="full_name" id="new_name"
-                                        class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-gray-700 text-xs font-bold mb-1">ID Number</label>
-                                    <input type="text" name="id_number"
-                                        class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-gray-700 text-xs font-bold mb-1">Email</label>
-                                    <input type="email" name="email"
-                                        class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-gray-700 text-xs font-bold mb-1">Phone</label>
-                                    <input type="text" name="phone"
-                                        class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
-                                </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Breed</label>
+                                <input type="text" name="breed"
+                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
+                                    placeholder="e.g. Labrador">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Registration / Tag
+                                    Number</label>
+                                <input type="text" name="reg_number"
+                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
+                                    placeholder="e.g. T-1234">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Notes</label>
+                                <textarea name="notes" rows="3"
+                                    class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none"
+                                    placeholder="Any additional notes about this pet..."></textarea>
                             </div>
                         </div>
-                    </div>
-
-                    <?php if ($current_owners): ?>
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                            <h3 class="text-yellow-800 font-bold mb-3 flex items-center">
-                                <i class="fas fa-exclamation-triangle mr-2"></i> Replacement Confirmation
-                            </h3>
-                            <p class="text-sm text-yellow-700 mb-4">This unit already has owner(s) assigned. How would
-                                you
-                                like
-                                to proceed?</p>
-                            <div class="space-y-3">
-                                <label
-                                    class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
-                                    <input type="radio" name="replacement_type" value="replace" checked
-                                        class="h-4 w-4 text-yellow-600">
-                                    <div class="ml-3">
-                                        <span class="block font-bold text-gray-900">Replace existing owners</span>
-                                        <span class="block text-xs text-gray-500">They will be marked as "Previous
-                                            Owners"</span>
-                                    </div>
-                                </label>
-                                <label
-                                    class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
-                                    <input type="radio" name="replacement_type" value="add" class="h-4 w-4 text-yellow-600">
-                                    <div class="ml-3">
-                                        <span class="block font-bold text-gray-900">Add as Co-owner</span>
-                                        <span class="block text-xs text-gray-500">Unit will be owned by multiple people
-                                            simultaneously</span>
-                                    </div>
-                                </label>
-                            </div>
+                        <div class="flex gap-4 pt-4">
+                            <button type="submit" name="save_pet"
+                                class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded shadow transition duration-150">
+                                <i class="fas fa-paw mr-2"></i> Register Pet
+                            </button>
+                            <a href="units.php?action=view&id=<?= $unit_id ?>"
+                                class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded transition duration-150">
+                                Cancel
+                            </a>
                         </div>
-                        <?php
-                    endif; ?>
-
-                    <div class="flex items-center justify-between pt-6 border-t">
-                        <a href="units.php?action=view&id=<?= $id ?>"
-                            class="text-gray-500 hover:text-gray-700 font-bold">Cancel</a>
-                        <button type="submit" name="assign_owner"
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded shadow-lg transition duration-150">
-                            Update Unit Ownership
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+        <?php
+elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
+        <?php
+        $id = $_GET['id'];
+        $stmt = $pdo->prepare("SELECT * FROM units WHERE id = ?");
+        $stmt->execute([$id]);
+        $unit = $stmt->fetch();
 
-    <script>
-        function toggleNewOwnerForm() {
-            const select = document.getElementById('owner_id');
-            const form = document.getElementById('new_owner_form');
-            const nameInput = document.getElementById('full_name');
-            if (select && form && nameInput) {
-                if (select.value === "") {
-                    form.style.opacity = "1";
-                    form.style.pointerEvents = "auto";
-                    nameInput.required = true;
-                } else {
-                    form.style.opacity = "0.4";
-                    form.style.pointerEvents = "none";
-                    nameInput.required = false;
+        if (!$unit) {
+            echo "<div class='bg-red-100 p-4 rounded text-red-700'>Unit not found.</div>";
+            require_once 'includes/footer.php';
+            exit;
+        }
+
+        // Fetch current owners
+        $stmt = $pdo->prepare("SELECT o.* FROM owners o JOIN ownership_history oh ON o.id = oh.owner_id WHERE oh.unit_id = ? AND oh.is_current = 1");
+        $stmt->execute([$id]);
+        $current_owners = $stmt->fetchAll();
+
+        // Fetch all owners for dropdown
+        $all_owners = $pdo->query("SELECT id, full_name, email FROM owners WHERE is_active = 1 ORDER BY full_name ASC")->fetchAll();
+        ?>
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 bg-gray-50 border-b">
+                    <h2 class="text-xl font-bold text-gray-800">Manage Ownership:
+                        <?= h($unit['unit_number']) ?>
+                    </h2>
+                </div>
+                <div class="p-8">
+                    <!-- Current Owners List -->
+                    <div class="mb-10">
+                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Current Owners</h3>
+                        <?php if ($current_owners): ?>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <?php foreach ($current_owners as $owner): ?>
+                                            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                                <div>
+                                                    <div class="font-bold text-blue-900">
+                                                        <?= h($owner['full_name']) ?>
+                                                    </div>
+                                                    <div class="text-xs text-blue-600">
+                                                        <?= h($owner['email']) ?>
+                                                    </div>
+                                                </div>
+                                                <i class="fas fa-check-circle text-blue-500"></i>
+                                            </div>
+                                            <?php
+                                    endforeach; ?>
+                                </div>
+                                <?php
+                        else: ?>
+                                <p class="text-gray-400 italic">No owners currently assigned.</p>
+                                <?php
+                        endif; ?>
+                    </div>
+
+                    <form method="POST" class="space-y-8">
+                        <input type="hidden" name="unit_id" value="<?= $id ?>">
+
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Add or Assign
+                                Owner
+                            </h3>
+                            <div class="bg-gray-50 border rounded-lg p-6">
+                                <div class="mb-6">
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Select Existing
+                                        Owner</label>
+                                    <select name="owner_id"
+                                        class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
+                                        id="owner_select" onchange="toggleNewOwnerForm()">
+                                        <option value="">-- Create New Owner --</option>
+                                        <?php foreach ($all_owners as $o): ?>
+                                                <option value="<?= $o['id'] ?>">
+                                                    <?= h($o['full_name']) ?> (
+                                                    <?= h($o['email']) ?>)
+                                                </option>
+                                                <?php
+                                        endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <div id="new_owner_form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="col-span-2">
+                                        <p class="text-xs font-bold text-gray-500 mb-2 border-b pb-1">NEW OWNER DETAILS
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 text-xs font-bold mb-1">Full Name *</label>
+                                        <input type="text" name="full_name" id="new_name"
+                                            class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 text-xs font-bold mb-1">ID Number</label>
+                                        <input type="text" name="id_number"
+                                            class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 text-xs font-bold mb-1">Email</label>
+                                        <input type="email" name="email"
+                                            class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 text-xs font-bold mb-1">Phone</label>
+                                        <input type="text" name="phone"
+                                            class="shadow border rounded w-full py-2 px-3 text-gray-700 text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <?php if ($current_owners): ?>
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                                    <h3 class="text-yellow-800 font-bold mb-3 flex items-center">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i> Replacement Confirmation
+                                    </h3>
+                                    <p class="text-sm text-yellow-700 mb-4">This unit already has owner(s) assigned. How would
+                                        you
+                                        like
+                                        to proceed?</p>
+                                    <div class="space-y-3">
+                                        <label
+                                            class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
+                                            <input type="radio" name="replacement_type" value="replace" checked
+                                                class="h-4 w-4 text-yellow-600">
+                                            <div class="ml-3">
+                                                <span class="block font-bold text-gray-900">Replace existing owners</span>
+                                                <span class="block text-xs text-gray-500">They will be marked as "Previous
+                                                    Owners"</span>
+                                            </div>
+                                        </label>
+                                        <label
+                                            class="flex items-center p-3 bg-white border rounded cursor-pointer hover:border-yellow-400">
+                                            <input type="radio" name="replacement_type" value="add" class="h-4 w-4 text-yellow-600">
+                                            <div class="ml-3">
+                                                <span class="block font-bold text-gray-900">Add as Co-owner</span>
+                                                <span class="block text-xs text-gray-500">Unit will be owned by multiple people
+                                                    simultaneously</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <?php
+                        endif; ?>
+
+                        <div class="flex items-center justify-between pt-6 border-t">
+                            <a href="units.php?action=view&id=<?= $id ?>"
+                                class="text-gray-500 hover:text-gray-700 font-bold">Cancel</a>
+                            <button type="submit" name="assign_owner"
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded shadow-lg transition duration-150">
+                                Update Unit Ownership
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function toggleNewOwnerForm() {
+                const select = document.getElementById('owner_id');
+                const form = document.getElementById('new_owner_form');
+                const nameInput = document.getElementById('full_name');
+                if (select && form && nameInput) {
+                    if (select.value === "") {
+                        form.style.opacity = "1";
+                        form.style.pointerEvents = "auto";
+                        nameInput.required = true;
+                    } else {
+                        form.style.opacity = "0.4";
+                        form.style.pointerEvents = "none";
+                        nameInput.required = false;
+                    }
                 }
             }
-        }
-        document.addEventListener('DOMContentLoaded', toggleNewOwnerForm);
-    </script>
-    <?php
+            document.addEventListener('DOMContentLoaded', toggleNewOwnerForm);
+        </script>
+        <?php
 else: ?>
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
-        <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left">Unit Number</th>
-                    <th class="px-6 py-3 text-left">Current Owner</th>
-                    <th class="px-6 py-3 text-left">Current Resident</th>
-                    <th class="px-6 py-3 text-left">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                <?php
-                // Query to get units with current owners and tenant
-                $sql = "SELECT u.*, 
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
+            <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Unit Number</th>
+                        <th class="px-6 py-3 text-left">Current Owner</th>
+                        <th class="px-6 py-3 text-left">Current Resident</th>
+                        <th class="px-6 py-3 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <?php
+                    // Query to get units with current owners and tenant
+                    $sql = "SELECT u.*, 
                     GROUP_CONCAT(o.full_name SEPARATOR ', ') as owner_names, 
                     t.full_name as tenant_name,
                     t.id as tenant_id 
@@ -1683,51 +1683,51 @@ else: ?>
                     LEFT JOIN tenants t ON u.id = t.unit_id
                     GROUP BY u.id
                     ORDER BY u.unit_number ASC";
-                $stmt = $pdo->query($sql);
-                while ($row = $stmt->fetch()):
-                    ?>
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            <?= h($row['unit_number']) ?>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <?= $row['owner_names'] ? h($row['owner_names']) : '<span class="text-red-400">No Owner</span>' ?>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <?php if ($row['tenant_id']): ?>
-                                <a href="tenants.php?action=view&id=<?= $row['tenant_id'] ?>"
-                                    class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
-                                    <?= h($row['tenant_name']) ?>
-                                </a>
-                                <?php
-                            else: ?>
-                                <span class="text-gray-400">-</span>
-                                <?php
-                            endif; ?>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                            <a href="units.php?action=view&id=<?= $row['id'] ?>"
-                                class="text-green-600 hover:text-green-900">View</a>
-                            <a href="units.php?action=edit&id=<?= $row['id'] ?>"
-                                class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                        </td>
-                    </tr>
-                    <?php
-                endwhile; ?>
-            </tbody>
-        </table>
-    </div>
+                    $stmt = $pdo->query($sql);
+                    while ($row = $stmt->fetch()):
+                        ?>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <?= h($row['unit_number']) ?>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <?= $row['owner_names'] ? h($row['owner_names']) : '<span class="text-red-400">No Owner</span>' ?>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <?php if ($row['tenant_id']): ?>
+                                            <a href="tenants.php?action=view&id=<?= $row['tenant_id'] ?>"
+                                                class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
+                                                <?= h($row['tenant_name']) ?>
+                                            </a>
+                                            <?php
+                                    else: ?>
+                                            <span class="text-gray-400">-</span>
+                                            <?php
+                                    endif; ?>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                                    <a href="units.php?action=view&id=<?= $row['id'] ?>"
+                                        class="text-green-600 hover:text-green-900">View</a>
+                                    <a href="units.php?action=edit&id=<?= $row['id'] ?>"
+                                        class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                </td>
+                            </tr>
+                            <?php
+                    endwhile; ?>
+                </tbody>
+            </table>
+        </div>
 
-    <script>
-        $(document).ready(function () {
-            $('#unitsTable').DataTable({
-                "pageLength": 25,
-                "order": [[0, "asc"]],
-                "columnDefs": [
-                    {
-                        "orderable": false, " });
-    </script>
-    <?php
+        <script>
+            $(document).ready(function () {
+                $('#unitsTable').DataTable({
+                    "pageLength": 25,
+                    "order": [[0, "asc"]],
+                    "columnDefs": [
+                        {
+                            "orderable": false, " });
+        </script>
+        <?php
 endif; ?>
 
 <div id="document_lightbox"

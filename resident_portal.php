@@ -560,7 +560,9 @@ $just_saved = isset($_GET['saved']);
                                         $sc = 'bg-gray-100 text-gray-600';
                                         if ($pet['status'] == 'Approved')
                                             $sc = 'bg-green-100 text-green-800';
-                                        elseif ($pet['status'] == 'Declined')
+                                        elseif ($pet['status'] == 'Conditional Approval')
+                                            $sc = 'bg-orange-100 text-orange-800 font-bold';
+                                        elseif (strpos($pet['status'], 'Declined') !== false)
                                             $sc = 'bg-red-100 text-red-800';
                                         ?>
                                         <div class="p-3 bg-yellow-50 rounded-lg flex items-start justify-between">
@@ -576,6 +578,13 @@ $just_saved = isset($_GET['saved']);
                                                     <?= $pet['breed'] ? ' · ' . h($pet['breed']) : '' ?>
                                                     <?= !empty($pet['adult_size']) ? ' · ' . h($pet['adult_size']) : '' ?>
                                                 </div>
+                                                <?php if ($pet['status'] == 'Conditional Approval' || $pet['status'] == 'Declined'): ?>
+                                                    <div class="mt-2">
+                                                        <a href="manage_pets.php"
+                                                            class="text-xs font-bold text-orange-700 bg-orange-100 hover:bg-orange-200 px-3 py-1 rounded-md transition inline-flex items-center gap-1"><i
+                                                                class="fas fa-exclamation-circle"></i> Action Required</a>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
@@ -1053,7 +1062,9 @@ $just_saved = isset($_GET['saved']);
                                     $sColor = 'bg-gray-100 text-gray-600';
                                     if ($p['status'] == 'Approved')
                                         $sColor = 'bg-green-100 text-green-700';
-                                    elseif ($p['status'] == 'Declined')
+                                    elseif ($p['status'] == 'Conditional Approval')
+                                        $sColor = 'bg-orange-100 text-orange-700 font-bold';
+                                    elseif (strpos($p['status'], 'Declined') !== false)
                                         $sColor = 'bg-red-100 text-red-700';
                                     ?>
                                     <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-xl border border-yellow-100">
