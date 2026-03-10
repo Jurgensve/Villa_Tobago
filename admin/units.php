@@ -1135,11 +1135,6 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                         </form>
                                                     <?php endif; ?>
                                                 </div>
-                                                <button type="button"
-                                                    onclick="document.getElementById('pet_modal_<?= $pet['id'] ?>').classList.add('hidden')"
-                                                    class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition w-full md:w-auto">
-                                                    Close
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -1624,40 +1619,40 @@ elseif ($action === 'manage_owners' && isset($_GET['id'])): ?>
     </div>
 
     <script>
-        function toggleNewOwnerForm() {
-            const select = document.getElementById('owner_id');
-            const form = document.getElementById('new_owner_form');
-            const nameInput = document.getElementById('full_name');
-            if (select && form && nameInput) {
-                if (select.value === "") {
-                    form.style.opacity = "1";
-                    form.style.pointerEvents = "auto";
-                    nameInput.required = true;
-                } else {
-                    form.style.opacity = "0.4";
-                    form.style.pointerEvents = "none";
-                    nameInput.required = false;
+             function toggleNewOwnerForm() {
+                const select = document.getElementById('owner_id');
+                const form = document.getElementById('new_owner_form');
+                const nameInput = document.getElementById('full_name');
+                if (select && form && nameInput) {
+                    if (select.value === "") {
+                        form.style.opacity = "1";
+                        form.style.pointerEvents = "auto";
+                        nameInput.required = true;
+                    } else {
+                        form.style.opacity = "0.4";
+                        form.style.pointerEvents = "none";
+                        nameInput.required = false;
+                    }
                 }
             }
-        }
-        document.addEventListener('DOMContentLoaded', toggleNewOwnerForm);
-    </script>
-    <?php
+            document.addEventListener('DOMContentLoaded', toggleNewOwnerForm);
+        </script>
+        <?php
 else: ?>
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
-        <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left">Unit Number</th>
-                    <th class="px-6 py-3 text-left">Current Owner</th>
-                    <th class="px-6 py-3 text-left">Current Resident</th>
-                    <th class="px-6 py-3 text-left">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                <?php
-                // Query to get units with current owners and tenant
-                $sql = "SELECT u.*, 
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4">
+            <table id="unitsTable" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Unit Number</th>
+                        <th class="px-6 py-3 text-left">Current Owner</th>
+                        <th class="px-6 py-3 text-left">Current Resident</th>
+                        <th class="px-6 py-3 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <?php
+                    // Query to get units with current owners and tenant
+                    $sql = "SELECT u.*, 
                     GROUP_CONCAT(o.full_name SEPARATOR ', ') as owner_names, 
                     t.full_name as tenant_name,
                     t.id as tenant_id 
@@ -1667,51 +1662,51 @@ else: ?>
                     LEFT JOIN tenants t ON u.id = t.unit_id
                     GROUP BY u.id
                     ORDER BY u.unit_number ASC";
-                $stmt = $pdo->query($sql);
-                while ($row = $stmt->fetch()):
-                    ?>
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            <?= h($row['unit_number']) ?>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <?= $row['owner_names'] ? h($row['owner_names']) : '<span class="text-red-400">No Owner</span>' ?>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <?php if ($row['tenant_id']): ?>
-                                <a href="tenants.php?action=view&id=<?= $row['tenant_id'] ?>"
-                                    class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
-                                    <?= h($row['tenant_name']) ?>
-                                </a>
-                                <?php
-                            else: ?>
-                                <span class="text-gray-400">-</span>
-                                <?php
-                            endif; ?>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                            <a href="units.php?action=view&id=<?= $row['id'] ?>"
-                                class="text-green-600 hover:text-green-900">View</a>
-                            <a href="units.php?action=edit&id=<?= $row['id'] ?>"
-                                class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                        </td>
-                    </tr>
-                    <?php
-                endwhile; ?>
-            </tbody>
-        </table>
-    </div>
+                    $stmt = $pdo->query($sql);
+                    while ($row = $stmt->fetch()):
+                        ?>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <?= h($row['unit_number']) ?>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <?= $row['owner_names'] ? h($row['owner_names']) : '<span class="text-red-400">No Owner</span>' ?>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <?php if ($row['tenant_id']): ?>
+                                            <a href="tenants.php?action=view&id=<?= $row['tenant_id'] ?>"
+                                                class="text-blue-600 hover:text-blue-900 underline underline-offset-2">
+                                                <?= h($row['tenant_name']) ?>
+                                            </a>
+                                            <?php
+                                    else: ?>
+                                            <span class="text-gray-400">-</span>
+                                            <?php
+                                    endif; ?>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                                    <a href="units.php?action=view&id=<?= $row['id'] ?>"
+                                        class="text-green-600 hover:text-green-900">View</a>
+                                    <a href="units.php?action=edit&id=<?= $row['id'] ?>"
+                                        class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                </td>
+                            </tr>
+                            <?php
+                    endwhile; ?>
+                </tbody>
+            </table>
+        </div>
 
-    <script>
-        $(document).ready(function () {
-            $('#unitsTable').DataTable({
-                "pageLength": 25,
-                "order": [[0, "asc"]],
-                "columnDefs": [
-                    {
-                        "orderable": false, " });
-    </script>
-    <?php
+        <script>
+            $(document).ready(function () {
+                $('#unitsTable').DataTable({
+                    "pageLength": 25,
+                    "order": [[0, "asc"]],
+                    "columnDefs": [
+                        {
+                            "orderable": false, " });
+        </script>
+        <?php
 endif; ?>
 
 <div id="document_lightbox"
