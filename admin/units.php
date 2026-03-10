@@ -918,10 +918,11 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                         <?php if (!empty($pets)): ?>
                             <div class="space-y-3">
                                 <?php foreach ($pets as $pet):
+                                    $p_status = !empty($pet['status']) ? $pet['status'] : 'Pending';
                                     $sc = 'bg-gray-100 text-gray-600';
-                                    if ($pet['status'] == 'Approved')
+                                    if ($p_status == 'Approved')
                                         $sc = 'bg-green-100 text-green-800';
-                                    elseif ($pet['status'] == 'Declined')
+                                    elseif ($p_status == 'Declined')
                                         $sc = 'bg-red-100 text-red-800';
                                     ?>
                                     <div class="p-3 bg-yellow-50 rounded-lg flex items-start justify-between">
@@ -931,7 +932,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                 class="font-bold text-yellow-900 text-sm flex items-center gap-1 group-hover:text-yellow-700 transition">
                                                 <?= h($pet['name']) ?>
                                                 <span class="text-xs <?= $sc ?> px-1.5 py-0.5 rounded-full ml-1">
-                                                    <?= h($pet['status'] ?? 'Pending') ?>
+                                                    <?= h($p_status) ?>
                                                 </span>
                                                 <i
                                                     class="fas fa-info-circle text-gray-400 ml-1 text-xs opacity-0 group-hover:opacity-100 transition"></i>
@@ -976,7 +977,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                 </div>
                                                 <button
                                                     onclick="document.getElementById('pet_modal_<?= $pet['id'] ?>').classList.add('hidden')"
-                                                    class="text-gray-400 hover:text-gray-700 bg-white rounded-full p-1 border border-gray-200 hover:bg-gray-100 transition">
+                                                    class="text-gray-400 hover:text-gray-700 bg-white rounded-full p-1 border border-gray-200 hover:bg-gray-100 transition focus:outline-none">
                                                     <i class="fas fa-times w-6 h-6 flex items-center justify-center"></i>
                                                 </button>
                                             </div>
@@ -986,7 +987,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                     <div><span
                                                             class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-1">Status</span><span
                                                             class="<?= $sc ?> px-2.5 py-1 rounded-md text-xs font-bold shadow-sm">
-                                                            <?= h($pet['status'] ?? 'Pending') ?>
+                                                            <?= h($p_status) ?>
                                                         </span></div>
                                                     <div><span
                                                             class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-1">Size</span><span
@@ -1047,29 +1048,36 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                             Documents</span>
                                                         <div class="flex flex-col gap-2">
                                                             <?php if (!empty($pet['photo_path'])): ?>
-                                                                <a href="../<?= h($pet['photo_path']) ?>" target="_blank"
-                                                                    class="text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm"><span
-                                                                        class="flex items-center gap-3"><i
-                                                                            class="fas fa-image text-indigo-400 text-lg"></i> Pet Photo</span><i
-                                                                        class="fas fa-external-link-alt text-xs text-indigo-300"></i></a>
+                                                                <button type="button"
+                                                                    onclick="openLightbox('../<?= h($pet['photo_path']) ?>', <?= strtolower(pathinfo($pet['photo_path'], PATHINFO_EXTENSION)) === 'pdf' ? 'true' : 'false' ?>)"
+                                                                    class="w-full text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm">
+                                                                    <span class="flex items-center gap-3"><i
+                                                                            class="fas fa-image text-indigo-400 text-lg w-5 text-center"></i>
+                                                                        Pet Photo</span>
+                                                                    <i class="fas fa-expand-arrows-alt text-xs text-indigo-300"></i>
+                                                                </button>
                                                                 <?php
                                                             endif; ?>
                                                             <?php if (!empty($pet['sterilized_proof_path'])): ?>
-                                                                <a href="../<?= h($pet['sterilized_proof_path']) ?>" target="_blank"
-                                                                    class="text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm"><span
-                                                                        class="flex items-center gap-3"><i
-                                                                            class="fas fa-file-pdf text-indigo-400 text-lg"></i> Sterilization
-                                                                        Proof</span><i
-                                                                        class="fas fa-external-link-alt text-xs text-indigo-300"></i></a>
+                                                                <button type="button"
+                                                                    onclick="openLightbox('../<?= h($pet['sterilized_proof_path']) ?>', <?= strtolower(pathinfo($pet['sterilized_proof_path'], PATHINFO_EXTENSION)) === 'pdf' ? 'true' : 'false' ?>)"
+                                                                    class="w-full text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm">
+                                                                    <span class="flex items-center gap-3"><i
+                                                                            class="fas fa-file-pdf text-indigo-400 text-lg w-5 text-center"></i>
+                                                                        Sterilization Proof</span>
+                                                                    <i class="fas fa-expand-arrows-alt text-xs text-indigo-300"></i>
+                                                                </button>
                                                                 <?php
                                                             endif; ?>
                                                             <?php if (!empty($pet['vaccination_proof_path'])): ?>
-                                                                <a href="../<?= h($pet['vaccination_proof_path']) ?>" target="_blank"
-                                                                    class="text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm"><span
-                                                                        class="flex items-center gap-3"><i
-                                                                            class="fas fa-file-pdf text-indigo-400 text-lg"></i> Vaccination
-                                                                        Proof</span><i
-                                                                        class="fas fa-external-link-alt text-xs text-indigo-300"></i></a>
+                                                                <button type="button"
+                                                                    onclick="openLightbox('../<?= h($pet['vaccination_proof_path']) ?>', <?= strtolower(pathinfo($pet['vaccination_proof_path'], PATHINFO_EXTENSION)) === 'pdf' ? 'true' : 'false' ?>)"
+                                                                    class="w-full text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm">
+                                                                    <span class="flex items-center gap-3"><i
+                                                                            class="fas fa-file-pdf text-indigo-400 text-lg w-5 text-center"></i>
+                                                                        Vaccination Proof</span>
+                                                                    <i class="fas fa-expand-arrows-alt text-xs text-indigo-300"></i>
+                                                                </button>
                                                                 <?php
                                                             endif; ?>
                                                         </div>
@@ -1079,41 +1087,57 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                             </div>
 
                                             <div
-                                                class="px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex flex-wrap justify-between items-center gap-2">
-                                                <div class="flex gap-2">
-                                                    <?php if (($pet['status'] ?? 'Pending') === 'Pending'): ?>
-                                                        <form method="POST" action="approve_pet.php" class="inline">
+                                                class="px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                                                <div class="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                                                    <?php if ($p_status === 'Pending' || $p_status === 'Info Required'): ?>
+                                                        <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
                                                             <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
                                                             <input type="hidden" name="action" value="approve">
                                                             <button type="submit"
-                                                                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition">
-                                                                <i class="fas fa-check mr-1.5"></i>Approve
+                                                                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
+                                                                <i class="fas fa-check md:mr-1"></i> <span
+                                                                    class="hidden md:inline">Approve</span>
                                                             </button>
                                                         </form>
-                                                        <form method="POST" action="approve_pet.php" class="inline">
+                                                        <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
                                                             <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
                                                             <input type="hidden" name="action" value="request_info">
                                                             <button type="button"
                                                                 onclick="const p = prompt('What info do you need?'); if(p){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+p+'\'>'); this.form.submit(); }"
-                                                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition">
-                                                                <i class="fas fa-question-circle mr-1.5"></i>Request Info
+                                                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
+                                                                <i class="fas fa-question-circle md:mr-1"></i> <span
+                                                                    class="hidden md:inline">Request Info</span>
                                                             </button>
                                                         </form>
-                                                        <form method="POST" action="approve_pet.php" class="inline"
-                                                            onsubmit="return confirm('Are you sure you want to decline this pet?');">
+                                                        <form method="POST" action="approve_pet.php" class="inline flex-shrink-0">
                                                             <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
                                                             <input type="hidden" name="action" value="decline">
                                                             <button type="button"
-                                                                onclick="const r = prompt('Reason for declining:'); if(r){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+r+'\'>'); this.form.submit(); }"
-                                                                class="bg-white border border-red-200 text-red-600 hover:bg-red-50 font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition">
-                                                                <i class="fas fa-times mr-1.5"></i>Decline
+                                                                onclick="const p = prompt('Reason for decline?'); if(p){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+p+'\'>'); this.form.submit(); }"
+                                                                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-sm shadow-sm transition h-full text-center">
+                                                                <i class="fas fa-times md:mr-1"></i> <span
+                                                                    class="hidden md:inline">Decline</span>
+                                                            </button>
+                                                        </form>
+                                                    <?php else: ?>
+                                                        <!-- Option to undo or change status if needed -->
+                                                        <span class="text-xs text-gray-500 italic flex items-center h-full">This pet is
+                                                            already <?= h($p_status) ?>.</span>
+                                                        <form method="POST" action="approve_pet.php" class="inline ml-auto flex-shrink-0">
+                                                            <input type="hidden" name="pet_id" value="<?= $pet['id'] ?>">
+                                                            <input type="hidden" name="action" value="request_info">
+                                                            <button type="button"
+                                                                onclick="const p = prompt('Reason to reopen to Info Required?'); if(p){ this.form.insertAdjacentHTML('beforeend', '<input type=\'hidden\' name=\'reason\' value=\''+p+'\'>'); this.form.submit(); }"
+                                                                class="text-blue-500 hover:text-blue-700 font-bold py-1 px-2 text-sm transition text-center border rounded">
+                                                                <span class="md:hidden"><i class="fas fa-undo"></i></span> <span
+                                                                    class="hidden md:inline">Re-evaluate</span>
                                                             </button>
                                                         </form>
                                                     <?php endif; ?>
                                                 </div>
                                                 <button type="button"
                                                     onclick="document.getElementById('pet_modal_<?= $pet['id'] ?>').classList.add('hidden')"
-                                                    class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-2 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
+                                                    class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition w-full md:w-auto">
                                                     Close
                                                 </button>
                                             </div>
@@ -1684,9 +1708,37 @@ else: ?>
                 "pageLength": 25,
                 "order": [[0, "asc"]],
                 "columnDefs": [
-                    { "orderable": false, " });
+                    {
+                        "orderable": false, " });
     </script>
     <?php
 endif; ?>
+
+<div id="document_lightbox"
+    class="fixed inset-0 bg-black bg-opacity-80 z-[100] hidden flex-col items-center justify-center backdrop-blur-sm p-4">
+    <button onclick="document.getElementById('document_lightbox').classList.add('hidden')"
+        class="absolute top-6 right-6 text-white hover:text-gray-300 transition-colors focus:outline-none bg-black bg-opacity-50 p-2 rounded-lg z-[110]">
+        <i class="fas fa-times text-2xl"></i> <span class="ml-2 font-bold uppercase tracking-wider text-sm">Close</span>
+    </button>
+    <div id="lightbox_content"
+        class="w-full max-w-5xl h-[85vh] relative flex items-center justify-center bg-transparent mt-8">
+    </div>
+</div>
+
+<script>
+    function openLightbox(url, isPdf) {
+                                const box = document.getElementById('document_lightbox');
+                                const content = document.getElementById('lightbox_content');
+
+                                if (isPdf) {
+                                    content.innerHTML = `<iframe src="${url}" class="w-full h-full rounded-xl shadow-2xl bg-white border-none"></iframe>`;
+                                } else {
+                                    content.innerHTML = `<img src="${url}" class="max-w-full max-h-full rounded-xl shadow-2xl object-contain">`;
+                                }
+
+                                box.classList.remove('hidden');
+                                box.classList.add('flex');
+                            }
+</script>
 
 <?php require_once 'includes/footer.php'; ?>
