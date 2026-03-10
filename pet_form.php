@@ -17,6 +17,7 @@ $error = '';
 $pet_settings = $pdo->query("SELECT setting_key, setting_value FROM pet_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
 $max_pets = (int) ($pet_settings['max_pets_per_unit'] ?? 2);
 $allowed_types = array_map('trim', explode(',', $pet_settings['allowed_pet_types'] ?? 'Dog, Cat, Bird, Fish'));
+$allow_large_pets = (int) ($pet_settings['allow_large_pets'] ?? 0);
 
 // Check current pet count for this unit
 $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM pets WHERE unit_id = ? AND status != 'Removed'");
@@ -227,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
                         </div>
                         <div>
                             <label class="block text-gray-700 text-sm font-bold mb-1">Adult Size</label>
-                            <select name="adult_size"
+                            <select name="adult_size" id="adult_size" onchange="toggleMotivation()"
                                 class="w-full border-2 border-gray-200 rounded-lg px-4 py-2.5 focus:border-yellow-400 outline-none transition bg-white">
                                 <option value="">— Select Size —</option>
                                 <option value="Small">Small (under 10kg)</option>
@@ -382,9 +383,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
                     <h2 class="text-lg font-bold text-orange-900 mb-1 flex items-center gap-2">
                         <i class="fas fa-comment-alt text-orange-500"></i> Written Motivation
                     </h2>
-                    <p class="text-orange-700 text-sm mb-4">Your pet does not currently meet one or more of the required
-                        health standards. You may still submit this application with a written motivation explaining your
-                        circumstances. The Trustees will consider this during their review.</p>
+                    <p id="motivation-reason-text" class="text-orange-700 text-sm mb-4">Your pet does not currently meet one
+                        or more of the required health standards. You may still submit this application with a written
+                        motivation explaining your circumstances. The Trustees will consider this during their review.</p>
                     <label class="block text-orange-800 text-sm font-bold mb-2">Personal Motivation <span
                             class="text-gray-500 font-normal">(optional but encouraged)</span></label>
                     <textarea name="motivation_note" rows="4"
@@ -441,15 +442,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
     </div>
 
     <script>
+        const allowLargePets = <?= $allow_large_pets ?>;
+
         function toggleMotivation() {
-            const sterilized = document.getElementById('is_sterilized').checked;
-            const vaccinated = document.getElementById('is_vaccinated').checked;
+            const sterilized = document.getElementById('is_sterilized') ? document.getElementById('is_sterilized').checked : false;
+            const vaccinated = document.getElementById('is_vaccinated') ? document.getElementById('is_vaccinated').checked : false;
+            const size = document.getElementById('adult_size') ? document.getElementById('adult_size').value : '';
             const motivSection = document.getElementById('motivation-section');
-            // Show motivation if either required item is NOT checked
+            const motivText = document.getElementById('motivation-reason-text');
+
+            let htmlReasons = [];
+
+            // Assuming default state on page load is unchecked, so if not checked it's missing standard requirements
             if (!sterilized || !vaccinated) {
-                motivSection.classList.remove('hidden');
+                htmlReasons.push("<strong>does not currently meet one or more of the required health standards</strong>");
+            }
+            if (size === 'Large' && allowLargePets === 0) {
+                htmlReasons.push("<strong>is of a size (Large) that is not normally permitted</strong>");
+            }
+
+            if (htmlReasons.length > 0) {
+                if (motivText) motivText.innerHTML = `Notice: Your pet ${htmlReasons.join(" and ")}. You may still submit this application with a written motivation explaining your circumstances. The Trustees will consider this during their review.`;
+                if (motivSection) motivSection.classList.remove('hidden');
             } else {
-                motivSection.classList.add('hidden');
+                if (motivSection) motivSection.classList.add('hidden');
             }
         }
 

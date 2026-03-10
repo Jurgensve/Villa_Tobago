@@ -65,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
             'pet_management_enabled' => isset($_POST['pet_management_enabled']) ? '1' : '0',
             'max_pets_per_unit' => (int)$_POST['max_pets_per_unit'],
             'allowed_pet_types' => trim($_POST['allowed_pet_types']),
+            'allow_large_pets' => isset($_POST['allow_large_pets']) ? '1' : '0',
             'max_vehicles_per_unit' => (int)$_POST['max_vehicles_per_unit'],
         ];
 
@@ -129,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_system_settings'
 // Fetch current pet settings
 $settings_rows = $pdo->query("SELECT setting_key, setting_value FROM pet_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
 $pet_enabled = $settings_rows['pet_management_enabled'] ?? '1';
+$allow_large_pets = $settings_rows['allow_large_pets'] ?? '0';
 $max_pets = $settings_rows['max_pets_per_unit'] ?? '2';
 $allowed_types = $settings_rows['allowed_pet_types'] ?? 'Dog, Cat, Bird, Fish';
 $max_vehicles = $settings_rows['max_vehicles_per_unit'] ?? '2';
@@ -191,6 +193,20 @@ endif; ?>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="pet_management_enabled" value="1" <?= $pet_enabled ? 'checked' : ''
                             ?> class="sr-only peer">
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Allow Large Pets -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                    <div>
+                        <p class="font-bold text-gray-800">Allow Large Pets</p>
+                        <p class="text-sm text-gray-500">If disabled, residents selecting 'Large' size will be prompted for motivation.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="allow_large_pets" value="1" <?= $allow_large_pets ? 'checked' : '' ?> class="sr-only peer">
                         <div
                             class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                         </div>
