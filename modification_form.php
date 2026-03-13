@@ -40,9 +40,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     else {
         try {
-            $stmt = $pdo->prepare("INSERT INTO modifications (unit_id, owner_id, tenant_id, category, description, status, request_date, amendment_token) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)");
-            $stmt->execute([$unit_id, $owner_id, $tenant_id, $category, $description, $status, $amendment_token]);
+            $policy_accepted = isset($_POST['policy_agreement']) && $_POST['policy_agreement'] == '1' ? 1 : 0;
+            $stmt = $pdo->prepare("INSERT INTO modifications (unit_id, owner_id, tenant_id, category, description, status, request_date, amendment_token, policy_accepted) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)");
+            $stmt->execute([$unit_id, $owner_id, $tenant_id, $category, $description, $status, $amendment_token, $policy_accepted]);
             $mod_id = $pdo->lastInsertId();
+
+            if ($policy_accepted) {
+                $ip_addr = $_SERVER['REMOTE_ADDR'] ?? '';
+                $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                $pdo->prepare("INSERT INTO digital_signatures (resident_type, resident_id, unit_id, document_type, record_id, ip_address, user_agent) VALUES (?, ?, ?, 'Modification Policy', ?, ?, ?)")
+                    ->execute([$resident_type, ($resident_type === 'tenant' ? $tenant_id : $owner_id), $unit_id, $mod_id, $ip_addr, $user_agent]);
+            }
 
             // Handle Multiple Attachments
             if (isset($_FILES['attachments'])) {

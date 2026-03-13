@@ -75,6 +75,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
             ]);
             $pet_id = $pdo->lastInsertId();
 
+            if ($house_rules_accepted) {
+                $ip_addr = $_SERVER['REMOTE_ADDR'] ?? '';
+                $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                $pdo->prepare("INSERT INTO digital_signatures (resident_type, resident_id, unit_id, document_type, record_id, ip_address, user_agent) VALUES (?, ?, ?, 'Pet House Rules', ?, ?, ?)")
+                    ->execute([$res['type'], $res['id'], $res['unit_id'], $pet_id, $ip_addr, $user_agent]);
+            }
+
             // Handle file uploads
             $upload_dir = __DIR__ . "/uploads/pets/{$pet_id}/";
             if (!is_dir($upload_dir)) {

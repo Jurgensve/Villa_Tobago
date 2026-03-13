@@ -1345,6 +1345,12 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                                         <?= h(ucfirst($mod['status'])) ?>
                                                                     </span>
                                                                 </div>
+                                                                <?php if (!empty($mod['policy_accepted'])): ?>
+                                                                <div class="text-right">
+                                                                    <span class="text-green-600 font-bold block text-[10px] uppercase tracking-wider mb-1"><i class="fas fa-file-signature"></i> Policy Signature</span>
+                                                                    <span class="text-xs font-bold text-gray-700">Resident Accepted</span>
+                                                                </div>
+                                                                <?php endif; ?>
                                                             </div>
 
                                                             <div>

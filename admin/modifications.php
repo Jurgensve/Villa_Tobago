@@ -378,6 +378,11 @@ else: ?>
                     <div class="text-xs mt-1 text-gray-400">
                         <i class="fas fa-user mr-1"></i> Requester:
                         <?= h(!empty($row['tenant_name']) ? $row['tenant_name'] . ' (Tenant)' : ($row['owner_name'] . ' (Owner)'))?>
+                        <?php if (!empty($row['policy_accepted'])): ?>
+                            <span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800" title="Policy Document Accepted">
+                                <i class="fas fa-file-signature mr-1"></i> Policy Accepted
+                            </span>
+                        <?php endif; ?>
                     </div>
                     <?php if (!empty($row['trustee_comments'])): ?>
                     <div class="mt-1 text-xs text-blue-600 bg-blue-50 p-1 rounded">

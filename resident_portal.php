@@ -138,6 +138,11 @@ if (isset($_SESSION['auth_resident'])) {
     // ── Step E: Code of Conduct ───────────────────────────────────────────────
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accept_coc'])) {
         $pdo->prepare("UPDATE {$table} SET code_of_conduct_accepted = 1 WHERE id = ?")->execute([$rid]);
+        
+        $ip_addr = $_SERVER['REMOTE_ADDR'] ?? '';
+        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $pdo->prepare("INSERT INTO digital_signatures (resident_type, resident_id, unit_id, document_type, ip_address, user_agent) VALUES (?, ?, ?, 'Code of Conduct', ?, ?)")->execute([$rtype, $rid, $uid, $ip_addr, $user_agent]);
+        
         // Check if all required steps are done → mark details_complete
         checkAndMarkComplete($pdo, $rtype, $rid, $uid);
         header("Location: resident_portal.php?step=done&saved=1");
