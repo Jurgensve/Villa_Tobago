@@ -648,6 +648,8 @@ $just_saved = isset($_GET['saved']);
                                                 $sc = 'bg-red-100 text-red-800';
                                             elseif (strpos($mod['status'], 'Pending') !== false)
                                                 $sc = 'bg-yellow-100 text-yellow-800';
+                                            elseif ($mod['status'] === 'Information Requested')
+                                                $sc = 'bg-orange-100 text-orange-800';
                                             ?>
                                             <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
                                                 <div class="flex justify-between items-start mb-2">
@@ -658,11 +660,19 @@ $just_saved = isset($_GET['saved']);
                                                         <?= h($mod['status']) ?>
                                                     </span>
                                                 </div>
-                                                <p class="text-sm text-gray-600 mb-2">
+                                                <p class="text-sm text-gray-600 mb-2 truncate">
                                                     <?= h($mod['description']) ?>
                                                 </p>
-                                                <div class="text-xs text-gray-400"><i class="far fa-calendar-alt mr-1"></i> Requested:
-                                                    <?= format_date($mod['request_date']) ?>
+                                                <div class="flex justify-between items-center text-xs text-gray-400">
+                                                    <span><i class="far fa-calendar-alt mr-1"></i> Requested: <?= format_date($mod['request_date']) ?></span>
+                                                    <div class="flex gap-2">
+                                                        <?php if ($mod['status'] === 'Information Requested' && !empty($mod['amendment_token'])): ?>
+                                                        <a href="<?= SITE_URL ?>/amend_request.php?type=modification&token=<?= $mod['amendment_token'] ?>" class="text-white bg-orange-500 hover:bg-orange-600 px-2 py-1 rounded shadow-sm font-bold transition">
+                                                            <i class="fas fa-exclamation-circle mr-1"></i> See Reason & Upload Info
+                                                        </a>
+                                                        <?php endif; ?>
+                                                        <!-- Modal view in resident portal not implemented for minimal scope. Using direct amend link. -->
+                                                    </div>
                                                 </div>
                                             </div>
                                             <?php
