@@ -23,6 +23,9 @@ if (isset($_GET['msg'])) {
         case 'pet_added':
             $message = 'Pet successfully added.';
             break;
+        case 'mod_updated':
+            $message = 'Modification status updated successfully.';
+            break;
     }
 }
 
@@ -232,6 +235,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } catch (PDOException $e) {
                 $error = "Error updating intercom: " . $e->getMessage();
+            }
+        }
+    }
+
+    // Handle Modification Approval/Rejection
+    if (isset($_POST['action']) && in_array($_POST['action'], ['approve_mod', 'decline_mod', 'request_info_mod'])) {
+        $mod_id = (int)$_POST['mod_id'];
+        $unit_id = (int)($_GET['id'] ?? 0);
+        $trustee_comments = trim($_POST['trustee_comments'] ?? '');
+
+        if ($_POST['action'] === 'approve_mod') {
+            $status = 'Approved';
+        } elseif ($_POST['action'] === 'decline_mod') {
+            $status = 'Declined';
+        } else {
+            $status = 'Information Requested';
+        }
+
+        // Fetch current to check email
+        $stmtCurrent = $pdo->prepare("SELECT m.*, o.email as owner_email, o.full_name FROM modifications m LEFT JOIN owners o ON m.owner_id = o.id WHERE m.id = ?");
+        $stmtCurrent->execute([$mod_id]);
+        $currentMod = $stmtCurrent->fetch();
+
+        $token = $currentMod['amendment_token'] ?? '';
+
+        if (($status === 'Information Requested' || $status === 'Declined') && empty($trustee_comments)) {
+            $error = "Trustee Comment is mandatory when requesting information or declining.";
+        } else {
+            try {
+                if (empty($token) && $status === 'Information Requested') {
+                    $token = bin2hex(random_bytes(32));
+                }
+                
+                $stmt = $pdo->prepare("UPDATE modifications SET status = ?, trustee_comments = ?, amendment_token = ?, approval_date = NOW() WHERE id = ?");
+                $stmt->execute([$status, $trustee_comments, $token, $mod_id]);
+
+                // Log action
+                $log_comment = "Status changed to $status. " . ($trustee_comments ? "Comment: $trustee_comments" : "");
+                $log = $pdo->prepare("INSERT INTO amendment_logs (related_type, related_id, action_type, comments) VALUES ('modification', ?, 'status_change', ?)");
+                $log->execute([$mod_id, $log_comment]);
+
+                // Send email
+                if ($currentMod && !empty($currentMod['owner_email'])) {
+                    $subject = "Modification Request Update - $status";
+                    $body = "<p>Dear " . h($currentMod['full_name']) . ",</p>";
+                    $body .= "<p>Your modification request status is now: <strong>$status</strong>.</p>";
+                    if (!empty($trustee_comments)) {
+                        $body .= "<p><strong>Trustee Comments:</strong><br>" . nl2br(h($trustee_comments)) . "</p>";
+                    }
+
+                    if ($status === 'Information Requested') {
+                        $link = SITE_URL . "/amend_request.php?type=modification&token=" . $token;
+                        $body .= "<p>Please update your request by clicking here: <a href='$link'>Update Request</a></p>";
+                    }
+                    send_notification_email($currentMod['owner_email'], $subject, $body);
+                }
+
+                echo "<script>window.location.href='units.php?action=view&id=" . $unit_id . "&msg=mod_updated';</script>";
+                exit;
+            } catch (PDOException $e) {
+                $error = "Error updating modification: " . $e->getMessage();
             }
         }
     }
@@ -1213,6 +1277,7 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                             <th class="pb-2 text-left">Status</th>
                                             <th class="pb-2 text-left">Date</th>
                                             <th class="pb-2 text-left">Description</th>
+                                            <th class="pb-2 text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-100">
@@ -1224,6 +1289,13 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                 $mc = 'bg-red-100 text-red-800';
                                             elseif ($mod['status'] === 'Completed')
                                                 $mc = 'bg-blue-100 text-blue-800';
+                                            elseif ($mod['status'] === 'Information Requested')
+                                                $mc = 'bg-yellow-100 text-yellow-800';
+                                            
+                                            // Fetch attachements for modal handling
+                                            $stmt_atts = $pdo->prepare("SELECT * FROM modification_attachments WHERE modification_id = ?");
+                                            $stmt_atts->execute([$mod['id']]);
+                                            $mod_atts = $stmt_atts->fetchAll();
                                             ?>
                                                 <tr class="hover:bg-gray-50">
                                                     <td class="py-2 pr-3 font-bold text-gray-800">
@@ -1238,7 +1310,122 @@ elseif ($action === 'view' && isset($_GET['id'])): ?>
                                                     <td class="py-2 text-gray-600 truncate max-w-xs">
                                                         <?= h(mb_strimwidth($mod['description'], 0, 80, '…')) ?>
                                                     </td>
+                                                    <td class="py-2 text-right whitespace-nowrap">
+                                                        <button type="button" onclick="document.getElementById('mod_modal_<?= $mod['id'] ?>').classList.remove('hidden')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded hover:bg-indigo-100 font-bold shadow-sm transition"><i class="fas fa-eye mr-1"></i> View</button>
+                                                    </td>
                                                 </tr>
+
+                                                <!-- Modification Details Modal -->
+                                                <div id="mod_modal_<?= $mod['id'] ?>" class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+                                                    <div class="relative w-full max-w-lg shadow-2xl rounded-xl bg-white m-4">
+                                                        <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-start bg-gray-50 rounded-t-xl">
+                                                            <div class="flex items-center gap-3">
+                                                                <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xl border-2 border-indigo-200 shadow-sm">
+                                                                    <i class="fas fa-hammer"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <h3 class="text-lg leading-6 font-bold text-gray-900">
+                                                                        <?= h($mod['category'] ?? 'Modification Request') ?>
+                                                                    </h3>
+                                                                    <p class="text-sm text-gray-500 font-medium">
+                                                                        Requested on <?= format_date($mod['request_date']) ?>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <button type="button" onclick="document.getElementById('mod_modal_<?= $mod['id'] ?>').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 bg-white rounded-full p-1 border border-gray-200 hover:bg-gray-100 transition focus:outline-none">
+                                                                <i class="fas fa-times w-6 h-6 flex items-center justify-center"></i>
+                                                            </button>
+                                                        </div>
+
+                                                        <div class="p-5 text-sm text-gray-700 space-y-5">
+                                                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 grid grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-1">Status</span>
+                                                                    <span class="<?= $mc ?> px-2.5 py-1 rounded-md text-xs font-bold shadow-sm">
+                                                                        <?= h(ucfirst($mod['status'])) ?>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div>
+                                                                <span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Description</span>
+                                                                <div class="text-gray-700 border border-gray-200/60 p-4 rounded-xl">
+                                                                    <?= nl2br(h($mod['description'])) ?>
+                                                                </div>
+                                                            </div>
+
+                                                            <?php if (!empty($mod['notes'])): ?>
+                                                            <div>
+                                                                <span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Admin Notes</span>
+                                                                <div class="bg-blue-50/50 text-gray-700 border border-blue-200/60 p-4 rounded-xl italic">
+                                                                    <?= nl2br(h($mod['notes'])) ?>
+                                                                </div>
+                                                            </div>
+                                                            <?php endif; ?>
+
+                                                            <?php if (!empty($mod['trustee_comments'])): ?>
+                                                            <div>
+                                                                <span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Trustee / Condition</span>
+                                                                <div class="bg-yellow-50/50 text-gray-700 border border-yellow-200/60 p-4 rounded-xl font-medium">
+                                                                    <?= nl2br(h($mod['trustee_comments'])) ?>
+                                                                </div>
+                                                            </div>
+                                                            <?php endif; ?>
+
+                                                            <?php if (!empty($mod_atts)): ?>
+                                                            <div>
+                                                                <span class="text-gray-400 font-bold block text-[10px] uppercase tracking-wider mb-2">Attachments</span>
+                                                                <div class="flex flex-col gap-2">
+                                                                    <?php foreach ($mod_atts as $att): ?>
+                                                                    <a href="<?= SITE_URL ?>/<?= h($att['file_path']) ?>" target="_blank" class="w-full text-indigo-700 hover:text-indigo-900 bg-indigo-50 border border-indigo-100 py-2.5 px-4 rounded-xl flex items-center justify-between font-medium transition hover:shadow-sm">
+                                                                        <span class="flex items-center gap-3">
+                                                                            <i class="fas fa-paperclip text-indigo-400 text-lg w-5 text-center"></i>
+                                                                            <?= h($att['display_name']) ?>
+                                                                        </span>
+                                                                        <i class="fas fa-external-link-alt text-xs text-indigo-300"></i>
+                                                                    </a>
+                                                                    <?php endforeach; ?>
+                                                                </div>
+                                                            </div>
+                                                            <?php endif; ?>
+                                                        </div>
+
+                                                        <div class="px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex flex-wrap gap-2 justify-end">
+                                                            <?php if (!in_array($mod['status'], ['Approved', 'approved', 'Declined', 'rejected', 'Completed'])): ?>
+                                                                <form method="POST" class="inline">
+                                                                    <input type="hidden" name="mod_id" value="<?= $mod['id'] ?>">
+                                                                    <input type="hidden" name="action" value="approve_mod">
+                                                                    <button type="button" onclick="const p = prompt('Any conditions for approval? (Optional)'); if(p !== null){ const i = document.createElement('input'); i.type='hidden'; i.name='trustee_comments'; i.value=p; this.form.appendChild(i); this.form.submit(); }" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition">
+                                                                        <i class="fas fa-check mr-1.5"></i> Approve
+                                                                    </button>
+                                                                </form>
+                                                                <form method="POST" class="inline">
+                                                                    <input type="hidden" name="mod_id" value="<?= $mod['id'] ?>">
+                                                                    <input type="hidden" name="action" value="request_info_mod">
+                                                                    <button type="button" onclick="const p = prompt('What info do you need?'); if(p){ const i = document.createElement('input'); i.type='hidden'; i.name='trustee_comments'; i.value=p; this.form.appendChild(i); this.form.submit(); } else if (p !== null) { alert('You must provide a reason.'); }" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition">
+                                                                        <i class="fas fa-question-circle mr-1.5"></i> Request Info
+                                                                    </button>
+                                                                </form>
+                                                                <form method="POST" class="inline">
+                                                                    <input type="hidden" name="mod_id" value="<?= $mod['id'] ?>">
+                                                                    <input type="hidden" name="action" value="decline_mod">
+                                                                    <button type="button" onclick="const p = prompt('Reason for decline?'); if(p){ const i = document.createElement('input'); i.type='hidden'; i.name='trustee_comments'; i.value=p; this.form.appendChild(i); this.form.submit(); } else if (p !== null) { alert('You must provide a reason.'); }" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-sm transition">
+                                                                        <i class="fas fa-times mr-1.5"></i> Decline
+                                                                    </button>
+                                                                </form>
+                                                            <?php else: ?>
+                                                                <span class="text-sm text-gray-500 italic mr-auto flex items-center">Status is already <?= h($mod['status']) ?>.</span>
+                                                                <form method="POST" class="inline">
+                                                                    <input type="hidden" name="mod_id" value="<?= $mod['id'] ?>">
+                                                                    <input type="hidden" name="action" value="request_info_mod">
+                                                                    <button type="button" onclick="const p = prompt('Reason to reopen to Info Required?'); if(p){ const i = document.createElement('input'); i.type='hidden'; i.name='trustee_comments'; i.value=p; this.form.appendChild(i); this.form.submit(); }" class="text-blue-600 hover:bg-blue-50 border border-blue-200 font-bold py-2 px-4 rounded-lg text-sm transition">
+                                                                        <i class="fas fa-undo mr-1.5"></i> Re-evaluate
+                                                                    </button>
+                                                                </form>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <?php
                                         endforeach; ?>
                                     </tbody>
