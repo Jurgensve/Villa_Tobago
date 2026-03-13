@@ -30,6 +30,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $upd = $pdo->prepare("UPDATE modifications SET description = ?, status = 'Pending Updated', amendment_token = NULL WHERE id = ?");
                 $upd->execute([$description, $record['id']]);
 
+                // Handle file attachments
+                if (!empty($_FILES['attachments']['name'][0])) {
+                    $target_dir = __DIR__ . '/uploads/modifications/';
+                    if (!is_dir($target_dir)) {
+                        mkdir($target_dir, 0755, true);
+                    }
+                    foreach ($_FILES['attachments']['name'] as $key => $name) {
+                        if ($_FILES['attachments']['error'][$key] == UPLOAD_ERR_OK) {
+                            $tmp_name = $_FILES['attachments']['tmp_name'][$key];
+                            $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                            $display_name = preg_replace("/[^a-zA-Z0-9.\- ]/", "_", $name);
+                            $new_filename = uniqid('mod_') . '_' . time() . '.' . $ext;
+                            $target_path = $target_dir . $new_filename;
+                            
+                            if (move_uploaded_file($tmp_name, $target_path)) {
+                                $relative_path = 'uploads/modifications/' . $new_filename;
+                                $att_stmt = $pdo->prepare("INSERT INTO modification_attachments (modification_id, file_path, display_name) VALUES (?, ?, ?)");
+                                $att_stmt->execute([$record['id'], $relative_path, $display_name]);
+                            }
+                        }
+                    }
+                }
+
                 // Fetch trustee emails to notify
                 $admins = $pdo->query("SELECT email FROM owners WHERE id IN (SELECT owner_id FROM ownership_history WHERE is_current=1) LIMIT 1")->fetch(); // Just using a dummy admin email for now
                 send_notification_email('admin@villatobago.co.za', "Modification Resubmitted", "Unit modification {$record['id']} has been resubmitted and is Pending Updated.");
@@ -82,7 +105,7 @@ elseif ($record): ?>
             </p>
         </div>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <?php if ($type === 'modification'): ?>
             <div class="mb-4">
                 <label class="block text-gray-700 font-bold mb-2">Description / Details</label>
@@ -90,6 +113,12 @@ elseif ($record): ?>
                     required><?= h($record['description'])?></textarea>
                 <p class="text-sm text-gray-500 mt-1">Please update your request details based on the trustee comments.
                 </p>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 font-bold mb-2">Additional Documents (Optional)</label>
+                <input type="file" name="attachments[]" multiple class="w-full border p-2 rounded bg-gray-50 text-sm">
+                <p class="text-sm text-gray-500 mt-1">Upload any requested reports, plans, or documents. You can select multiple files.</p>
             </div>
             <?php
     elseif ($type === 'pet'): ?>
