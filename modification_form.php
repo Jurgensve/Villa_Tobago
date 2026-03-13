@@ -127,16 +127,29 @@ endif; ?>
         <form method="POST" enctype="multipart/form-data">
             <div class="mb-4">
                 <label class="block text-gray-700 font-bold mb-2">Category *</label>
-                <select name="category" class="w-full border p-2 rounded" required>
-                    <option value="">-- Select Category --</option>
-                    <option value="Gas Installation">Gas Installation</option>
-                    <option value="Patio Cover Modification">Patio Cover Modification</option>
-                    <option value="External Windows or Doors">External Windows or Doors</option>
-                    <option value="Aircon Installation">Aircon Installation</option>
-                    <option value="Solar Power System">Solar Power System</option>
-                    <option value="Other">Other</option>
+                <select id="categorySelect" name="category" class="w-full border p-2 rounded" required onchange="handleCategoryChange(this)">
+                    <option value="" data-policy="">-- Select Category --</option>
+                    <?php 
+                    $mod_categories = $pdo->query("SELECT * FROM modification_categories ORDER BY name ASC")->fetchAll();
+                    foreach ($mod_categories as $cat) {
+                        $policyPath = $cat['policy_document_path'] ? SITE_URL . '/' . h($cat['policy_document_path']) : '';
+                        echo '<option value="' . h($cat['name']) . '" data-policy="' . $policyPath . '">' . h($cat['name']) . '</option>';
+                    }
+                    ?>
                 </select>
             </div>
+            
+            <div id="policyAgreementSection" class="mb-4 hidden">
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded text-sm text-blue-800">
+                    <p class="mb-2"><strong>Policy Document Required:</strong> This modification category has a specific policy you must read.</p>
+                    <a id="policyLink" href="#" target="_blank" class="inline-block bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 font-bold mb-3"><i class="fas fa-file-pdf"></i> View Policy Document</a>
+                    <label class="flex items-start gap-2 cursor-pointer font-bold">
+                        <input type="checkbox" id="policyAgreementCheckbox" name="policy_agreement" value="1" class="mt-1">
+                        I have read, understood and agreed to the terms and requirements laid out in the policy document.
+                    </label>
+                </div>
+            </div>
+
             <div class="mb-4">
                 <label class="block text-gray-700 font-bold mb-2">Detailed Description *</label>
                 <textarea name="description" class="w-full border p-2 rounded" rows="5"
@@ -175,6 +188,24 @@ endif; ?>
             clone.querySelector('input[type="text"]').value = '';
             clone.querySelector('input[type="file"]').value = '';
             container.appendChild(clone);
+        }
+
+        function handleCategoryChange(selectElement) {
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const policyPath = selectedOption.getAttribute('data-policy');
+            const section = document.getElementById('policyAgreementSection');
+            const link = document.getElementById('policyLink');
+            const checkbox = document.getElementById('policyAgreementCheckbox');
+
+            if (policyPath) {
+                link.href = policyPath;
+                section.classList.remove('hidden');
+                checkbox.setAttribute('required', 'required');
+            } else {
+                section.classList.add('hidden');
+                checkbox.removeAttribute('required');
+                checkbox.checked = false;
+            }
         }
     </script>
 </body>

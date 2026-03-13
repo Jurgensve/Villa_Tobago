@@ -10,6 +10,24 @@ try {
     // Temporary patch: Ensure 'status' column is VARCHAR, not ENUM, so 'Conditional Approval' saves correctly.
     try {
         $pdo->exec("ALTER TABLE pets MODIFY COLUMN status VARCHAR(50) DEFAULT 'Pending'");
+        
+        $pdo->exec("CREATE TABLE IF NOT EXISTS modification_categories (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            policy_document_path VARCHAR(255) DEFAULT NULL
+        )");
+        
+        // Seed default categories if none exist
+        $count = $pdo->query("SELECT COUNT(*) FROM modification_categories")->fetchColumn();
+        if ($count == 0) {
+            $pdo->exec("INSERT INTO modification_categories (name) VALUES 
+                ('Gas Installation'), 
+                ('Patio Cover Modification'), 
+                ('External Windows or Doors'), 
+                ('Aircon Installation'), 
+                ('Solar Power System'), 
+                ('Other')");
+        }
     } catch (PDOException $ex) {
         // Ignore if error
     }

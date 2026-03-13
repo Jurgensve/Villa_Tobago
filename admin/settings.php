@@ -127,6 +127,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_system_settings'
     }
 }
 
+// Handle Add Modification Category
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_mod_category'])) {
+    $name = trim($_POST['category_name']);
+    $policy_path = null;
+
+    if (!empty($_FILES['policy_doc']['name'])) {
+        $doc_ext = strtolower(pathinfo($_FILES['policy_doc']['name'], PATHINFO_EXTENSION));
+        if ($doc_ext === 'pdf') {
+            $new_filename = 'mod_cat_' . uniqid() . '.pdf';
+            $doc_dest = __DIR__ . '/../uploads/' . $new_filename;
+            if (move_uploaded_file($_FILES['policy_doc']['tmp_name'], $doc_dest)) {
+                $policy_path = 'uploads/' . $new_filename;
+            }
+        } else {
+            $error = "Policy Document must be a PDF file.";
+        }
+    }
+
+    if (empty($error) && !empty($name)) {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO modification_categories (name, policy_document_path) VALUES (?, ?)");
+            $stmt->execute([$name, $policy_path]);
+            $message = "Modification category added successfully.";
+        } catch (PDOException $e) {
+            $error = "Error adding modification category: " . $e->getMessage();
+        }
+    }
+}
+
+// Handle Delete Modification Category
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_mod_category'])) {
+    $id = (int) $_POST['category_id'];
+    try {
+        $stmt = $pdo->prepare("SELECT policy_document_path FROM modification_categories WHERE id = ?");
+        $stmt->execute([$id]);
+        $cat = $stmt->fetch();
+        if ($cat && $cat['policy_document_path']) {
+            $file_path = __DIR__ . '/../' . $cat['policy_document_path'];
+            if (file_exists($file_path)) {
+                unlink($file_path);
+            }
+        }
+        $pdo->prepare("DELETE FROM modification_categories WHERE id = ?")->execute([$id]);
+        $message = "Modification category deleted successfully.";
+    } catch (PDOException $e) {
+        $error = "Error deleting modification category: " . $e->getMessage();
+    }
+}
+
 // Fetch current pet settings
 $settings_rows = $pdo->query("SELECT setting_key, setting_value FROM pet_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
 $pet_enabled = $settings_rows['pet_management_enabled'] ?? '1';
@@ -374,6 +423,66 @@ endif; ?>
             </button>
         </div>
     </form>
+
+
+    <!-- Modification Categories Configuration -->
+    <div class="mt-8 bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-hammer mr-3 text-purple-500"></i>
+                <h2 class="text-lg font-bold text-gray-800">Modification Categories</h2>
+            </div>
+        </div>
+        <div class="p-6">
+            <?php
+            $mod_categories = $pdo->query("SELECT * FROM modification_categories ORDER BY name ASC")->fetchAll();
+            if (empty($mod_categories)):
+            ?>
+                <p class="text-gray-500 italic mb-4">No categories defined. Please add one below.</p>
+            <?php else: ?>
+                <div class="space-y-4 mb-6">
+                    <?php foreach ($mod_categories as $cat): ?>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 border rounded-lg">
+                            <div>
+                                <h3 class="font-bold text-gray-800"><?= h($cat['name']) ?></h3>
+                                <?php if ($cat['policy_document_path']): ?>
+                                    <a href="<?= SITE_URL . '/' . h($cat['policy_document_path']) ?>" target="_blank" class="text-sm text-blue-600 hover:underline">
+                                        <i class="fas fa-file-pdf mr-1 text-red-500"></i> View Policy Document
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-sm text-gray-400 italic">No policy document attached.</span>
+                                <?php endif; ?>
+                            </div>
+                            <form method="POST" onsubmit="return confirm('Are you sure you want to delete this category? Residents will no longer be able to select it.');">
+                                <input type="hidden" name="category_id" value="<?= $cat['id'] ?>">
+                                <button type="submit" name="delete_mod_category" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition duration-150" title="Delete Category">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" enctype="multipart/form-data" class="bg-blue-50 border border-blue-100 p-4 rounded-lg">
+                <h3 class="font-bold text-gray-800 mb-3"><i class="fas fa-plus-circle text-blue-500 mr-1"></i> Add New Category</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-1">Category Name *</label>
+                        <input type="text" name="category_name" required class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none" placeholder="e.g. Gas Installation">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-1">Policy Document (PDF Optional)</label>
+                        <input type="file" name="policy_doc" accept="application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200">
+                        <p class="text-xs text-gray-500 mt-1">If provided, residents must agree to this policy before submitting the modification.</p>
+                    </div>
+                </div>
+                <button type="submit" name="add_mod_category" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow transition duration-150">
+                    <i class="fas fa-plus mr-1"></i> Add Category
+                </button>
+            </form>
+        </div>
+    </div>
 
 
     <div class="mt-8 bg-white shadow rounded-lg overflow-hidden">
